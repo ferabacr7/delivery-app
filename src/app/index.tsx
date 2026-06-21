@@ -1,15 +1,31 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { useEffect } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+
+import { supabase } from "../lib/supabase";
 import { colors } from "../styles/theme";
 
 export default function HomeScreen() {
+  useEffect(() => {
+    testConnection();
+  }, []);
+
+  const testConnection = async () => {
+    const { data, error } = await supabase.from("orders").select("*").limit(1);
+
+    console.log("SUPABASE DATA:", data);
+    console.log("SUPABASE ERROR:", error);
+  };
+
   return (
     <View style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.hero}>
           <Text style={styles.logo}>Delivery App</Text>
+
           <Text style={styles.slogan}>Lo que necesites,{"\n"}lo pedís.</Text>
+
           <Text style={styles.description}>
             Compras, comida, mandados y servicios locales desde una sola app.
           </Text>
@@ -30,6 +46,7 @@ export default function HomeScreen() {
             onPress={() => router.push("/create-order")}
           >
             <Text style={styles.buttonText}>Hacer Pedido</Text>
+
             <Ionicons name="arrow-forward" size={24} color={colors.white} />
           </Pressable>
         </View>
@@ -37,9 +54,11 @@ export default function HomeScreen() {
 
       <View style={styles.nav}>
         <Ionicons name="home" size={26} color={colors.primary} />
+
         <Pressable onPress={() => router.push("/orders")}>
           <Ionicons name="clipboard-outline" size={26} color={colors.muted} />
         </Pressable>
+
         <Pressable onPress={() => router.push("/profile")}>
           <Ionicons
             name="person-circle-outline"
@@ -64,6 +83,7 @@ function Category({
       <View style={styles.iconCircle}>
         <Ionicons name={icon} size={32} color={colors.primary} />
       </View>
+
       <Text style={styles.cardTitle}>{title}</Text>
     </View>
   );
@@ -74,6 +94,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.white,
   },
+
   hero: {
     paddingTop: 80,
     paddingHorizontal: 28,
@@ -82,11 +103,13 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 34,
     borderBottomRightRadius: 34,
   },
+
   logo: {
     fontSize: 38,
     fontWeight: "900",
     color: colors.white,
   },
+
   slogan: {
     marginTop: 18,
     fontSize: 34,
@@ -94,26 +117,31 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     color: colors.white,
   },
+
   description: {
     marginTop: 18,
     fontSize: 16,
     lineHeight: 24,
     color: colors.white,
   },
+
   panel: {
     padding: 24,
   },
+
   title: {
     fontSize: 28,
     fontWeight: "900",
     color: colors.dark,
     marginBottom: 20,
   },
+
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 14,
   },
+
   card: {
     width: "47%",
     minHeight: 130,
@@ -124,6 +152,7 @@ const styles = StyleSheet.create({
     padding: 18,
     justifyContent: "center",
   },
+
   iconCircle: {
     width: 58,
     height: 58,
@@ -133,11 +162,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 14,
   },
+
   cardTitle: {
     fontSize: 17,
     fontWeight: "800",
     color: colors.dark,
   },
+
   button: {
     marginTop: 30,
     height: 62,
@@ -148,11 +179,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 16,
   },
+
   buttonText: {
     color: colors.white,
     fontSize: 20,
     fontWeight: "900",
   },
+
   nav: {
     height: 82,
     borderTopWidth: 1,
