@@ -1,98 +1,165 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
-  return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { colors } from "../styles/theme";
 
 export default function HomeScreen() {
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
+    <View style={styles.container}>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <View style={styles.hero}>
+          <Text style={styles.logo}>Delivery App</Text>
+          <Text style={styles.slogan}>Lo que necesites,{"\n"}lo pedís.</Text>
+          <Text style={styles.description}>
+            Compras, comida, mandados y servicios locales desde una sola app.
+          </Text>
+        </View>
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
+        <View style={styles.panel}>
+          <Text style={styles.title}>¿Qué necesitás?</Text>
 
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
+          <View style={styles.grid}>
+            <Category icon="cart-outline" title="Compras" />
+            <Category icon="fast-food-outline" title="Comida" />
+            <Category icon="bicycle-outline" title="Mandados" />
+            <Category icon="construct-outline" title="Servicios" />
+          </View>
+
+          <Pressable
+            style={styles.button}
+            onPress={() => router.push("/create-order")}
+          >
+            <Text style={styles.buttonText}>Hacer Pedido</Text>
+            <Ionicons name="arrow-forward" size={24} color={colors.white} />
+          </Pressable>
+        </View>
+      </ScrollView>
+
+      <View style={styles.nav}>
+        <Ionicons name="home" size={26} color={colors.primary} />
+        <Pressable onPress={() => router.push("/orders")}>
+          <Ionicons name="clipboard-outline" size={26} color={colors.muted} />
+        </Pressable>
+        <Pressable onPress={() => router.push("/profile")}>
+          <Ionicons
+            name="person-circle-outline"
+            size={28}
+            color={colors.muted}
           />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
 
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+function Category({
+  icon,
+  title,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  title: string;
+}) {
+  return (
+    <View style={styles.card}>
+      <View style={styles.iconCircle}>
+        <Ionicons name={icon} size={32} color={colors.primary} />
+      </View>
+      <Text style={styles.cardTitle}>{title}</Text>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
+    backgroundColor: colors.white,
   },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
+  hero: {
+    paddingTop: 80,
+    paddingHorizontal: 28,
+    paddingBottom: 60,
+    backgroundColor: colors.primary,
+    borderBottomLeftRadius: 34,
+    borderBottomRightRadius: 34,
   },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+  logo: {
+    fontSize: 38,
+    fontWeight: "900",
+    color: colors.white,
+  },
+  slogan: {
+    marginTop: 18,
+    fontSize: 34,
+    lineHeight: 40,
+    fontWeight: "900",
+    color: colors.white,
+  },
+  description: {
+    marginTop: 18,
+    fontSize: 16,
+    lineHeight: 24,
+    color: colors.white,
+  },
+  panel: {
+    padding: 24,
   },
   title: {
-    textAlign: 'center',
+    fontSize: 28,
+    fontWeight: "900",
+    color: colors.dark,
+    marginBottom: 20,
   },
-  code: {
-    textTransform: 'uppercase',
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 14,
   },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+  card: {
+    width: "47%",
+    minHeight: 130,
+    borderRadius: 22,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 18,
+    justifyContent: "center",
+  },
+  iconCircle: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: colors.softTeal,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 14,
+  },
+  cardTitle: {
+    fontSize: 17,
+    fontWeight: "800",
+    color: colors.dark,
+  },
+  button: {
+    marginTop: 30,
+    height: 62,
+    borderRadius: 18,
+    backgroundColor: colors.primary,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 16,
+  },
+  buttonText: {
+    color: colors.white,
+    fontSize: 20,
+    fontWeight: "900",
+  },
+  nav: {
+    height: 82,
+    borderTopWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.white,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-around",
   },
 });
