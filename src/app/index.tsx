@@ -1,52 +1,53 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useEffect } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
-import { supabase } from "../lib/supabase";
+import { useLanguage } from "../i18n/useLanguage";
+import { useTranslation } from "../i18n/useTranslation";
 import { colors } from "../styles/theme";
 
 export default function HomeScreen() {
-  useEffect(() => {
-    testConnection();
-  }, []);
+  const { t } = useTranslation();
+  const { language, setLanguage } = useLanguage();
 
-  const testConnection = async () => {
-    const { data, error } = await supabase.from("orders").select("*").limit(1);
-
-    console.log("SUPABASE DATA:", data);
-    console.log("SUPABASE ERROR:", error);
-  };
+  function toggleLanguage() {
+    setLanguage(language === "es" ? "en" : "es");
+  }
 
   return (
     <View style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.hero}>
-          <Text style={styles.logo}>Delivery App</Text>
+          <View style={styles.header}>
+            <Text style={styles.logo}>{t("home.title")}</Text>
 
-          <Text style={styles.slogan}>Lo que necesites,{"\n"}lo pedís.</Text>
+            <Pressable style={styles.languageButton} onPress={toggleLanguage}>
+              <Text style={styles.languageText}>
+                🌎 {language === "es" ? "EN" : "ES"}
+              </Text>
+            </Pressable>
+          </View>
 
-          <Text style={styles.description}>
-            Compras, comida, mandados y servicios locales desde una sola app.
-          </Text>
+          <Text style={styles.slogan}>{t("home.slogan")}</Text>
+
+          <Text style={styles.description}>{t("home.description")}</Text>
         </View>
 
         <View style={styles.panel}>
-          <Text style={styles.title}>¿Qué necesitás?</Text>
+          <Text style={styles.title}>{t("home.question")}</Text>
 
           <View style={styles.grid}>
-            <Category icon="cart-outline" title="Compras" />
-            <Category icon="fast-food-outline" title="Comida" />
-            <Category icon="bicycle-outline" title="Mandados" />
-            <Category icon="construct-outline" title="Servicios" />
+            <Category icon="cart-outline" title={t("home.shopping")} />
+            <Category icon="fast-food-outline" title={t("home.food")} />
+            <Category icon="bicycle-outline" title={t("home.errands")} />
+            <Category icon="construct-outline" title={t("home.services")} />
           </View>
 
           <Pressable
             style={styles.button}
             onPress={() => router.push("/create-order")}
           >
-            <Text style={styles.buttonText}>Hacer Pedido</Text>
-
+            <Text style={styles.buttonText}>{t("home.makeOrder")}</Text>
             <Ionicons name="arrow-forward" size={24} color={colors.white} />
           </Pressable>
         </View>
@@ -104,10 +105,29 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 34,
   },
 
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
   logo: {
-    fontSize: 38,
+    fontSize: 32,
     fontWeight: "900",
     color: colors.white,
+  },
+
+  languageButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.18)",
+  },
+
+  languageText: {
+    color: colors.white,
+    fontWeight: "900",
+    fontSize: 14,
   },
 
   slogan: {

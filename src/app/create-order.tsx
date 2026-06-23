@@ -1,16 +1,56 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { useState } from "react";
 import {
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
+
+import { useTranslation } from "../i18n/useTranslation";
+import { createOrder } from "../services/orderService";
 import { colors } from "../styles/theme";
 
 export default function CreateOrderScreen() {
+  const [description, setDescription] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const { t } = useTranslation();
+
+  async function handleCreateOrder() {
+    if (!description.trim()) {
+      Alert.alert(t("common.error"), t("createOrder.required"));
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const { error } = await createOrder(description);
+
+      if (error) {
+        Alert.alert(t("common.error"), error.message);
+        return;
+      }
+
+      Alert.alert(
+        t("createOrder.successTitle"),
+        t("createOrder.successMessage"),
+      );
+
+      setDescription("");
+      router.push("/orders");
+    } catch {
+      Alert.alert(t("common.error"), t("createOrder.errorMessage"));
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.hero}>
@@ -18,33 +58,44 @@ export default function CreateOrderScreen() {
           <Ionicons name="arrow-back" size={26} color={colors.white} />
         </Pressable>
 
-        <Text style={styles.title}>Crear Pedido</Text>
-        <Text style={styles.subtitle}>
-          Contanos qué necesitás y lo resolvemos por vos.
-        </Text>
+        <Text style={styles.title}>{t("createOrder.title")}</Text>
+        <Text style={styles.subtitle}>{t("createOrder.subtitle")}</Text>
       </View>
 
       <View style={styles.panel}>
-        <Text style={styles.label}>¿Qué necesitás?</Text>
+        <Text style={styles.label}>{t("createOrder.question")}</Text>
 
         <TextInput
           style={styles.textArea}
           multiline
-          placeholder="Ej: Necesito comprar pan, leche y huevos..."
+          value={description}
+          onChangeText={setDescription}
+          placeholder={t("createOrder.placeholder")}
           placeholderTextColor={colors.muted}
         />
 
-        <Text style={styles.sectionTitle}>Detalles opcionales</Text>
+        <Text style={styles.sectionTitle}>
+          {t("createOrder.optionalDetails")}
+        </Text>
 
-        <Option icon="image-outline" title="Foto de referencia" />
-        <Option icon="location-outline" title="Dirección de entrega" />
-        <Option icon="document-text-outline" title="Notas adicionales" />
+        <Option icon="image-outline" title={t("createOrder.referencePhoto")} />
+        <Option
+          icon="location-outline"
+          title={t("createOrder.deliveryAddress")}
+        />
+        <Option
+          icon="document-text-outline"
+          title={t("createOrder.additionalNotes")}
+        />
 
         <Pressable
-          style={styles.button}
-          onPress={() => router.push("/order-detail")}
+          style={[styles.button, loading && styles.buttonDisabled]}
+          onPress={handleCreateOrder}
+          disabled={loading}
         >
-          <Text style={styles.buttonText}>Continuar</Text>
+          <Text style={styles.buttonText}>
+            {loading ? t("createOrder.creating") : t("createOrder.button")}
+          </Text>
         </Pressable>
       </View>
     </ScrollView>
@@ -136,6 +187,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
+  },
+  buttonDisabled: {
+    opacity: 0.7,
   },
   buttonText: { color: colors.white, fontSize: 18, fontWeight: "900" },
 });

@@ -1,0 +1,261 @@
+export const translations = {
+  es: {
+    home: {
+      title: "Delivery App",
+      createOrder: "Crear Pedido",
+      myOrders: "Mis Pedidos",
+      slogan: "Lo que necesites,\nlo pedís.",
+      description:
+        "Compras, comida, mandados y servicios locales desde una sola app.",
+      question: "¿Qué necesitás?",
+      shopping: "Compras",
+      food: "Comida",
+      errands: "Mandados",
+      services: "Servicios",
+      makeOrder: "Hacer Pedido",
+    },
+
+    login: {
+      title: "Iniciar Sesión",
+      email: "Correo Electrónico",
+      password: "Contraseña",
+      button: "Ingresar",
+      noAccount: "¿No tenés cuenta?",
+      register: "Registrarse",
+      createAccount: "Crear cuenta",
+      requiredTitle: "Campos requeridos",
+      requiredMessage: "Ingresá correo y contraseña.",
+      errorTitle: "Error de Login",
+    },
+
+    register: {
+      title: "Crear Cuenta",
+      email: "Correo Electrónico",
+      password: "Contraseña",
+      confirmPassword: "Confirmar Contraseña",
+      button: "Crear Cuenta",
+      subtitle:
+        "Registrate para hacer pedidos y dar seguimiento a tus entregas.",
+
+      requiredTitle: "Campos requeridos",
+      requiredMessage: "Ingresá email y contraseña.",
+
+      errorTitle: "Error al registrarse",
+
+      successTitle: "Registro exitoso",
+      successMessage: "Usuario creado correctamente.",
+
+      registerButton: "Registrarme",
+
+      backHome: "Volver al inicio",
+    },
+
+    profile: {
+      title: "Mi Perfil",
+      email: "Correo",
+      userId: "ID de Usuario",
+      profileName: "Nombre del Perfil",
+      status: "Estado",
+      logout: "Cerrar sesión",
+      loading: "Cargando...",
+      noUser: "No hay usuario autenticado.",
+      notFound: "Perfil no encontrado o bloqueado por RLS.",
+      noName: "Sin nombre",
+      loaded: "Perfil cargado correctamente.",
+      notAvailable: "No disponible",
+      language: "Idioma",
+      spanish: "Español",
+      english: "Inglés",
+    },
+
+    orders: {
+      title: "Mis Pedidos",
+      empty: "Todavía no tenés pedidos registrados.",
+      order: "Pedido",
+      accepted: "Aceptado",
+      rejected: "Rechazado",
+      pending: "Pendiente",
+    },
+
+    createOrder: {
+      title: "Crear Pedido",
+      placeholder: "¿Qué necesitás que te traigamos?",
+      button: "Enviar Pedido",
+      successTitle: "Pedido creado",
+      successMessage: "Tu pedido fue enviado correctamente.",
+      errorTitle: "Error",
+      errorMessage: "No se pudo crear el pedido.",
+      subtitle: "Contanos qué necesitás y lo resolvemos por vos.",
+      question: "¿Qué necesitás?",
+      required: "Por favor escribí tu pedido.",
+      optionalDetails: "Detalles opcionales",
+      referencePhoto: "Foto de referencia",
+      deliveryAddress: "Dirección de entrega",
+      additionalNotes: "Notas adicionales",
+      creating: "Creando...",
+    },
+
+    orderDetail: {
+      title: "Detalle del Pedido",
+      accepted: "🟢 Pedido Aceptado",
+      rejected: "🔴 Pedido Rechazado",
+      pending: "🟡 Cotización Pendiente",
+      quoteReceived: "Cotización Recibida",
+      quoteStatus: "Estado",
+      description: "Descripción del pedido",
+      createdAt: "Fecha de creación",
+      accept: "Aceptar",
+      reject: "Rechazar",
+      waitingTitle: "Cotización pendiente",
+      waitingQuote:
+        "Estamos revisando tu pedido. Pronto recibirás una cotización.",
+      acceptedMessage: "Tu pedido fue confirmado.",
+      rejectedMessage: "Este pedido fue cancelado.",
+      processingMessage: "Estamos procesando tu solicitud.",
+      backHome: "Volver al inicio",
+      currentStatus: "Estado actual",
+      quoteAcceptedTitle: "Cotización aceptada",
+      quoteRejectedTitle: "Cotización rechazada",
+      rejectError: "No se pudo rechazar la cotización.",
+      notFound: "No se encontró el pedido.",
+    },
+
+    common: {
+      accept: "Aceptar",
+      reject: "Rechazar",
+      back: "Volver",
+      loading: "Cargando...",
+      error: "Error",
+    },
+  },
+
+  en: {
+    home: {
+      title: "Delivery App",
+      createOrder: "Create Order",
+      myOrders: "My Orders",
+      slogan: "Whatever you need,\njust order it.",
+      description: "Shopping, food, errands, and local services from one app.",
+      question: "What do you need?",
+      shopping: "Shopping",
+      food: "Food",
+      errands: "Errands",
+      services: "Services",
+      makeOrder: "Place Order",
+    },
+
+    login: {
+      title: "Sign In",
+      email: "Email",
+      password: "Password",
+      button: "Sign In",
+      noAccount: "Don't have an account?",
+      register: "Register",
+      createAccount: "Create Account",
+      requiredTitle: "Required Fields",
+      requiredMessage: "Please enter email and password.",
+      errorTitle: "Login Error",
+    },
+
+    register: {
+      title: "Create Account",
+      email: "Email",
+      password: "Password",
+      confirmPassword: "Confirm Password",
+      button: "Create Account",
+      subtitle: "Register to place orders and track your deliveries.",
+
+      requiredTitle: "Required Fields",
+      requiredMessage: "Please enter email and password.",
+
+      errorTitle: "Registration Error",
+
+      successTitle: "Registration Successful",
+      successMessage: "User created successfully.",
+
+      registerButton: "Register",
+
+      backHome: "Back to Home",
+    },
+
+    profile: {
+      title: "My Profile",
+      email: "Email",
+      userId: "User ID",
+      profileName: "Profile Name",
+      status: "Status",
+      logout: "Sign Out",
+      loading: "Loading...",
+      noUser: "No authenticated user.",
+      notFound: "Profile not found or blocked by RLS.",
+      noName: "No name",
+      loaded: "Profile loaded successfully.",
+      notAvailable: "Not available",
+      language: "Language",
+      spanish: "Spanish",
+      english: "English",
+    },
+
+    orders: {
+      title: "My Orders",
+      empty: "You don't have any orders yet.",
+      order: "Order",
+      accepted: "Accepted",
+      rejected: "Rejected",
+      pending: "Pending",
+    },
+
+    createOrder: {
+      title: "Create Order",
+      placeholder: "What do you need us to bring?",
+      button: "Submit Order",
+      successTitle: "Order Created",
+      successMessage: "Your order was submitted successfully.",
+      errorTitle: "Error",
+      errorMessage: "The order could not be created.",
+      subtitle: "Tell us what you need and we will take care of it.",
+      question: "What do you need?",
+      required: "Please enter your order.",
+      optionalDetails: "Optional details",
+      referencePhoto: "Reference photo",
+      deliveryAddress: "Delivery address",
+      additionalNotes: "Additional notes",
+      creating: "Creating...",
+    },
+
+    orderDetail: {
+      title: "Order Details",
+      accepted: "🟢 Order Accepted",
+      rejected: "🔴 Order Rejected",
+      pending: "🟡 Quote Pending",
+      quoteReceived: "Quote Received",
+      quoteStatus: "Status",
+      description: "Order description",
+      createdAt: "Created at",
+      accept: "Accept",
+      reject: "Reject",
+      waitingTitle: "Quote pending",
+      waitingQuote:
+        "We are reviewing your order. You will receive a quote soon.",
+      acceptedMessage: "Your order was confirmed.",
+      rejectedMessage: "This order was cancelled.",
+      processingMessage: "We are processing your request.",
+      backHome: "Back to Home",
+      currentStatus: "Current status",
+      quoteAcceptedTitle: "Quote accepted",
+      quoteRejectedTitle: "Quote rejected",
+      rejectError: "The quote could not be rejected.",
+      notFound: "Order not found.",
+    },
+
+    common: {
+      accept: "Accept",
+      reject: "Reject",
+      back: "Back",
+      loading: "Loading...",
+      error: "Error",
+    },
+  },
+};
+
+export type Language = keyof typeof translations;
