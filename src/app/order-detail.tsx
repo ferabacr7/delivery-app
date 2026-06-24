@@ -37,16 +37,32 @@ export default function OrderDetailScreen() {
   }, [orderId]);
 
   function getOrderStatusLabel(status: string) {
-    if (status === "accepted") return t("orderDetail.accepted");
-    if (status === "rejected") return t("orderDetail.rejected");
-    if (status === "pending") return t("orderDetail.pending");
+    const normalizedStatus = String(status).toUpperCase();
+
+    if (normalizedStatus === "ACCEPTED") return "Aceptado";
+    if (normalizedStatus === "REJECTED") return "Rechazado";
+    if (normalizedStatus === "PENDING") return "Pendiente";
+    if (normalizedStatus === "QUOTED") return "Cotizado";
+
     return status;
   }
 
   function getSubtitle(status: string) {
-    if (status === "accepted") return t("orderDetail.acceptedMessage");
-    if (status === "rejected") return t("orderDetail.rejectedMessage");
-    return t("orderDetail.processingMessage");
+    const normalizedStatus = String(status).toUpperCase();
+
+    if (normalizedStatus === "ACCEPTED") {
+      return "Tu cotización fue aceptada. Pronto iniciaremos el pedido.";
+    }
+
+    if (normalizedStatus === "REJECTED") {
+      return "Rechazaste esta cotización.";
+    }
+
+    if (normalizedStatus === "QUOTED") {
+      return "Ya recibiste una cotización para este pedido.";
+    }
+
+    return "Estamos procesando tu pedido.";
   }
 
   async function loadOrderDetail() {
@@ -86,21 +102,18 @@ export default function OrderDetailScreen() {
     try {
       setActionLoading(true);
 
-      const { data, error } = await acceptQuote(quote.id);
-
-      console.log("RESULTADO ACCEPT:", { data, error });
+      const { error } = await acceptQuote(quote.id);
 
       if (error) {
-        Alert.alert(t("common.error"), JSON.stringify(error));
+        Alert.alert("Error", JSON.stringify(error));
         console.error("ERROR ACCEPT:", error);
         return;
       }
 
       Alert.alert(
-        t("orderDetail.quoteAcceptedTitle"),
-        t("orderDetail.acceptedMessage"),
+        "Cotización aceptada",
+        "Tu pedido fue aceptado correctamente.",
       );
-
       await loadOrderDetail();
     } finally {
       setActionLoading(false);
@@ -116,16 +129,12 @@ export default function OrderDetailScreen() {
       const { error } = await rejectQuote(quote.id);
 
       if (error) {
-        Alert.alert(t("common.error"), t("orderDetail.rejectError"));
+        Alert.alert("Error", "No se pudo rechazar la cotización.");
         console.error(error);
         return;
       }
 
-      Alert.alert(
-        t("orderDetail.quoteRejectedTitle"),
-        t("orderDetail.rejectedMessage"),
-      );
-
+      Alert.alert("Cotización rechazada", "Rechazaste esta cotización.");
       await loadOrderDetail();
     } finally {
       setActionLoading(false);
@@ -180,43 +189,41 @@ export default function OrderDetailScreen() {
 
         {quote ? (
           <View style={styles.quoteBox}>
-            <Text style={styles.quoteTitle}>
-              {t("orderDetail.quoteReceived")}
-            </Text>
+            <Text style={styles.quoteTitle}>Cotización recibida</Text>
 
             <Text style={styles.quoteAmount}>
               ₡{Number(quote.amount).toLocaleString()}
             </Text>
 
-            <Text style={styles.quoteNotes}>{quote.notes}</Text>
-
-            <Text style={styles.quoteStatus}>
-              {t("orderDetail.quoteStatus")}: {quote.status}
+            <Text style={styles.quoteNotes}>
+              {quote.notes || "Sin notas adicionales"}
             </Text>
 
-            {quote.status === "pending" && (
-              <View style={styles.actions}>
-                <Pressable
-                  style={[styles.actionButton, styles.rejectButton]}
-                  onPress={handleRejectQuote}
-                  disabled={actionLoading}
-                >
-                  <Text style={styles.rejectText}>
-                    {t("orderDetail.reject")}
-                  </Text>
-                </Pressable>
+            <Text style={styles.quoteStatus}>
+              Estado de cotización: {String(quote.status)}
+            </Text>
 
-                <Pressable
-                  style={[styles.actionButton, styles.acceptButton]}
-                  onPress={handleAcceptQuote}
-                  disabled={actionLoading}
-                >
-                  <Text style={styles.acceptText}>
-                    {t("orderDetail.accept")}
-                  </Text>
-                </Pressable>
-              </View>
-            )}
+            <View style={styles.actions}>
+              <Pressable
+                style={[styles.actionButton, styles.rejectButton]}
+                onPress={handleRejectQuote}
+                disabled={actionLoading}
+              >
+                <Text style={styles.rejectText}>
+                  {actionLoading ? "Procesando..." : "Rechazar"}
+                </Text>
+              </Pressable>
+
+              <Pressable
+                style={[styles.actionButton, styles.acceptButton]}
+                onPress={handleAcceptQuote}
+                disabled={actionLoading}
+              >
+                <Text style={styles.acceptText}>
+                  {actionLoading ? "Procesando..." : "Aceptar"}
+                </Text>
+              </Pressable>
+            </View>
           </View>
         ) : (
           <View style={styles.waitingBox}>
@@ -324,9 +331,16 @@ const styles = StyleSheet.create({
     color: colors.primaryDark,
   },
 
+  quoteLine: {
+    marginTop: 10,
+    fontSize: 16,
+    fontWeight: "800",
+    color: colors.dark,
+  },
+
   quoteAmount: {
     marginTop: 12,
-    fontSize: 36,
+    fontSize: 28,
     fontWeight: "900",
     color: colors.primary,
   },

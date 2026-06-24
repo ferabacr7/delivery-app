@@ -1,5 +1,12 @@
+import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  FlatList,
+  Pressable,
+  Text,
+  View,
+} from "react-native";
 import { getAllOrders } from "../../services/adminService";
 
 export default function AdminOrdersScreen() {
@@ -57,7 +64,13 @@ export default function AdminOrdersScreen() {
           data={orders}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <View
+            <Pressable
+              onPress={() =>
+                router.push({
+                  pathname: "/admin/order-detail",
+                  params: { orderId: String(item.id) },
+                })
+              }
               style={{
                 padding: 16,
                 borderWidth: 1,
@@ -73,7 +86,10 @@ export default function AdminOrdersScreen() {
               <Text>
                 Dirección: {item.addresses?.address_line ?? "Sin dirección"}
               </Text>
-            </View>
+              <Text style={{ marginTop: 8, fontWeight: "700" }}>
+                Tocar para ver detalle →
+              </Text>
+            </Pressable>
           )}
         />
       )}
