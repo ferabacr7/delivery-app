@@ -2,31 +2,17 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
-import { useLanguage } from "../i18n/useLanguage";
 import { useTranslation } from "../i18n/useTranslation";
 import { colors } from "../styles/theme";
 
 export default function HomeScreen() {
   const { t } = useTranslation();
-  const { language, setLanguage } = useLanguage();
-
-  function toggleLanguage() {
-    setLanguage(language === "es" ? "en" : "es");
-  }
 
   return (
     <View style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.hero}>
-          <View style={styles.header}>
-            <Text style={styles.logo}>{t("home.title")}</Text>
-
-            <Pressable style={styles.languageButton} onPress={toggleLanguage}>
-              <Text style={styles.languageText}>
-                🌎 {language === "es" ? "EN" : "ES"}
-              </Text>
-            </Pressable>
-          </View>
+          <Text style={styles.logo}>{t("home.title")}</Text>
 
           <Text style={styles.slogan}>{t("home.slogan")}</Text>
 
@@ -48,7 +34,15 @@ export default function HomeScreen() {
             onPress={() => router.push("/create-order")}
           >
             <Text style={styles.buttonText}>{t("home.makeOrder")}</Text>
+
             <Ionicons name="arrow-forward" size={24} color={colors.white} />
+          </Pressable>
+
+          <Pressable
+            style={styles.adminButton}
+            onPress={() => router.push("/admin/orders")}
+          >
+            <Text style={styles.adminButtonText}>Admin Orders</Text>
           </Pressable>
         </View>
       </ScrollView>
@@ -105,29 +99,10 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 34,
   },
 
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-
   logo: {
-    fontSize: 32,
+    fontSize: 38,
     fontWeight: "900",
     color: colors.white,
-  },
-
-  languageButton: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.18)",
-  },
-
-  languageText: {
-    color: colors.white,
-    fontWeight: "900",
-    fontSize: 14,
   },
 
   slogan: {
@@ -204,6 +179,22 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: 20,
     fontWeight: "900",
+  },
+
+  adminButton: {
+    marginTop: 16,
+    height: 54,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  adminButtonText: {
+    color: colors.primary,
+    fontSize: 18,
+    fontWeight: "800",
   },
 
   nav: {

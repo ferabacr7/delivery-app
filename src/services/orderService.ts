@@ -1,24 +1,23 @@
 import { supabase } from "../lib/supabase";
 
 export async function createOrder(description: string) {
-  const { data: userData, error: userError } = await supabase.auth.getUser();
+  const { data: sessionData } = await supabase.auth.getSession();
 
-  console.log("USER LOGUEADO:", userData.user);
-  console.log("USER ID:", userData.user?.id);
+  const user = sessionData.session?.user;
 
-  if (userError || !userData.user) {
+  if (!user) {
     return {
       data: null,
-      error: userError ?? new Error("No authenticated user found"),
+      error: new Error("No authenticated user found"),
     };
   }
 
   const { data, error } = await supabase
     .from("orders")
     .insert({
-      profile_id: userData.user.id,
+      profile_id: user.id,
       description,
-      status: "VALIDATION",
+      status: "PENDING",
     })
     .select()
     .single();
@@ -27,19 +26,21 @@ export async function createOrder(description: string) {
 }
 
 export async function getMyOrders() {
-  const { data: userData, error: userError } = await supabase.auth.getUser();
+  const { data: sessionData } = await supabase.auth.getSession();
 
-  if (userError || !userData.user) {
+  const user = sessionData.session?.user;
+
+  if (!user) {
     return {
-      data: null,
-      error: userError ?? new Error("No authenticated user found"),
+      data: [],
+      error: null,
     };
   }
 
   const { data, error } = await supabase
     .from("orders")
     .select("*")
-    .eq("profile_id", userData.user.id)
+    .eq("profile_id", user.id)
     .order("created_at", { ascending: false });
 
   return { data, error };
