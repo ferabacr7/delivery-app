@@ -14,6 +14,10 @@ export default function AdminOrdersScreen() {
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
+  function handleBackToHome() {
+    router.push("/" as never);
+  }
+
   async function loadOrders() {
     const { data, error } = await getAllOrders();
 
@@ -45,6 +49,22 @@ export default function AdminOrdersScreen() {
   if (errorMessage) {
     return (
       <View style={{ flex: 1, padding: 24, paddingTop: 80 }}>
+        <Pressable
+          onPress={handleBackToHome}
+          style={{
+            alignSelf: "flex-start",
+            backgroundColor: "#E0F2F1",
+            paddingVertical: 10,
+            paddingHorizontal: 14,
+            borderRadius: 12,
+            marginBottom: 24,
+          }}
+        >
+          <Text style={{ color: "#0F766E", fontWeight: "900" }}>
+            ← Back to Home
+          </Text>
+        </Pressable>
+
         <Text style={{ fontSize: 24, fontWeight: "800" }}>Admin Orders</Text>
         <Text style={{ marginTop: 20, color: "red" }}>{errorMessage}</Text>
       </View>
@@ -53,6 +73,22 @@ export default function AdminOrdersScreen() {
 
   return (
     <View style={{ flex: 1, padding: 24, paddingTop: 80 }}>
+      <Pressable
+        onPress={handleBackToHome}
+        style={{
+          alignSelf: "flex-start",
+          backgroundColor: "#E0F2F1",
+          paddingVertical: 10,
+          paddingHorizontal: 14,
+          borderRadius: 12,
+          marginBottom: 24,
+        }}
+      >
+        <Text style={{ color: "#0F766E", fontWeight: "900" }}>
+          ← Back to Home
+        </Text>
+      </Pressable>
+
       <Text style={{ fontSize: 28, fontWeight: "800", marginBottom: 20 }}>
         Admin Orders
       </Text>

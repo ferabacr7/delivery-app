@@ -44,6 +44,10 @@ export default function ProfileScreen() {
     setProfileStatus(t("profile.loaded"));
   }
 
+  function handleGoBack() {
+    router.back();
+  }
+
   async function handleLogout() {
     await signOut();
     router.replace("/login" as never);
@@ -51,6 +55,10 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.container}>
+      <Pressable style={styles.backButton} onPress={handleGoBack}>
+        <Text style={styles.backButtonText}>← Go Back</Text>
+      </Pressable>
+
       <Text style={styles.title}>{t("profile.title")}</Text>
 
       <Text style={styles.label}>{t("profile.email")}:</Text>
@@ -93,6 +101,13 @@ export default function ProfileScreen() {
         </View>
       </View>
 
+      <Pressable
+        style={styles.secondaryButton}
+        onPress={() => router.push("/my-address" as never)}
+      >
+        <Text style={styles.secondaryButtonText}>📍 Mi dirección</Text>
+      </Pressable>
+
       <Pressable style={styles.button} onPress={handleLogout}>
         <Text style={styles.buttonText}>{t("profile.logout")}</Text>
       </Pressable>
@@ -106,6 +121,22 @@ const styles = StyleSheet.create({
     padding: 28,
     justifyContent: "center",
     backgroundColor: colors.white,
+  },
+
+  backButton: {
+    position: "absolute",
+    top: 56,
+    left: 28,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    backgroundColor: colors.softTeal,
+  },
+
+  backButtonText: {
+    color: colors.primary,
+    fontSize: 15,
+    fontWeight: "900",
   },
 
   title: {
@@ -158,13 +189,30 @@ const styles = StyleSheet.create({
     color: colors.dark,
   },
 
+  secondaryButton: {
+    height: 56,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 28,
+    backgroundColor: colors.softTeal,
+  },
+
+  secondaryButtonText: {
+    color: colors.primary,
+    fontWeight: "900",
+    fontSize: 16,
+  },
+
   button: {
     height: 58,
     borderRadius: 16,
     backgroundColor: colors.primary,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 32,
+    marginTop: 16,
   },
 
   buttonText: {

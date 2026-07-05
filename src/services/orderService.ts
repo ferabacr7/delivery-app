@@ -1,14 +1,42 @@
 import { supabase } from "../lib/supabase";
+import { generateAutomaticQuote } from "./quoteEngineService";
+import { ServiceType } from "@/business/quoteEngine/models";
+import { getAddressById } from "./addressService";
 
-export async function createOrder(description: string) {
-  const { data: sessionData } = await supabase.auth.getSession();
+const ORDER_STATUS_VALIDATION = "VALIDATION";
 
-  const user = sessionData.session?.user;
+async function getAuthenticatedUser() {
+  const { data: sessionData, error } = await supabase.auth.getSession();
+
+  if (error) {
+    return { user: null, error };
+  }
+
+  const user = sessionData.session?.user ?? null;
 
   if (!user) {
     return {
-      data: null,
+      user: null,
       error: new Error("No authenticated user found"),
+    };
+  }
+
+  return { user, error: null };
+}
+
+type CreateOrderInput = {
+  description: string;
+  addressId: string;
+  serviceType: ServiceType;
+};
+
+export async function createOrder(input: CreateOrderInput) {
+  const { user, error: authError } = await getAuthenticatedUser();
+
+  if (authError || !user) {
+    return {
+      data: null,
+      error: authError,
     };
   }
 
@@ -16,24 +44,50 @@ export async function createOrder(description: string) {
     .from("orders")
     .insert({
       profile_id: user.id,
-      description,
-      status: "PENDING",
+      address_id: input.addressId,
+      description: input.description,
+      service_type: input.serviceType,
+      status: ORDER_STATUS_VALIDATION,
     })
     .select()
     .single();
 
-  return { data, error };
+  if (error || !data) {
+    return { data, error };
+  }
+
+  console.log("ORDER CREATED:", data);
+
+  const { data: address, error: addressError } = await getAddressById(
+    input.addressId
+  );
+
+  console.log("ADDRESS FOUND:", address);
+  console.log("ADDRESS ERROR:", addressError);
+
+  const quoteResult = await generateAutomaticQuote({
+    orderId: data.id,
+    description: data.description,
+    serviceType: data.service_type,
+    locationText: `${address?.address_line ?? ""} ${address?.reference ?? ""} ${address?.label ?? ""}`,
+  });
+
+  console.log("AUTOMATIC QUOTE RESULT:", quoteResult);
+
+  if (quoteResult.error) {
+    console.error("Quote generation failed", quoteResult.error);
+  }
+
+  return { data, error: null };
 }
 
 export async function getMyOrders() {
-  const { data: sessionData } = await supabase.auth.getSession();
+  const { user, error: authError } = await getAuthenticatedUser();
 
-  const user = sessionData.session?.user;
-
-  if (!user) {
+  if (authError || !user) {
     return {
       data: [],
-      error: null,
+      error: authError,
     };
   }
 
@@ -47,10 +101,20 @@ export async function getMyOrders() {
 }
 
 export async function getOrderById(orderId: string) {
+  const { user, error: authError } = await getAuthenticatedUser();
+
+  if (authError || !user) {
+    return {
+      data: null,
+      error: authError,
+    };
+  }
+
   const { data, error } = await supabase
     .from("orders")
     .select("*")
     .eq("id", orderId)
+    .eq("profile_id", user.id)
     .single();
 
   return { data, error };

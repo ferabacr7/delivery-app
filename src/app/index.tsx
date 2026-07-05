@@ -16,42 +16,66 @@ export default function HomeScreen() {
 
           <Text style={styles.slogan}>{t("home.slogan")}</Text>
 
-          <Text style={styles.description}>{t("home.description")}</Text>
+          <Text style={styles.description}>
+            {t("home.description")}
+          </Text>
         </View>
 
         <View style={styles.panel}>
           <Text style={styles.title}>{t("home.question")}</Text>
 
           <View style={styles.grid}>
-            <Category icon="cart-outline" title={t("home.shopping")} />
-            <Category icon="fast-food-outline" title={t("home.food")} />
-            <Category icon="bicycle-outline" title={t("home.errands")} />
-            <Category icon="construct-outline" title={t("home.services")} />
+            <Category
+              icon="cart-outline"
+              title={t("home.shopping")}
+            />
+
+            <Category
+              icon="fast-food-outline"
+              title={t("home.food")}
+            />
+
+            <Category
+              icon="bicycle-outline"
+              title={t("home.errands")}
+            />
+
+            <Category
+              icon="construct-outline"
+              title={t("home.services")}
+            />
           </View>
 
           <Pressable
             style={styles.button}
             onPress={() => router.push("/create-order")}
           >
-            <Text style={styles.buttonText}>{t("home.makeOrder")}</Text>
+            <Text style={styles.buttonText}>
+              {t("home.makeOrder")}
+            </Text>
 
-            <Ionicons name="arrow-forward" size={24} color={colors.white} />
-          </Pressable>
-
-          <Pressable
-            style={styles.adminButton}
-            onPress={() => router.push("/admin/orders")}
-          >
-            <Text style={styles.adminButtonText}>Admin Orders</Text>
+            <Ionicons
+              name="arrow-forward"
+              size={24}
+              color={colors.white}
+            />
           </Pressable>
         </View>
       </ScrollView>
 
       <View style={styles.nav}>
-        <Ionicons name="home" size={26} color={colors.primary} />
+        <Ionicons
+          name="home"
+          size={26}
+          color={colors.primary}
+        />
 
         <Pressable onPress={() => router.push("/orders")}>
-          <Ionicons name="clipboard-outline" size={26} color={colors.muted} />
+          <Ionicons
+            name="clipboard-outline"
+            size={26}
+            color={colors.muted}
+          />
         </Pressable>
 
         <Pressable onPress={() => router.push("/profile")}>
@@ -76,10 +100,16 @@ function Category({
   return (
     <View style={styles.card}>
       <View style={styles.iconCircle}>
-        <Ionicons name={icon} size={32} color={colors.primary} />
+        <Ionicons
+          name={icon}
+          size={32}
+          color={colors.primary}
+        />
       </View>
 
-      <Text style={styles.cardTitle}>{title}</Text>
+      <Text style={styles.cardTitle}>
+        {title}
+      </Text>
     </View>
   );
 }
@@ -179,22 +209,6 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: 20,
     fontWeight: "900",
-  },
-
-  adminButton: {
-    marginTop: 16,
-    height: 54,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  adminButtonText: {
-    color: colors.primary,
-    fontSize: 18,
-    fontWeight: "800",
   },
 
   nav: {

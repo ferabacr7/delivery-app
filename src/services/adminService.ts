@@ -1,66 +1,38 @@
 import { supabase } from "../lib/supabase";
 
-export async function getAllOrders() {
-  const { data, error } = await supabase
-    .from("orders")
-    .select(
-      `
-      *,
-      profiles (
-        full_name,
-        phone
-      ),
-      addresses (
-        label,
-        address_line,
-        reference
-      ),
-      quotes (
-        id,
-        amount,
-        subtotal,
-        delivery_fee,
-        total,
-        notes,
-        status,
-        created_at
-      )
-    `,
-    )
-    .order("created_at", { ascending: false });
+const ADMIN_ORDER_SELECT = `
+  *,
+  profiles (
+    full_name,
+    phone
+  ),
+  addresses (
+    label,
+    address_line,
+    reference
+  ),
+  quotes (
+    id,
+    subtotal,
+    delivery_fee,
+    total,
+    notes,
+    status,
+    created_at
+  )
+`;
 
-  return { data, error };
+export async function getAllOrders() {
+  return await supabase
+    .from("orders")
+    .select(ADMIN_ORDER_SELECT)
+    .order("created_at", { ascending: false });
 }
 
 export async function getAdminOrderById(orderId: string) {
-  const { data, error } = await supabase
+  return await supabase
     .from("orders")
-    .select(
-      `
-      *,
-      profiles (
-        full_name,
-        phone
-      ),
-      addresses (
-        label,
-        address_line,
-        reference
-      ),
-      quotes (
-        id,
-        amount,
-        subtotal,
-        delivery_fee,
-        total,
-        notes,
-        status,
-        created_at
-      )
-    `,
-    )
+    .select(ADMIN_ORDER_SELECT)
     .eq("id", orderId)
     .maybeSingle();
-
-  return { data, error };
 }

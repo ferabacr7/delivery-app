@@ -1,5 +1,20 @@
 import { supabase } from "../lib/supabase";
 
+const QUOTE_STATUS_PENDING = "PENDING";
+const QUOTE_STATUS_ACCEPTED = "ACCEPTED";
+const QUOTE_STATUS_REJECTED = "REJECTED";
+
+const ORDER_STATUS_QUOTED = "QUOTED";
+const ORDER_STATUS_ACCEPTED = "ACCEPTED";
+const ORDER_STATUS_REJECTED = "REJECTED";
+
+type CreateQuoteInput = {
+  orderId: string;
+  subtotal: number;
+  deliveryFee: number;
+  notes?: string;
+};
+
 export async function getOrderQuote(orderId: string) {
   const { data, error } = await supabase
     .from("quotes")
@@ -17,24 +32,22 @@ export async function createQuoteForOrder({
   subtotal,
   deliveryFee,
   notes,
-}: {
-  orderId: string;
-  subtotal: number;
-  deliveryFee: number;
-  notes?: string;
-}) {
+}: CreateQuoteInput) {
   const total = subtotal + deliveryFee;
+  const now = new Date().toISOString();
 
   const { data: createdQuote, error: quoteError } = await supabase
     .from("quotes")
     .insert({
       order_id: orderId,
-      amount: total,
       subtotal,
       delivery_fee: deliveryFee,
       total,
       notes: notes ?? "",
-      status: "PENDING",
+      internal_notes: notes ?? null,
+      quote_source: "MANUAL",
+      calculation_version: 1,
+      status: QUOTE_STATUS_PENDING,
     })
     .select()
     .maybeSingle();
@@ -49,8 +62,8 @@ export async function createQuoteForOrder({
   const { data: updatedOrder, error: orderError } = await supabase
     .from("orders")
     .update({
-      status: "QUOTED",
-      updated_at: new Date().toISOString(),
+      status: ORDER_STATUS_QUOTED,
+      updated_at: now,
     })
     .eq("id", orderId)
     .select()
@@ -72,7 +85,11 @@ export async function createQuoteForOrder({
   };
 }
 
-export async function acceptQuote(quoteId: string) {
+async function updateQuoteDecision(
+  quoteId: string,
+  quoteStatus: typeof QUOTE_STATUS_ACCEPTED | typeof QUOTE_STATUS_REJECTED,
+  orderStatus: typeof ORDER_STATUS_ACCEPTED | typeof ORDER_STATUS_REJECTED,
+) {
   const { data: quote, error: quoteError } = await supabase
     .from("quotes")
     .select("*")
@@ -86,11 +103,13 @@ export async function acceptQuote(quoteId: string) {
     };
   }
 
+  const now = new Date().toISOString();
+
   const { data: updatedQuote, error: updateQuoteError } = await supabase
     .from("quotes")
     .update({
-      status: "ACCEPTED",
-      updated_at: new Date().toISOString(),
+      status: quoteStatus,
+      updated_at: now,
     })
     .eq("id", quoteId)
     .select()
@@ -106,8 +125,8 @@ export async function acceptQuote(quoteId: string) {
   const { data: updatedOrder, error: updateOrderError } = await supabase
     .from("orders")
     .update({
-      status: "ACCEPTED",
-      updated_at: new Date().toISOString(),
+      status: orderStatus,
+      updated_at: now,
     })
     .eq("id", quote.order_id)
     .select()
@@ -129,59 +148,18 @@ export async function acceptQuote(quoteId: string) {
   };
 }
 
+export async function acceptQuote(quoteId: string) {
+  return updateQuoteDecision(
+    quoteId,
+    QUOTE_STATUS_ACCEPTED,
+    ORDER_STATUS_ACCEPTED,
+  );
+}
+
 export async function rejectQuote(quoteId: string) {
-  const { data: quote, error: quoteError } = await supabase
-    .from("quotes")
-    .select("*")
-    .eq("id", quoteId)
-    .maybeSingle();
-
-  if (quoteError || !quote) {
-    return {
-      data: null,
-      error: quoteError ?? new Error("Quote not found"),
-    };
-  }
-
-  const { data: updatedQuote, error: updateQuoteError } = await supabase
-    .from("quotes")
-    .update({
-      status: "REJECTED",
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", quoteId)
-    .select()
-    .maybeSingle();
-
-  if (updateQuoteError) {
-    return {
-      data: null,
-      error: updateQuoteError,
-    };
-  }
-
-  const { data: updatedOrder, error: updateOrderError } = await supabase
-    .from("orders")
-    .update({
-      status: "REJECTED",
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", quote.order_id)
-    .select()
-    .maybeSingle();
-
-  if (updateOrderError) {
-    return {
-      data: null,
-      error: updateOrderError,
-    };
-  }
-
-  return {
-    data: {
-      quote: updatedQuote,
-      order: updatedOrder,
-    },
-    error: null,
-  };
+  return updateQuoteDecision(
+    quoteId,
+    QUOTE_STATUS_REJECTED,
+    ORDER_STATUS_REJECTED,
+  );
 }

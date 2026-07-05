@@ -1,9 +1,11 @@
 import { supabase } from "../lib/supabase";
 
+const DEFAULT_PROFILE_NAME = "Usuario Delivery";
+
 export async function signUp(
   email: string,
   password: string,
-  fullName: string = "Usuario Delivery",
+  fullName: string = DEFAULT_PROFILE_NAME,
 ) {
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -27,30 +29,22 @@ export async function signUp(
 }
 
 export async function signIn(email: string, password: string) {
-  const result = await supabase.auth.signInWithPassword({
+  return await supabase.auth.signInWithPassword({
     email,
     password,
   });
-
-  return result;
 }
 
 export async function signOut() {
-  const result = await supabase.auth.signOut();
-
-  return result;
+  return await supabase.auth.signOut();
 }
 
 export async function getCurrentUser() {
-  const result = await supabase.auth.getUser();
-
-  return result;
+  return await supabase.auth.getUser();
 }
 
 export async function getSession() {
-  const result = await supabase.auth.getSession();
-
-  return result;
+  return await supabase.auth.getSession();
 }
 
 export async function getMyProfile() {
@@ -63,11 +57,9 @@ export async function getMyProfile() {
     };
   }
 
-  const { data, error } = await supabase
+  return await supabase
     .from("profiles")
     .select("*")
     .eq("id", userData.user.id)
     .single();
-
-  return { data, error };
 }

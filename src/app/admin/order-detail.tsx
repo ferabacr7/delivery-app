@@ -1,13 +1,14 @@
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Button,
-    ScrollView,
-    Text,
-    TextInput,
-    View,
+  ActivityIndicator,
+  Alert,
+  Button,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 import { getAdminOrderById } from "../../services/adminService";
 import { createQuoteForOrder } from "../../services/quoteService";
@@ -30,6 +31,10 @@ export default function AdminOrderDetailScreen() {
   const subtotalNumber = Number(subtotal) || 0;
   const deliveryFeeNumber = Number(deliveryFee) || 0;
   const total = subtotalNumber + deliveryFeeNumber;
+
+  function handleBackToAdminOrders() {
+    router.push("/admin/orders" as never);
+  }
 
   async function loadOrder() {
     if (!orderId) {
@@ -105,6 +110,22 @@ export default function AdminOrderDetailScreen() {
   if (!order) {
     return (
       <View style={{ flex: 1, padding: 24, paddingTop: 80 }}>
+        <Pressable
+          onPress={handleBackToAdminOrders}
+          style={{
+            alignSelf: "flex-start",
+            backgroundColor: "#E0F2F1",
+            paddingVertical: 10,
+            paddingHorizontal: 14,
+            borderRadius: 12,
+            marginBottom: 24,
+          }}
+        >
+          <Text style={{ color: "#0F766E", fontWeight: "900" }}>
+            ← Back to Admin Orders
+          </Text>
+        </Pressable>
+
         <Text style={{ fontSize: 24, fontWeight: "800" }}>
           No se encontró el pedido.
         </Text>
@@ -119,6 +140,22 @@ export default function AdminOrderDetailScreen() {
 
   return (
     <ScrollView style={{ flex: 1, padding: 24, paddingTop: 80 }}>
+      <Pressable
+        onPress={handleBackToAdminOrders}
+        style={{
+          alignSelf: "flex-start",
+          backgroundColor: "#E0F2F1",
+          paddingVertical: 10,
+          paddingHorizontal: 14,
+          borderRadius: 12,
+          marginBottom: 24,
+        }}
+      >
+        <Text style={{ color: "#0F766E", fontWeight: "900" }}>
+          ← Back to Admin Orders
+        </Text>
+      </Pressable>
+
       <Text style={{ fontSize: 28, fontWeight: "800", marginBottom: 20 }}>
         Order Detail
       </Text>
