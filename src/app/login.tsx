@@ -2,6 +2,7 @@ import { router } from "expo-router";
 import { useState } from "react";
 import {
   Alert,
+  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -40,36 +41,45 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.logo}>Delivery App</Text>
-
-      <Text style={styles.title}>{t("login.title")}</Text>
-
-      <TextInput
-        style={styles.input}
-        placeholder={t("login.email")}
-        placeholderTextColor={colors.muted}
-        autoCapitalize="none"
-        keyboardType="email-address"
-        value={email}
-        onChangeText={setEmail}
+      <Image
+        source={require("../../assets/images/login2.png")}
+        style={styles.backgroundImage}
+        resizeMode="contain"
       />
 
-      <TextInput
-        style={styles.input}
-        placeholder={t("login.password")}
-        placeholderTextColor={colors.muted}
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
+      <View style={styles.overlay}>
+        <View style={styles.formContainer}>
+          <Text style={styles.title}>{t("login.title")}</Text>
 
-      <Pressable style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>{t("login.button")}</Text>
-      </Pressable>
+          <TextInput
+            style={styles.input}
+            placeholder={t("login.email")}
+            placeholderTextColor={colors.muted}
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="email-address"
+            value={email}
+            onChangeText={setEmail}
+          />
 
-      <Pressable onPress={() => router.push("/register" as never)}>
-        <Text style={styles.link}>{t("login.createAccount")}</Text>
-      </Pressable>
+          <TextInput
+            style={styles.input}
+            placeholder={t("login.password")}
+            placeholderTextColor={colors.muted}
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+          />
+
+          <Pressable style={styles.button} onPress={handleLogin}>
+            <Text style={styles.buttonText}>{t("login.button")}</Text>
+          </Pressable>
+
+          <Pressable onPress={() => router.push("/register" as never)}>
+            <Text style={styles.link}>{t("login.createAccount")}</Text>
+          </Pressable>
+        </View>
+      </View>
     </View>
   );
 }
@@ -77,16 +87,26 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 28,
-    justifyContent: "center",
     backgroundColor: colors.white,
   },
 
-  logo: {
-    fontSize: 32,
-    fontWeight: "900",
-    color: colors.primary,
-    marginBottom: 32,
+  backgroundImage: {
+  position: "absolute",
+  width: "125%",
+  height: "125%",
+  alignSelf: "center",
+  top: -185,
+},
+
+  overlay: {
+  flex: 1,
+  justifyContent: "center",
+  paddingHorizontal: 28,
+  backgroundColor: "rgba(255,255,255,0.82)",
+},
+
+  formContainer: {
+    width: "100%",
   },
 
   title: {
@@ -94,6 +114,7 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     color: colors.dark,
     marginBottom: 24,
+    textAlign: "center",
   },
 
   input: {

@@ -1,4 +1,5 @@
 import { supabase } from "../lib/supabase";
+import { createDeliveryForOrder } from "./deliveryService";
 
 const QUOTE_STATUS_PENDING = "PENDING";
 const QUOTE_STATUS_ACCEPTED = "ACCEPTED";
@@ -133,19 +134,36 @@ async function updateQuoteDecision(
     .maybeSingle();
 
   if (updateOrderError) {
+  return {
+    data: null,
+    error: updateOrderError,
+  };
+}
+
+let delivery = null;
+
+if (quoteStatus === QUOTE_STATUS_ACCEPTED) {
+  const { data: createdDelivery, error: deliveryError } =
+    await createDeliveryForOrder(quote.order_id);
+
+  if (deliveryError) {
     return {
       data: null,
-      error: updateOrderError,
+      error: deliveryError,
     };
   }
 
-  return {
-    data: {
-      quote: updatedQuote,
-      order: updatedOrder,
-    },
-    error: null,
-  };
+  delivery = createdDelivery;
+}
+
+return {
+  data: {
+    quote: updatedQuote,
+    order: updatedOrder,
+    delivery,
+  },
+  error: null,
+};
 }
 
 export async function acceptQuote(quoteId: string) {

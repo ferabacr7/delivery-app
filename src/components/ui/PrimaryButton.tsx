@@ -1,27 +1,13 @@
 import React from "react";
-import {
-  Pressable,
-  Text,
-  StyleSheet,
-  PressableProps,
-} from "react-native";
+import { Pressable, Text, StyleSheet, PressableProps } from "react-native";
 
-import {
-  colors,
-  radius,
-  spacing,
-  typography,
-} from "../../constants/theme";
+import { colors, radius, spacing, typography } from "../../constants/theme";
 
 type Props = PressableProps & {
   title: string;
 };
 
-export default function PrimaryButton({
-  title,
-  style,
-  ...props
-}: Props) {
+export default function PrimaryButton({ title, style, ...props }: Props) {
   return (
     <Pressable
       style={({ pressed }) => [
@@ -38,7 +24,7 @@ export default function PrimaryButton({
 
 const styles = StyleSheet.create({
   button: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.brand,
     borderRadius: radius.pill,
     paddingVertical: spacing.lg,
     alignItems: "center",

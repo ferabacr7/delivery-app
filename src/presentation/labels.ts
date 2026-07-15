@@ -1,7 +1,14 @@
 export const quoteLabels = {
   es: {
     headerTitle: "Detalle del pedido",
-    headerSubtitle: "Revisá la cotización antes de responder",
+
+    headerSubtitle: {
+      pending: "Revisá la cotización antes de responder.",
+      accepted: "Tu pedido fue confirmado.",
+      rejected: "Has rechazado esta cotización.",
+      expired: "Esta cotización ha expirado.",
+      unknown: "",
+    },
 
     serviceTitle: "Servicio solicitado",
     locationTitle: "Dirección de entrega",
@@ -25,11 +32,31 @@ export const quoteLabels = {
       expired: "Expirada",
       unknown: "Sin estado",
     },
+
+    serviceType: "Tipo de servicio",
+    unknownServiceType: "Servicio no especificado",
+    statusPrefix: "Estado",
+
+    serviceTypes: {
+      GENERAL_MESSAGING: "Mensajería",
+      SUPERMARKET: "Supermercado",
+      PHARMACY: "Farmacia",
+      FOOD: "Comida",
+      PACKAGE: "Encomienda",
+      ERRAND: "Mandado",
+    },
   },
 
   en: {
     headerTitle: "Order details",
-    headerSubtitle: "Review the quote before responding",
+
+    headerSubtitle: {
+      pending: "Review the quote before responding.",
+      accepted: "Your order has been confirmed.",
+      rejected: "You rejected this quote.",
+      expired: "This quote has expired.",
+      unknown: "",
+    },
 
     serviceTitle: "Requested service",
     locationTitle: "Delivery address",
@@ -52,6 +79,19 @@ export const quoteLabels = {
       rejected: "Rejected",
       expired: "Expired",
       unknown: "No status",
+    },
+
+    serviceType: "Service type",
+    unknownServiceType: "Unspecified service",
+    statusPrefix: "Status",
+
+    serviceTypes: {
+      GENERAL_MESSAGING: "Messaging",
+      SUPERMARKET: "Supermarket",
+      PHARMACY: "Pharmacy",
+      FOOD: "Food",
+      PACKAGE: "Package delivery",
+      ERRAND: "Errand",
     },
   },
 };

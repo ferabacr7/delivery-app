@@ -59,7 +59,7 @@ export async function createOrder(input: CreateOrderInput) {
   console.log("ORDER CREATED:", data);
 
   const { data: address, error: addressError } = await getAddressById(
-    input.addressId
+    input.addressId,
   );
 
   console.log("ADDRESS FOUND:", address);
@@ -112,7 +112,18 @@ export async function getOrderById(orderId: string) {
 
   const { data, error } = await supabase
     .from("orders")
-    .select("*")
+    .select(
+      `
+      *,
+      addresses (
+  address_line,
+  reference,
+  label,
+  latitude,
+  longitude
+)
+    `,
+    )
     .eq("id", orderId)
     .eq("profile_id", user.id)
     .single();

@@ -1,16 +1,25 @@
-import { router } from "expo-router";
-import { useEffect, useState } from "react";
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
 
+import AppHeader from "../components/ui/AppHeader";
+import BottomNavigation from "../components/ui/BottomNavigation";
+import {
+  colors,
+  radius,
+  shadows,
+  spacing,
+  typography,
+} from "../constants/theme";
 import { useTranslation } from "../i18n/useTranslation";
 import { getMyOrders } from "../services/orderService";
-import { colors } from "../styles/theme";
 
 export default function OrdersScreen() {
   const [orders, setOrders] = useState<any[]>([]);
@@ -18,79 +27,136 @@ export default function OrdersScreen() {
 
   const { t } = useTranslation();
 
-  useEffect(() => {
-    loadOrders();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      loadOrders();
+    }, []),
+  );
 
   async function loadOrders() {
     try {
+      setLoading(true);
+
       const { data, error } = await getMyOrders();
 
       if (error) {
-        console.error(error);
+        console.error("Error loading orders:", error);
         return;
       }
 
       setOrders(data ?? []);
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error("Unexpected error loading orders:", error);
     } finally {
       setLoading(false);
     }
   }
 
   function getStatusLabel(status: string) {
-    if (status === "accepted") return t("orders.accepted");
-    if (status === "rejected") return t("orders.rejected");
-    if (status === "pending") return t("orders.pending");
+    const normalizedStatus = status?.toLowerCase();
+
+    if (normalizedStatus === "accepted") {
+      return t("orders.accepted");
+    }
+
+    if (normalizedStatus === "rejected") {
+      return t("orders.rejected");
+    }
+
+    if (normalizedStatus === "pending") {
+      return t("orders.pending");
+    }
 
     return status;
   }
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={colors.primary} />
+      <View style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.brand} />
+
+          <Text style={styles.loadingText}>
+            {t("common.loading")}
+          </Text>
+        </View>
+
+        <BottomNavigation active="orders" />
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{t("orders.title")}</Text>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        <AppHeader
+          title={t("orders.title")}
+          showBackButton
+          backLabel={t("common.back")}
+          onBack={() => router.replace("/" as never)}
+        />
 
-      {orders.length === 0 ? (
-        <Text style={styles.emptyText}>{t("orders.empty")}</Text>
-      ) : (
-        orders.map((order) => (
-          <Pressable
-            key={order.id}
-            style={styles.card}
-            onPress={() =>
-              router.push({
-                pathname: "/order-detail",
-                params: { orderId: order.id },
-              })
-            }
-          >
-            <View>
-              <Text style={styles.orderId}>
-                {t("orders.order")} #{order.id.slice(0, 8)}
+        <View style={styles.content}>
+          {orders.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyText}>
+                {t("orders.empty")}
               </Text>
 
-              <Text style={styles.description}>{order.description}</Text>
-
-              <Text style={styles.time}>
-                {new Date(order.created_at).toLocaleString()}
-              </Text>
+              <Pressable
+                style={styles.emptyButton}
+                onPress={() => router.push("/create-order" as never)}
+              >
+                <Text style={styles.emptyButtonText}>
+                  {t("orders.firstOrder")}
+                </Text>
+              </Pressable>
             </View>
+          ) : (
+            orders.map((order) => (
+              <Pressable
+                key={order.id}
+                style={styles.card}
+                onPress={() =>
+                  router.push({
+                    pathname: "/order-detail",
+                    params: {
+                      orderId: order.id,
+                    },
+                  } as never)
+                }
+              >
+                <View style={styles.cardHeader}>
+                  <Text style={styles.orderId}>
+                    {t("orders.order")} #
+                    {order.id.slice(-6).toUpperCase()}
+                  </Text>
 
-            <View style={styles.right}>
-              <Text style={styles.status}>{getStatusLabel(order.status)}</Text>
-            </View>
-          </Pressable>
-        ))
-      )}
+                  <Text style={styles.status}>
+                    {getStatusLabel(order.status)}
+                  </Text>
+                </View>
+
+                <Text
+                  style={styles.description}
+                  numberOfLines={3}
+                >
+                  {order.description}
+                </Text>
+
+                <Text style={styles.time}>
+                  {new Date(order.created_at).toLocaleString()}
+                </Text>
+              </Pressable>
+            ))
+          )}
+        </View>
+      </ScrollView>
+
+      <BottomNavigation active="orders" />
     </View>
   );
 }
@@ -98,69 +164,118 @@ export default function OrdersScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 70,
-    paddingHorizontal: 24,
     backgroundColor: colors.background,
+    position: "relative",
+  },
+
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 140,
+  },
+
+  content: {
+    flexGrow: 1,
+    marginTop: -24,
+    paddingTop: spacing.xl,
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.xxl,
+    backgroundColor: colors.background,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
   },
 
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    paddingBottom: 100,
     backgroundColor: colors.background,
   },
 
-  title: {
-    fontSize: 34,
-    fontWeight: "900",
-    color: colors.dark,
-    marginBottom: 28,
+  loadingText: {
+    ...typography.body,
+    marginTop: spacing.md,
+    color: colors.textMuted,
+  },
+
+  emptyState: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    padding: spacing.xl,
+    borderWidth: 1,
+    borderColor: colors.border,
+    ...shadows.sm,
   },
 
   emptyText: {
-    color: colors.muted,
-    fontSize: 16,
+    ...typography.body,
+    color: colors.textMuted,
+    marginBottom: spacing.md,
+  },
+
+  emptyButton: {
+    minHeight: 52,
+    backgroundColor: colors.brand,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderRadius: radius.lg,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  emptyButtonText: {
+    ...typography.button,
+    color: colors.textInverse,
+    textAlign: "center",
   },
 
   card: {
-    backgroundColor: colors.white,
-    borderRadius: 20,
-    padding: 18,
-    marginBottom: 14,
-    flexDirection: "row",
-    justifyContent: "space-between",
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
+    ...shadows.sm,
+  },
+
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: spacing.md,
   },
 
   orderId: {
-    fontSize: 18,
-    fontWeight: "900",
-    color: colors.primary,
+    ...typography.body,
+    flex: 1,
+    fontWeight: "700",
+    color: colors.text,
   },
 
   description: {
-    marginTop: 8,
-    color: colors.dark,
-    fontWeight: "700",
+    ...typography.body,
+    marginTop: spacing.sm,
+    color: colors.text,
+    fontWeight: "600",
   },
 
   time: {
-    marginTop: 6,
-    color: colors.muted,
-  },
-
-  right: {
-    alignItems: "flex-end",
+    ...typography.caption,
+    marginTop: spacing.sm,
+    color: colors.textMuted,
   },
 
   status: {
-    backgroundColor: colors.softTeal,
-    color: colors.primaryDark,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 14,
-    fontWeight: "800",
+    backgroundColor: colors.brandSoft,
+    color: colors.brandDark,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.pill,
+    fontWeight: "700",
     fontSize: 12,
+    maxWidth: 120,
+    textAlign: "center",
+    overflow: "hidden",
   },
 });

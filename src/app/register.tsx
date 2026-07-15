@@ -2,6 +2,7 @@ import { router } from "expo-router";
 import { useState } from "react";
 import {
   Alert,
+  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -34,48 +35,64 @@ export default function RegisterScreen() {
 
     console.log("REGISTER DATA:", data);
 
-    Alert.alert(t("register.successTitle"), t("register.successMessage"), [
-      {
-        text: "OK",
-        onPress: () => router.push("/"),
-      },
-    ]);
+    Alert.alert(
+      t("register.successTitle"),
+      t("register.successMessage"),
+      [
+        {
+          text: "OK",
+          onPress: () => router.push("/"),
+        },
+      ]
+    );
   }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.logo}>Delivery App</Text>
-
-      <Text style={styles.title}>{t("register.title")}</Text>
-
-      <Text style={styles.subtitle}>{t("register.subtitle")}</Text>
-
-      <TextInput
-        style={styles.input}
-        placeholder={t("register.email")}
-        placeholderTextColor="#8A8A8A"
-        autoCapitalize="none"
-        keyboardType="email-address"
-        value={email}
-        onChangeText={setEmail}
+      <Image
+        source={require("../../assets/images/register2.png")}
+        style={styles.backgroundImage}
+        resizeMode="cover"
       />
 
-      <TextInput
-        style={styles.input}
-        placeholder={t("register.password")}
-        placeholderTextColor="#8A8A8A"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
+      <View style={styles.overlay}>
+        <Text style={styles.title}>{t("register.title")}</Text>
 
-      <Pressable style={styles.button} onPress={handleRegister}>
-        <Text style={styles.buttonText}>{t("register.registerButton")}</Text>
-      </Pressable>
+        <Text style={styles.subtitle}>
+          {t("register.subtitle")}
+        </Text>
 
-      <Pressable onPress={() => router.push("/")}>
-        <Text style={styles.link}>{t("register.backHome")}</Text>
-      </Pressable>
+        <TextInput
+          style={styles.input}
+          placeholder={t("register.email")}
+          placeholderTextColor="#8A8A8A"
+          autoCapitalize="none"
+          keyboardType="email-address"
+          value={email}
+          onChangeText={setEmail}
+        />
+
+        <TextInput
+          style={styles.input}
+          placeholder={t("register.password")}
+          placeholderTextColor="#8A8A8A"
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+        />
+
+        <Pressable style={styles.button} onPress={handleRegister}>
+          <Text style={styles.buttonText}>
+            {t("register.registerButton")}
+          </Text>
+        </Pressable>
+
+        <Pressable onPress={() => router.push("/")}>
+          <Text style={styles.link}>
+            {t("register.backHome")}
+          </Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -83,16 +100,22 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 28,
-    justifyContent: "center",
     backgroundColor: colors.white,
   },
 
-  logo: {
-    fontSize: 32,
-    fontWeight: "900",
-    color: colors.primary,
-    marginBottom: 32,
+  backgroundImage: {
+    position: "absolute",
+    width: "125%",
+    height: "125%",
+    alignSelf: "center",
+    top: -140,
+  },
+
+  overlay: {
+    flex: 1,
+    justifyContent: "center",
+    paddingHorizontal: 28,
+    backgroundColor: "rgba(255,255,255,0.88)",
   },
 
   title: {
@@ -100,6 +123,7 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     color: colors.dark,
     marginBottom: 12,
+    textAlign: "center",
   },
 
   subtitle: {
@@ -107,18 +131,20 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     color: colors.muted,
     marginBottom: 32,
+    textAlign: "center",
   },
 
   input: {
-    height: 58,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: 18,
-    fontSize: 16,
-    color: colors.dark,
-    marginBottom: 16,
-  },
+  height: 58,
+  borderRadius: 16,
+  borderWidth: 1,
+  borderColor: colors.border,
+  backgroundColor: "rgba(255,255,255,0.60)",
+  paddingHorizontal: 18,
+  fontSize: 16,
+  color: colors.dark,
+  marginBottom: 16,
+},
 
   button: {
     height: 60,

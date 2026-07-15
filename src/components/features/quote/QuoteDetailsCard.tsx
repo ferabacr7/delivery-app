@@ -2,7 +2,6 @@ import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import Card from "../../ui/Card";
-import InfoRow from "../../ui/InfoRow";
 import StatusBadge from "../../ui/StatusBadge";
 
 import {
@@ -15,9 +14,16 @@ import { QuoteStatusTone } from "../../../presentation/QuoteViewModel";
 
 type Props = {
   title: string;
+
+  typeLabel: string;
+  type: string;
+
   description: string;
+
+  statusPrefix: string;
   statusLabel: string;
   statusTone: QuoteStatusTone;
+
   locationTitle: string;
   address: string;
   reference?: string | null;
@@ -25,7 +31,10 @@ type Props = {
 
 export default function QuoteDetailsCard({
   title,
+  typeLabel,
+  type,
   description,
+  statusPrefix,
   statusLabel,
   statusTone,
   locationTitle,
@@ -34,8 +43,22 @@ export default function QuoteDetailsCard({
 }: Props) {
   return (
     <Card>
-      <View style={styles.header}>
-        <Text style={styles.title}>{title}</Text>
+      <Text style={styles.title}>{title}</Text>
+
+      <View style={styles.section}>
+        <Text style={styles.label}>
+          {typeLabel}
+        </Text>
+
+        <Text style={styles.value}>
+          {type}
+        </Text>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.label}>
+          {statusPrefix}
+        </Text>
 
         <StatusBadge
           label={statusLabel}
@@ -43,9 +66,15 @@ export default function QuoteDetailsCard({
         />
       </View>
 
-      <Text style={styles.description}>
-        {description}
-      </Text>
+      <View style={styles.section}>
+        <Text style={styles.label}>
+          Descripción
+        </Text>
+
+        <Text style={styles.description}>
+          {description}
+        </Text>
+      </View>
 
       <View style={styles.divider} />
 
@@ -67,18 +96,31 @@ export default function QuoteDetailsCard({
 }
 
 const styles = StyleSheet.create({
-  header: {
-    gap: spacing.sm,
+  title: {
+    ...typography.subtitle,
+    marginBottom: spacing.lg,
+  },
+
+  section: {
     marginBottom: spacing.md,
   },
 
-  title: {
-    ...typography.subtitle,
+  label: {
+    ...typography.caption,
+    color: colors.textMuted,
+    marginBottom: spacing.xs,
+    fontWeight: "600",
+  },
+
+  value: {
+    ...typography.body,
+    color: colors.text,
+    fontWeight: "700",
   },
 
   description: {
     ...typography.body,
-    color: colors.textMuted,
+    color: colors.text,
   },
 
   divider: {

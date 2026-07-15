@@ -9,10 +9,13 @@ import {
 type OrderLike = {
   id?: string;
   description?: string | null;
+  service_type?: string | null;
   status?: string | null;
   addresses?: {
-    address_line?: string |null;
+    address_line?: string | null;
     reference?: string | null;
+    latitude?: number | string | null;
+    longitude?: number | string | null;
   } | null;
 };
 
@@ -37,35 +40,62 @@ function normalizeStatus(status?: string | null): QuoteStatusType {
   switch (value) {
     case "PENDING":
       return "pending";
-
     case "ACCEPTED":
       return "accepted";
-
     case "REJECTED":
       return "rejected";
-
     case "EXPIRED":
       return "expired";
-
     default:
       return "unknown";
   }
+}
+
+function normalizeServiceType(serviceType?: string | null) {
+  if (!serviceType) return "UNKNOWN";
+
+  const normalized = serviceType
+    .trim()
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+  const serviceMap: Record<string, string> = {
+    GENERAL_MESSAGING: "GENERAL_MESSAGING",
+    MENSAJERIA: "GENERAL_MESSAGING",
+
+    SUPERMARKET: "SUPERMARKET",
+    SUPERMERCADO: "SUPERMARKET",
+
+    PHARMACY: "PHARMACY",
+    FARMACIA: "PHARMACY",
+
+    FOOD: "FOOD",
+    COMIDA: "FOOD",
+    RECOGER_COMIDA: "FOOD",
+    "RECOGER COMIDA": "FOOD",
+    PICKUP_FOOD: "FOOD",
+
+    PACKAGE: "PACKAGE",
+    ENCOMIENDA: "PACKAGE",
+
+    ERRAND: "ERRAND",
+    MANDADO: "ERRAND",
+  };
+
+  return serviceMap[normalized] ?? "UNKNOWN";
 }
 
 function getStatusTone(status: QuoteStatusType): QuoteStatusTone {
   switch (status) {
     case "accepted":
       return "success";
-
     case "pending":
       return "warning";
-
     case "rejected":
       return "danger";
-
     case "expired":
       return "info";
-
     default:
       return "neutral";
   }
@@ -81,6 +111,33 @@ function formatMoney(value?: number | string | null): string {
   }).format(numericValue);
 }
 
+function buildMapUrls(
+  latitude?: number | string | null,
+  longitude?: number | string | null,
+) {
+  if (!latitude || !longitude) {
+    return {
+      googleMapsUrl: undefined,
+      wazeUrl: undefined,
+    };
+  }
+
+  const lat = Number(latitude);
+  const lng = Number(longitude);
+
+  if (Number.isNaN(lat) || Number.isNaN(lng)) {
+    return {
+      googleMapsUrl: undefined,
+      wazeUrl: undefined,
+    };
+  }
+
+  return {
+    googleMapsUrl: `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`,
+    wazeUrl: `https://www.waze.com/ul?ll=${lat},${lng}&navigate=yes`,
+  };
+}
+
 export function buildQuoteViewModel({
   order,
   quote,
@@ -90,16 +147,30 @@ export function buildQuoteViewModel({
 
   const statusType = normalizeStatus(quote?.status);
   const statusTone = getStatusTone(statusType);
+  const normalizedServiceType = normalizeServiceType(order.service_type);
+
+  const mapUrls = buildMapUrls(
+    order.addresses?.latitude,
+    order.addresses?.longitude,
+  );
 
   return {
+    orderNumber: order.id?.slice(-6).toUpperCase() ?? "------",
+
     header: {
       title: labels.headerTitle,
-      subtitle: labels.headerSubtitle,
+      subtitle: labels.headerSubtitle[statusType],
     },
 
     service: {
       title: labels.serviceTitle,
+      typeLabel: labels.serviceType,
+      type:
+        labels.serviceTypes[
+          normalizedServiceType as keyof typeof labels.serviceTypes
+        ] ?? labels.unknownServiceType,
       description: order.description ?? "",
+      statusPrefix: labels.statusPrefix,
       statusLabel: labels.status[statusType],
       statusType,
       statusTone,
@@ -109,6 +180,14 @@ export function buildQuoteViewModel({
       title: labels.locationTitle,
       address: order.addresses?.address_line ?? "",
       reference: order.addresses?.reference ?? labels.noReference,
+      latitude: order.addresses?.latitude
+        ? Number(order.addresses.latitude)
+        : null,
+      longitude: order.addresses?.longitude
+        ? Number(order.addresses.longitude)
+        : null,
+      googleMapsUrl: mapUrls.googleMapsUrl,
+      wazeUrl: mapUrls.wazeUrl,
     },
 
     pricing: {

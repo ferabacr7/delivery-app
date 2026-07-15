@@ -1,7 +1,7 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
-import SectionCard from "../../ui/SectionCard";
+import Card from "../../ui/Card";
 import InfoRow from "../../ui/InfoRow";
 
 import {
@@ -30,40 +30,43 @@ export default function PriceSummaryCard({
   total,
 }: Props) {
   return (
-    <SectionCard title={title}>
+    <Card>
+      <Text style={styles.title}>{title}</Text>
+
       <InfoRow label={subtotalLabel} value={subtotal} />
       <InfoRow label={deliveryFeeLabel} value={deliveryFee} />
 
       <View style={styles.divider} />
 
-      <View style={styles.totalRow}>
-        <Text style={styles.totalLabel}>{totalLabel}</Text>
-        <Text style={styles.totalValue}>{total}</Text>
-      </View>
-    </SectionCard>
+      <InfoRow
+        label={totalLabel}
+        value={total}
+        labelStyle={styles.totalLabel}
+        valueStyle={styles.totalValue}
+      />
+    </Card>
   );
 }
 
 const styles = StyleSheet.create({
+  title: {
+    ...typography.subtitle,
+    marginBottom: spacing.lg,
+  },
+
   divider: {
     height: 1,
     backgroundColor: colors.border,
     marginVertical: spacing.md,
   },
 
-  totalRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-
   totalLabel: {
-    ...typography.subtitle,
+    fontWeight: "800",
     color: colors.text,
   },
 
   totalValue: {
-    ...typography.title,
-    color: colors.primary,
+    fontWeight: "900",
+    color: colors.brandDark,
   },
 });

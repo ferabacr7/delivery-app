@@ -1,5 +1,11 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextStyle,
+  StyleProp,
+} from "react-native";
 
 import {
   colors,
@@ -10,17 +16,25 @@ import {
 type InfoRowProps = {
   label: string;
   value: string;
+  labelStyle?: StyleProp<TextStyle>;
+  valueStyle?: StyleProp<TextStyle>;
 };
 
 export default function InfoRow({
   label,
   value,
+  labelStyle,
+  valueStyle,
 }: InfoRowProps) {
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={[styles.label, labelStyle]}>
+        {label}
+      </Text>
 
-      <Text style={styles.value}>{value}</Text>
+      <Text style={[styles.value, valueStyle]}>
+        {value}
+      </Text>
     </View>
   );
 }
