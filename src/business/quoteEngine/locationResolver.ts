@@ -1,10 +1,11 @@
-import { LocationZone, ResolvedLocation } from "./models";
+import { ResolvedLocation } from "./models";
 
 export class LocationResolver {
   resolve(locationText?: string | null): ResolvedLocation {
     console.log("LOCATION RECEIVED:", locationText);
 
-    const normalizedLocation = locationText?.toLowerCase().trim() ?? "";
+    const normalizedLocation =
+      locationText?.toLowerCase().trim() ?? "";
 
     if (
       normalizedLocation.includes("potrero") ||
@@ -16,13 +17,17 @@ export class LocationResolver {
       };
     }
 
-    if (
-      normalizedLocation.includes("brasilito") ||
-      normalizedLocation.includes("flamingo")
-    ) {
+    if (normalizedLocation.includes("flamingo")) {
       return {
         zone: "NEARBY",
         distanceKm: 8,
+      };
+    }
+
+    if (normalizedLocation.includes("brasilito")) {
+      return {
+        zone: "EXTENDED",
+        distanceKm: 12,
       };
     }
 

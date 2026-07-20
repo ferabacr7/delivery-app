@@ -11,6 +11,25 @@ type OrderLike = {
   description?: string | null;
   service_type?: string | null;
   status?: string | null;
+
+  /*
+   * Este monto es únicamente una referencia operativa
+   * para validar que la compra esté dentro del límite permitido.
+   *
+   * No forma parte del subtotal, la tarifa de entrega
+   * ni el total del servicio.
+   */
+  estimated_purchase_amount?: number | string | null;
+
+  /*
+   * Solo aplica para FOOD_PICKUP.
+   *
+   * true  = el pedido del restaurante ya fue pagado.
+   * false = el repartidor deberá pagarlo al recogerlo.
+   * null  = no aplica o no fue especificado.
+   */
+  food_order_paid?: boolean | null;
+
   addresses?: {
     address_line?: string | null;
     reference?: string | null;
@@ -35,24 +54,30 @@ type BuildQuoteViewModelInput = {
 };
 
 function normalizeStatus(status?: string | null): QuoteStatusType {
-  const value = status?.toUpperCase();
+  const value = status?.trim().toUpperCase();
 
   switch (value) {
     case "PENDING":
       return "pending";
+
     case "ACCEPTED":
       return "accepted";
+
     case "REJECTED":
       return "rejected";
+
     case "EXPIRED":
       return "expired";
+
     default:
       return "unknown";
   }
 }
 
 function normalizeServiceType(serviceType?: string | null) {
-  if (!serviceType) return "UNKNOWN";
+  if (!serviceType) {
+    return "UNKNOWN";
+  }
 
   const normalized = serviceType
     .trim()
@@ -70,11 +95,20 @@ function normalizeServiceType(serviceType?: string | null) {
     PHARMACY: "PHARMACY",
     FARMACIA: "PHARMACY",
 
-    FOOD: "FOOD",
-    COMIDA: "FOOD",
-    RECOGER_COMIDA: "FOOD",
-    "RECOGER COMIDA": "FOOD",
-    PICKUP_FOOD: "FOOD",
+    /*
+     * FOOD_PICKUP es el valor oficial guardado
+     * actualmente en orders.service_type.
+     *
+     * Todas las variantes anteriores también se
+     * normalizan al mismo tipo para mantener
+     * compatibilidad con datos viejos.
+     */
+    FOOD_PICKUP: "FOOD_PICKUP",
+    FOOD: "FOOD_PICKUP",
+    COMIDA: "FOOD_PICKUP",
+    RECOGER_COMIDA: "FOOD_PICKUP",
+    "RECOGER COMIDA": "FOOD_PICKUP",
+    PICKUP_FOOD: "FOOD_PICKUP",
 
     PACKAGE: "PACKAGE",
     ENCOMIENDA: "PACKAGE",
@@ -90,12 +124,16 @@ function getStatusTone(status: QuoteStatusType): QuoteStatusTone {
   switch (status) {
     case "accepted":
       return "success";
+
     case "pending":
       return "warning";
+
     case "rejected":
       return "danger";
+
     case "expired":
       return "info";
+
     default:
       return "neutral";
   }
@@ -103,6 +141,14 @@ function getStatusTone(status: QuoteStatusType): QuoteStatusTone {
 
 function formatMoney(value?: number | string | null): string {
   const numericValue = Number(value ?? 0);
+
+  if (!Number.isFinite(numericValue)) {
+    return new Intl.NumberFormat("es-CR", {
+      style: "currency",
+      currency: "CRC",
+      maximumFractionDigits: 0,
+    }).format(0);
+  }
 
   return new Intl.NumberFormat("es-CR", {
     style: "currency",
@@ -115,7 +161,12 @@ function buildMapUrls(
   latitude?: number | string | null,
   longitude?: number | string | null,
 ) {
-  if (!latitude || !longitude) {
+  if (
+    latitude === null ||
+    latitude === undefined ||
+    longitude === null ||
+    longitude === undefined
+  ) {
     return {
       googleMapsUrl: undefined,
       wazeUrl: undefined,
@@ -125,7 +176,7 @@ function buildMapUrls(
   const lat = Number(latitude);
   const lng = Number(longitude);
 
-  if (Number.isNaN(lat) || Number.isNaN(lng)) {
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
     return {
       googleMapsUrl: undefined,
       wazeUrl: undefined,
@@ -134,6 +185,7 @@ function buildMapUrls(
 
   return {
     googleMapsUrl: `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`,
+
     wazeUrl: `https://www.waze.com/ul?ll=${lat},${lng}&navigate=yes`,
   };
 }
@@ -146,13 +198,20 @@ export function buildQuoteViewModel({
   const labels = quoteLabels[language];
 
   const statusType = normalizeStatus(quote?.status);
+
   const statusTone = getStatusTone(statusType);
+
   const normalizedServiceType = normalizeServiceType(order.service_type);
 
   const mapUrls = buildMapUrls(
     order.addresses?.latitude,
     order.addresses?.longitude,
   );
+
+  const serviceTypeLabel =
+    labels.serviceTypes[
+      normalizedServiceType as keyof typeof labels.serviceTypes
+    ] ?? labels.unknownServiceType;
 
   return {
     orderNumber: order.id?.slice(-6).toUpperCase() ?? "------",
@@ -165,10 +224,7 @@ export function buildQuoteViewModel({
     service: {
       title: labels.serviceTitle,
       typeLabel: labels.serviceType,
-      type:
-        labels.serviceTypes[
-          normalizedServiceType as keyof typeof labels.serviceTypes
-        ] ?? labels.unknownServiceType,
+      type: serviceTypeLabel,
       description: order.description ?? "",
       statusPrefix: labels.statusPrefix,
       statusLabel: labels.status[statusType],
@@ -179,25 +235,54 @@ export function buildQuoteViewModel({
     location: {
       title: labels.locationTitle,
       address: order.addresses?.address_line ?? "",
+
       reference: order.addresses?.reference ?? labels.noReference,
-      latitude: order.addresses?.latitude
-        ? Number(order.addresses.latitude)
-        : null,
-      longitude: order.addresses?.longitude
-        ? Number(order.addresses.longitude)
-        : null,
+
+      latitude:
+        order.addresses?.latitude !== null &&
+        order.addresses?.latitude !== undefined
+          ? Number(order.addresses.latitude)
+          : null,
+
+      longitude:
+        order.addresses?.longitude !== null &&
+        order.addresses?.longitude !== undefined
+          ? Number(order.addresses.longitude)
+          : null,
+
       googleMapsUrl: mapUrls.googleMapsUrl,
       wazeUrl: mapUrls.wazeUrl,
     },
 
+    /*
+     * Esta sección contiene exclusivamente
+     * el precio del servicio de entrega.
+     *
+     * estimated_purchase_amount nunca se suma
+     * ni se incluye aquí.
+     */
     pricing: {
       title: labels.pricingTitle,
       subtotalLabel: labels.subtotal,
       subtotal: formatMoney(quote?.subtotal),
+
       deliveryFeeLabel: labels.deliveryFee,
+
       deliveryFee: formatMoney(quote?.delivery_fee),
+
       totalLabel: labels.total,
       total: formatMoney(quote?.total),
+    },
+
+    purchaseValidation: {
+      shouldShow: false,
+      title: "",
+      amountLabel: "",
+      amount: "",
+      helperText: "",
+      paymentStatusLabel: "",
+      paymentStatus: "",
+      isFoodPickup: false,
     },
 
     customerMessage: {

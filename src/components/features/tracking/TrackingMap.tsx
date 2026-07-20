@@ -1,9 +1,21 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useRef, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
-import MapView, { Marker, Polyline } from "react-native-maps";
+import {
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import MapView, {
+  Marker,
+  Polyline,
+} from "react-native-maps";
 
-import { colors, radius, spacing, typography } from "../../../constants/theme";
+import {
+  colors,
+  radius,
+  spacing,
+  typography,
+} from "../../../constants/theme";
 import {
   getLatestTrackingLocation,
   subscribeToTrackingLocation,
@@ -19,10 +31,26 @@ type TrackingMapProps = {
 type DriverLocation = {
   latitude: number;
   longitude: number;
+  heading: number | null;
 };
 
 const DEFAULT_LATITUDE = 10.4239;
 const DEFAULT_LONGITUDE = -85.7937;
+
+function normalizeHeading(
+  heading: number | null | undefined,
+): number | null {
+  if (
+    heading === null ||
+    heading === undefined ||
+    !Number.isFinite(heading) ||
+    heading < 0
+  ) {
+    return null;
+  }
+
+  return heading % 360;
+}
 
 export default function TrackingMap({
   deliveryId,
@@ -31,29 +59,48 @@ export default function TrackingMap({
 }: TrackingMapProps) {
   const mapRef = useRef<MapView>(null);
 
-  const [driverLocation, setDriverLocation] = useState<DriverLocation | null>(
-    null,
-  );
+  const hasAdjustedMap = useRef(false);
 
-  const destinationLatitude = latitude ?? DEFAULT_LATITUDE;
-  const destinationLongitude = longitude ?? DEFAULT_LONGITUDE;
+  const [driverLocation, setDriverLocation] =
+    useState<DriverLocation | null>(null);
 
-  /*
-   * Mientras no exista una ubicación real, mostramos una posición
-   * cercana al destino como fallback visual.
-   */
+  const destinationLatitude =
+    latitude ?? DEFAULT_LATITUDE;
+
+  const destinationLongitude =
+    longitude ?? DEFAULT_LONGITUDE;
+
   const driverLatitude =
-    driverLocation?.latitude ?? destinationLatitude - 0.0015;
+    driverLocation?.latitude ??
+    destinationLatitude - 0.0015;
 
   const driverLongitude =
-    driverLocation?.longitude ?? destinationLongitude - 0.0015;
+    driverLocation?.longitude ??
+    destinationLongitude - 0.0015;
+
+  const driverHeading =
+    driverLocation?.heading ?? 0;
 
   /*
-   * Obtiene la última ubicación real registrada en Supabase.
+   * Cuando cambia la entrega:
+   * - reinicia la ubicación;
+   * - permite volver a ajustar el mapa.
+   */
+  useEffect(() => {
+    hasAdjustedMap.current = false;
+    setDriverLocation(null);
+  }, [deliveryId]);
+
+  /*
+   * Obtiene la última ubicación conocida
+   * al abrir el mapa.
    */
   useEffect(() => {
     if (!deliveryId) {
-      console.warn("TRACKING MAP: No se recibió un deliveryId válido.");
+      console.warn(
+        "TRACKING MAP: No se recibió un deliveryId válido.",
+      );
+
       return;
     }
 
@@ -64,7 +111,9 @@ export default function TrackingMap({
     async function loadLatestTrackingLocation() {
       try {
         const { data, error } =
-          await getLatestTrackingLocation(validDeliveryId);
+          await getLatestTrackingLocation(
+            validDeliveryId,
+          );
 
         if (error) {
           throw error;
@@ -74,34 +123,59 @@ export default function TrackingMap({
           return;
         }
 
-        const parsedLatitude = Number(data.latitude);
-        const parsedLongitude = Number(data.longitude);
+        const parsedLatitude = Number(
+          data.latitude,
+        );
+
+        const parsedLongitude = Number(
+          data.longitude,
+        );
+
+        const parsedHeading =
+          data.heading === null
+            ? null
+            : Number(data.heading);
 
         if (
           !Number.isFinite(parsedLatitude) ||
           !Number.isFinite(parsedLongitude)
         ) {
-          throw new Error("La ubicación recibida desde Supabase no es válida.");
+          throw new Error(
+            "La ubicación recibida desde Supabase no es válida.",
+          );
         }
 
         setDriverLocation({
           latitude: parsedLatitude,
           longitude: parsedLongitude,
+          heading: normalizeHeading(
+            parsedHeading,
+          ),
         });
 
-        console.log("LATEST TRACKING LOCATION:", data);
+        console.log(
+          "LATEST TRACKING LOCATION:",
+          data,
+        );
       } catch (error) {
-        console.error("LOAD TRACKING LOCATION ERROR:", error);
+        console.error(
+          "LOAD TRACKING LOCATION ERROR:",
+          error,
+        );
       }
     }
 
-    loadLatestTrackingLocation();
+    void loadLatestTrackingLocation();
 
     return () => {
       isMounted = false;
     };
   }, [deliveryId]);
 
+  /*
+   * Escucha nuevas ubicaciones mediante
+   * Supabase Realtime.
+   */
   useEffect(() => {
     if (!deliveryId) {
       return;
@@ -109,38 +183,81 @@ export default function TrackingMap({
 
     const validDeliveryId = deliveryId;
 
-    const channel = subscribeToTrackingLocation(
-      validDeliveryId,
-      (newLocation) => {
-        const newLatitude = Number(newLocation.latitude);
+    const channel =
+      subscribeToTrackingLocation(
+        validDeliveryId,
+        (newLocation) => {
+          const newLatitude = Number(
+            newLocation.latitude,
+          );
 
-        const newLongitude = Number(newLocation.longitude);
+          const newLongitude = Number(
+            newLocation.longitude,
+          );
 
-        if (!Number.isFinite(newLatitude) || !Number.isFinite(newLongitude)) {
-          console.warn("REALTIME TRACKING LOCATION INVALID:", newLocation);
+          const rawHeading =
+            newLocation.heading === null
+              ? null
+              : Number(newLocation.heading);
 
-          return;
-        }
+          if (
+            !Number.isFinite(newLatitude) ||
+            !Number.isFinite(newLongitude)
+          ) {
+            console.warn(
+              "REALTIME TRACKING LOCATION INVALID:",
+              newLocation,
+            );
 
-        console.log("REALTIME TRACKING LOCATION:", newLocation);
+            return;
+          }
 
-        setDriverLocation({
-          latitude: newLatitude,
-          longitude: newLongitude,
-        });
-      },
-    );
+          const normalizedHeading =
+            normalizeHeading(rawHeading);
+
+          console.log(
+            "REALTIME TRACKING LOCATION:",
+            newLocation,
+          );
+
+          console.log(
+            "DRIVER HEADING:",
+            normalizedHeading,
+          );
+
+          setDriverLocation(
+            (currentLocation) => ({
+              latitude: newLatitude,
+              longitude: newLongitude,
+
+              /*
+               * Si iOS devuelve -1 o null,
+               * conservamos el último rumbo válido.
+               */
+              heading:
+                normalizedHeading ??
+                currentLocation?.heading ??
+                null,
+            }),
+          );
+        },
+      );
 
     return () => {
-      void unsubscribeFromTrackingLocation(channel);
+      void unsubscribeFromTrackingLocation(
+        channel,
+      );
     };
   }, [deliveryId]);
 
   /*
-   * Ajusta automáticamente el mapa para mostrar al repartidor
-   * y el destino.
+   * Ajusta el mapa una sola vez por entrega.
    */
   useEffect(() => {
+    if (hasAdjustedMap.current) {
+      return;
+    }
+
     const timeout = setTimeout(() => {
       mapRef.current?.fitToCoordinates(
         [
@@ -163,9 +280,13 @@ export default function TrackingMap({
           animated: true,
         },
       );
+
+      hasAdjustedMap.current = true;
     }, 350);
 
-    return () => clearTimeout(timeout);
+    return () => {
+      clearTimeout(timeout);
+    };
   }, [
     driverLatitude,
     driverLongitude,
@@ -184,8 +305,16 @@ export default function TrackingMap({
         toolbarEnabled={false}
         showsUserLocation={false}
         initialRegion={{
-          latitude: (destinationLatitude + driverLatitude) / 2,
-          longitude: (destinationLongitude + driverLongitude) / 2,
+          latitude:
+            (
+              destinationLatitude +
+              driverLatitude
+            ) / 2,
+          longitude:
+            (
+              destinationLongitude +
+              driverLongitude
+            ) / 2,
           latitudeDelta: 0.01,
           longitudeDelta: 0.01,
         }}
@@ -211,14 +340,33 @@ export default function TrackingMap({
             latitude: driverLatitude,
             longitude: driverLongitude,
           }}
-          anchor={{ x: 0.5, y: 0.5 }}
+          anchor={{
+            x: 0.5,
+            y: 0.5,
+          }}
         >
           <View style={styles.markerWrapper}>
             <View style={styles.driverMarker}>
-              <Ionicons name="bicycle" size={24} color={colors.textInverse} />
+              <View
+                style={{
+                  transform: [
+                    {
+                      rotate: `${driverHeading}deg`,
+                    },
+                  ],
+                }}
+              >
+                <Ionicons
+                  name="bicycle"
+                  size={24}
+                  color={colors.textInverse}
+                />
+              </View>
             </View>
 
-            <Text style={styles.markerLabel}>Repartidor</Text>
+            <Text style={styles.markerLabel}>
+              Repartidor
+            </Text>
           </View>
         </Marker>
 
@@ -227,14 +375,25 @@ export default function TrackingMap({
             latitude: destinationLatitude,
             longitude: destinationLongitude,
           }}
-          anchor={{ x: 0.5, y: 0.5 }}
+          anchor={{
+            x: 0.5,
+            y: 0.5,
+          }}
         >
           <View style={styles.markerWrapper}>
-            <View style={styles.destinationMarker}>
-              <Ionicons name="home" size={22} color={colors.textInverse} />
+            <View
+              style={styles.destinationMarker}
+            >
+              <Ionicons
+                name="home"
+                size={22}
+                color={colors.textInverse}
+              />
             </View>
 
-            <Text style={styles.markerLabel}>Tu dirección</Text>
+            <Text style={styles.markerLabel}>
+              Tu dirección
+            </Text>
           </View>
         </Marker>
       </MapView>
@@ -248,7 +407,8 @@ const styles = StyleSheet.create({
     height: 320,
     overflow: "hidden",
     borderRadius: radius.xl,
-    backgroundColor: colors.surfaceSoft,
+    backgroundColor:
+      colors.surfaceSoft,
   },
 
   map: {
@@ -284,7 +444,8 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: colors.brandDark,
+    backgroundColor:
+      colors.brandDark,
     borderWidth: 4,
     borderColor: colors.surface,
     shadowColor: "#000",

@@ -44,3 +44,10 @@ yarn-error.*
 
 # Supabase CLI temporary files
 supabase/.temp/
+
+# Supabase local development
+supabase/.branches/
+supabase/.cache/
+
+# Logs
+*.log

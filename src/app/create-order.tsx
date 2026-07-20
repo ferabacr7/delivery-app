@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
+import Slider from "@react-native-community/slider";
 import { router, useFocusEffect } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Alert,
   Pressable,
@@ -11,7 +12,8 @@ import {
   View,
 } from "react-native";
 
-import { ServiceType } from "@/business/quoteEngine/models";
+import { CourierWeight, ServiceType } from "@/business/quoteEngine/models";
+
 import { useTranslation } from "../i18n/useTranslation";
 import { getMyAddresses } from "../services/addressService";
 import { createOrder } from "../services/orderService";
@@ -50,15 +52,87 @@ const SERVICE_TYPES: {
   },
 ];
 
+function formatCurrency(value: number, locale: string, currency: string) {
+  return new Intl.NumberFormat(locale, {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
 export default function CreateOrderScreen() {
   const [description, setDescription] = useState("");
+
   const [selectedAddressId, setSelectedAddressId] = useState("");
+
   const [selectedServiceType, setSelectedServiceType] =
     useState<ServiceType | null>(null);
+
+  const [courierWeight, setCourierWeight] = useState<CourierWeight>("LIGHT");
+
+  const [foodOrderPaid, setFoodOrderPaid] = useState<boolean | null>(null);
+
   const [addresses, setAddresses] = useState<any[]>([]);
+
   const [loading, setLoading] = useState(false);
 
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
+
+  const purchaseLimits =
+    language === "es"
+      ? {
+          minimum: 5000,
+          maximum: 50000,
+          step: 1000,
+          currency: "CRC",
+          locale: "es-CR",
+        }
+      : {
+          minimum: 10,
+          maximum: 100,
+          step: 5,
+          currency: "USD",
+          locale: "en-US",
+        };
+
+  const [estimatedPurchaseAmount, setEstimatedPurchaseAmount] = useState(
+    language === "es" ? 5000 : 10,
+  );
+
+  useEffect(() => {
+    setEstimatedPurchaseAmount(language === "es" ? 5000 : 10);
+  }, [language]);
+
+  const courierWeightOptions: {
+    title: string;
+    subtitle: string;
+    price: string;
+    value: CourierWeight;
+  }[] = [
+    {
+      title: t("createOrder.courierLightTitle"),
+      subtitle: t("createOrder.courierLightDescription"),
+      price: "₡2.500",
+      value: "LIGHT",
+    },
+    {
+      title: t("createOrder.courierMediumTitle"),
+      subtitle: t("createOrder.courierMediumDescription"),
+      price: "₡3.500",
+      value: "MEDIUM",
+    },
+    {
+      title: t("createOrder.courierHeavyTitle"),
+      subtitle: t("createOrder.courierHeavyDescription"),
+      price: "₡5.000",
+      value: "HEAVY",
+    },
+  ];
+
+  const shouldShowEstimatedPurchaseAmount =
+    selectedServiceType === "SUPERMARKET" ||
+    selectedServiceType === "PHARMACY" ||
+    (selectedServiceType === "FOOD_PICKUP" && foodOrderPaid === false);
 
   async function loadAddresses() {
     const { data, error } = await getMyAddresses();
@@ -85,38 +159,51 @@ export default function CreateOrderScreen() {
     }, []),
   );
 
+  function handleSelectService(serviceType: ServiceType) {
+    setSelectedServiceType(serviceType);
+
+    if (serviceType !== "FOOD_PICKUP") {
+      setFoodOrderPaid(null);
+    }
+
+    if (serviceType !== "GENERAL_MESSAGING") {
+      setCourierWeight("LIGHT");
+    }
+  }
+
   async function handleCreateOrder() {
     const trimmedDescription = description.trim();
 
     if (!selectedAddressId) {
-      Alert.alert(
-        t("common.error"),
-        t("createOrder.selectAddress"),
-      );
+      Alert.alert(t("common.error"), t("createOrder.selectAddress"));
       return;
     }
 
     if (!selectedServiceType) {
-      Alert.alert(
-        t("common.error"),
-        t("createOrder.selectService"),
-      );
+      Alert.alert(t("common.error"), t("createOrder.selectService"));
+      return;
+    }
+
+    if (selectedServiceType === "FOOD_PICKUP" && foodOrderPaid === null) {
+      Alert.alert(t("common.error"), t("createOrder.foodPaymentRequired"));
       return;
     }
 
     if (!trimmedDescription) {
-      Alert.alert(
-        t("common.error"),
-        t("createOrder.required"),
-      );
+      Alert.alert(t("common.error"), t("createOrder.required"));
       return;
     }
 
     if (trimmedDescription.length < 5) {
-      Alert.alert(
-        t("common.error"),
-        t("createOrder.moreDetail"),
-      );
+      Alert.alert(t("common.error"), t("createOrder.moreDetail"));
+      return;
+    }
+
+    if (
+      estimatedPurchaseAmount < purchaseLimits.minimum ||
+      estimatedPurchaseAmount > purchaseLimits.maximum
+    ) {
+      Alert.alert(t("common.error"), t("createOrder.purchaseAmountOutOfRange"));
       return;
     }
 
@@ -127,6 +214,20 @@ export default function CreateOrderScreen() {
         description: trimmedDescription,
         addressId: selectedAddressId,
         serviceType: selectedServiceType,
+
+        courierWeight:
+          selectedServiceType === "GENERAL_MESSAGING"
+            ? courierWeight
+            : undefined,
+
+        foodOrderPaid:
+          selectedServiceType === "FOOD_PICKUP"
+            ? (foodOrderPaid ?? undefined)
+            : undefined,
+
+        estimatedPurchaseAmount: shouldShowEstimatedPurchaseAmount
+          ? estimatedPurchaseAmount
+          : undefined,
       });
 
       if (error) {
@@ -141,15 +242,15 @@ export default function CreateOrderScreen() {
 
       setDescription("");
       setSelectedServiceType(null);
+      setCourierWeight("LIGHT");
+      setEstimatedPurchaseAmount(10);
+      setFoodOrderPaid(null);
 
       router.replace("/orders" as never);
     } catch (error) {
       console.error("Unexpected error creating order:", error);
 
-      Alert.alert(
-        t("common.error"),
-        t("createOrder.errorMessage"),
-      );
+      Alert.alert(t("common.error"), t("createOrder.errorMessage"));
     } finally {
       setLoading(false);
     }
@@ -173,24 +274,14 @@ export default function CreateOrderScreen() {
           accessibilityRole="button"
           accessibilityLabel={t("common.back")}
         >
-          <Ionicons
-            name="arrow-back"
-            size={26}
-            color={colors.white}
-          />
+          <Ionicons name="arrow-back" size={26} color={colors.white} />
 
-          <Text style={styles.backButtonText}>
-            {t("common.back")}
-          </Text>
+          <Text style={styles.backButtonText}>{t("common.back")}</Text>
         </Pressable>
 
-        <Text style={styles.title}>
-          {t("createOrder.title")}
-        </Text>
+        <Text style={styles.title}>{t("createOrder.title")}</Text>
 
-        <Text style={styles.subtitle}>
-          {t("createOrder.subtitle")}
-        </Text>
+        <Text style={styles.subtitle}>{t("createOrder.subtitle")}</Text>
       </View>
 
       <View style={styles.panel}>
@@ -200,15 +291,9 @@ export default function CreateOrderScreen() {
 
         {addresses.length === 0 ? (
           <View style={styles.emptyBox}>
-            <Ionicons
-              name="location-outline"
-              size={24}
-              color={colors.muted}
-            />
+            <Ionicons name="location-outline" size={24} color={colors.muted} />
 
-            <Text style={styles.emptyText}>
-              {t("createOrder.noAddresses")}
-            </Text>
+            <Text style={styles.emptyText}>{t("createOrder.noAddresses")}</Text>
           </View>
         ) : (
           addresses.map((address) => {
@@ -221,24 +306,17 @@ export default function CreateOrderScreen() {
                   styles.selectCard,
                   isSelected && styles.selectCardActive,
                 ]}
-                onPress={() =>
-                  setSelectedAddressId(address.id)
-                }
+                onPress={() => setSelectedAddressId(address.id)}
               >
                 <Ionicons
                   name="location-outline"
                   size={24}
-                  color={
-                    isSelected
-                      ? colors.primary
-                      : colors.muted
-                  }
+                  color={isSelected ? colors.primary : colors.muted}
                 />
 
                 <View style={styles.selectContent}>
                   <Text style={styles.selectTitle}>
-                    {address.label ||
-                      t("common.address")}
+                    {address.label || t("common.address")}
                   </Text>
 
                   <Text style={styles.selectSubtitle}>
@@ -258,39 +336,25 @@ export default function CreateOrderScreen() {
           })
         )}
 
-        <Text style={styles.sectionTitle}>
-          {t("createOrder.serviceType")}
-        </Text>
+        <Text style={styles.sectionTitle}>{t("createOrder.serviceType")}</Text>
 
         {SERVICE_TYPES.map((service) => {
-          const isSelected =
-            selectedServiceType === service.value;
+          const isSelected = selectedServiceType === service.value;
 
           return (
             <Pressable
               key={service.value}
-              style={[
-                styles.selectCard,
-                isSelected && styles.selectCardActive,
-              ]}
-              onPress={() =>
-                setSelectedServiceType(service.value)
-              }
+              style={[styles.selectCard, isSelected && styles.selectCardActive]}
+              onPress={() => handleSelectService(service.value)}
             >
               <Ionicons
                 name={service.icon}
                 size={24}
-                color={
-                  isSelected
-                    ? colors.primary
-                    : colors.muted
-                }
+                color={isSelected ? colors.primary : colors.muted}
               />
 
               <View style={styles.selectContent}>
-                <Text style={styles.selectTitle}>
-                  {t(service.labelKey)}
-                </Text>
+                <Text style={styles.selectTitle}>{t(service.labelKey)}</Text>
               </View>
 
               {isSelected ? (
@@ -304,9 +368,211 @@ export default function CreateOrderScreen() {
           );
         })}
 
-        <Text style={styles.label}>
-          {t("createOrder.question")}
-        </Text>
+        {selectedServiceType === "GENERAL_MESSAGING" && (
+          <>
+            <Text style={styles.sectionTitle}>
+              {t("createOrder.courierWeightTitle")}
+            </Text>
+
+            {courierWeightOptions.map((option) => {
+              const isSelected = courierWeight === option.value;
+
+              return (
+                <Pressable
+                  key={option.value}
+                  style={[
+                    styles.selectCard,
+                    isSelected && styles.selectCardActive,
+                  ]}
+                  onPress={() => setCourierWeight(option.value)}
+                >
+                  <Ionicons
+                    name={isSelected ? "radio-button-on" : "radio-button-off"}
+                    size={22}
+                    color={isSelected ? colors.primary : colors.muted}
+                  />
+
+                  <View style={styles.selectContent}>
+                    <View style={styles.weightHeader}>
+                      <Text style={styles.selectTitle}>{option.title}</Text>
+
+                      <Text style={styles.weightPrice}>{option.price}</Text>
+                    </View>
+
+                    <Text style={styles.selectSubtitle}>{option.subtitle}</Text>
+                  </View>
+                </Pressable>
+              );
+            })}
+
+            <View style={styles.courierNotice}>
+              <Ionicons
+                name="information-circle-outline"
+                size={22}
+                color="#8A6D3B"
+              />
+
+              <Text style={styles.courierNoticeText}>
+                {t("createOrder.courierManualReview")}
+              </Text>
+            </View>
+          </>
+        )}
+
+        {selectedServiceType === "FOOD_PICKUP" && (
+          <>
+            <Text style={styles.sectionTitle}>
+              {t("createOrder.foodPaymentTitle")}
+            </Text>
+
+            <View style={styles.paymentOptions}>
+              <Pressable
+                style={[
+                  styles.paymentOption,
+                  foodOrderPaid === true && styles.paymentOptionActive,
+                ]}
+                onPress={() => setFoodOrderPaid(true)}
+              >
+                <Ionicons
+                  name={
+                    foodOrderPaid === true
+                      ? "checkmark-circle"
+                      : "ellipse-outline"
+                  }
+                  size={24}
+                  color={foodOrderPaid === true ? colors.primary : colors.muted}
+                />
+
+                <View style={styles.selectContent}>
+                  <Text style={styles.selectTitle}>
+                    {t("createOrder.foodPaymentYes")}
+                  </Text>
+
+                  <Text style={styles.selectSubtitle}>
+                    {t("createOrder.foodPaymentYesDescription")}
+                  </Text>
+                </View>
+              </Pressable>
+
+              <Pressable
+                style={[
+                  styles.paymentOption,
+                  foodOrderPaid === false && styles.paymentOptionActive,
+                ]}
+                onPress={() => setFoodOrderPaid(false)}
+              >
+                <Ionicons
+                  name={
+                    foodOrderPaid === false
+                      ? "checkmark-circle"
+                      : "ellipse-outline"
+                  }
+                  size={24}
+                  color={
+                    foodOrderPaid === false ? colors.primary : colors.muted
+                  }
+                />
+
+                <View style={styles.selectContent}>
+                  <Text style={styles.selectTitle}>
+                    {t("createOrder.foodPaymentNo")}
+                  </Text>
+
+                  <Text style={styles.selectSubtitle}>
+                    {t("createOrder.foodPaymentNoDescription")}
+                  </Text>
+                </View>
+              </Pressable>
+            </View>
+          </>
+        )}
+
+        {shouldShowEstimatedPurchaseAmount && (
+          <>
+            <Text style={styles.sectionTitle}>
+              {t("createOrder.estimatedPurchaseTitle")}
+            </Text>
+
+            <View style={styles.amountCard}>
+              <View style={styles.amountHeader}>
+                <View style={styles.amountIcon}>
+                  <Ionicons
+                    name="shield-checkmark-outline"
+                    size={24}
+                    color={colors.primary}
+                  />
+                </View>
+
+                <View style={styles.amountHeaderContent}>
+                  <Text style={styles.amountLabel}>
+                    {t("createOrder.estimatedPurchaseApproximately")}
+                  </Text>
+
+                  <Text style={styles.amountValue}>
+                    {formatCurrency(
+                      estimatedPurchaseAmount,
+                      purchaseLimits.locale,
+                      purchaseLimits.currency,
+                    )}
+                  </Text>
+                </View>
+              </View>
+
+              <Text style={styles.amountHelper}>
+                {t("createOrder.estimatedPurchaseValidationHelper")}
+              </Text>
+
+              <View style={styles.separateChargeNotice}>
+                <Ionicons
+                  name="information-circle-outline"
+                  size={20}
+                  color="#356B75"
+                />
+
+                <Text style={styles.separateChargeNoticeText}>
+                  {t("createOrder.estimatedPurchaseSeparateCharge")}
+                </Text>
+              </View>
+
+              <Slider
+                style={styles.slider}
+                minimumValue={purchaseLimits.minimum}
+                maximumValue={purchaseLimits.maximum}
+                step={purchaseLimits.step}
+                value={estimatedPurchaseAmount}
+                onValueChange={setEstimatedPurchaseAmount}
+                minimumTrackTintColor={colors.primary}
+                maximumTrackTintColor={colors.border}
+                thumbTintColor={colors.primary}
+                accessibilityLabel={t(
+                  "createOrder.estimatedPurchaseAccessibility",
+                )}
+                accessibilityValue={{
+                  min: purchaseLimits.minimum,
+                  max: purchaseLimits.maximum,
+                  now: estimatedPurchaseAmount,
+                  text: new Intl.NumberFormat(purchaseLimits.locale, {
+                    style: "currency",
+                    currency: purchaseLimits.currency,
+                    maximumFractionDigits: 0,
+                  }).format(estimatedPurchaseAmount),
+                }}
+              />
+
+              <View style={styles.sliderLabels}>
+                <Text style={styles.sliderLabel}>
+                  {t("createOrder.minimumPurchaseAmount")} $10
+                </Text>
+
+                <Text style={styles.sliderLabel}>
+                  {t("createOrder.maximumPurchaseAmount")} $100
+                </Text>
+              </View>
+            </View>
+          </>
+        )}
+
+        <Text style={styles.label}>{t("createOrder.question")}</Text>
 
         <TextInput
           style={styles.textArea}
@@ -339,17 +605,12 @@ export default function CreateOrderScreen() {
         />
 
         <Pressable
-          style={[
-            styles.button,
-            loading && styles.buttonDisabled,
-          ]}
+          style={[styles.button, loading && styles.buttonDisabled]}
           onPress={handleCreateOrder}
           disabled={loading}
         >
           <Text style={styles.buttonText}>
-            {loading
-              ? t("createOrder.creating")
-              : t("createOrder.button")}
+            {loading ? t("createOrder.creating") : t("createOrder.button")}
           </Text>
         </Pressable>
       </View>
@@ -371,43 +632,25 @@ function Option({
   comingSoon = false,
 }: OptionProps) {
   return (
-    <View
-      style={[
-        styles.option,
-        comingSoon && styles.optionDisabled,
-      ]}
-    >
+    <View style={[styles.option, comingSoon && styles.optionDisabled]}>
       <Ionicons
         name={icon}
         size={24}
-        color={
-          comingSoon
-            ? colors.muted
-            : colors.primary
-        }
+        color={comingSoon ? colors.muted : colors.primary}
       />
 
       <Text
-        style={[
-          styles.optionText,
-          comingSoon && styles.optionTextDisabled,
-        ]}
+        style={[styles.optionText, comingSoon && styles.optionTextDisabled]}
       >
         {title}
       </Text>
 
       {comingSoon ? (
         <View style={styles.badge}>
-          <Text style={styles.badgeText}>
-            {comingSoonLabel}
-          </Text>
+          <Text style={styles.badgeText}>{comingSoonLabel}</Text>
         </View>
       ) : (
-        <Ionicons
-          name="chevron-forward"
-          size={22}
-          color={colors.muted}
-        />
+        <Ionicons name="chevron-forward" size={22} color={colors.muted} />
       )}
     </View>
   );
@@ -524,6 +767,60 @@ const styles = StyleSheet.create({
     color: colors.muted,
   },
 
+  weightHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+
+  weightPrice: {
+    fontSize: 15,
+    fontWeight: "900",
+    color: colors.primary,
+  },
+
+  courierNotice: {
+    marginTop: 4,
+    marginBottom: 12,
+    borderRadius: 14,
+    padding: 14,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    backgroundColor: "#FFF8E1",
+  },
+
+  courierNoticeText: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 20,
+    fontWeight: "600",
+    color: "#8A6D3B",
+  },
+
+  paymentOptions: {
+    gap: 10,
+  },
+
+  paymentOption: {
+    minHeight: 72,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: colors.white,
+  },
+
+  paymentOptionActive: {
+    borderColor: colors.primary,
+    backgroundColor: colors.softTeal,
+  },
+
   emptyBox: {
     borderWidth: 1,
     borderColor: colors.border,
@@ -541,6 +838,88 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 
+  amountCard: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 18,
+    padding: 18,
+    backgroundColor: colors.white,
+  },
+
+  amountHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+
+  amountIcon: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.softTeal,
+  },
+
+  amountHeaderContent: {
+    flex: 1,
+  },
+
+  amountLabel: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: colors.muted,
+  },
+
+  amountValue: {
+    marginTop: 2,
+    fontSize: 28,
+    fontWeight: "900",
+    color: colors.primary,
+  },
+
+  amountHelper: {
+    marginTop: 14,
+    fontSize: 13,
+    lineHeight: 19,
+    color: colors.muted,
+  },
+
+  separateChargeNotice: {
+    marginTop: 14,
+    padding: 12,
+    borderRadius: 12,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+    backgroundColor: "#EAF7F8",
+  },
+
+  separateChargeNoticeText: {
+    flex: 1,
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: "600",
+    color: "#356B75",
+  },
+
+  slider: {
+    width: "100%",
+    height: 44,
+    marginTop: 10,
+  },
+
+ sliderLabels: {
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "space-between",
+},
+
+  sliderLabel: {
+  fontSize: 11,
+  fontWeight: "700",
+  color: colors.muted,
+},
   option: {
     minHeight: 58,
     borderWidth: 1,

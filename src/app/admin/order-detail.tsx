@@ -11,6 +11,7 @@ import {
   View,
 } from "react-native";
 import { getAdminOrderById } from "../../services/adminService";
+import { getDeliveryByOrderId } from "../../services/deliveryService";
 import { createQuoteForOrder } from "../../services/quoteService";
 
 export default function AdminOrderDetailScreen() {
@@ -21,6 +22,9 @@ export default function AdminOrderDetailScreen() {
     : params.orderId;
 
   const [order, setOrder] = useState<any>(null);
+
+  const [deliveryId, setDeliveryId] = useState<string | null>(null);
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -34,6 +38,19 @@ export default function AdminOrderDetailScreen() {
 
   function handleBackToAdminOrders() {
     router.push("/admin/orders" as never);
+  }
+
+  function handleOpenDeliveryConsole() {
+    if (!deliveryId) {
+      Alert.alert(
+        "Entrega no disponible",
+        "Este pedido todavía no tiene una entrega creada.",
+      );
+
+      return;
+    }
+
+    router.push(`/internal/delivery-console/${deliveryId}` as never);
   }
 
   async function loadOrder() {
@@ -53,6 +70,18 @@ export default function AdminOrderDetailScreen() {
     }
 
     setOrder(data);
+
+    const { data: deliveryData, error: deliveryError } =
+      await getDeliveryByOrderId(String(orderId));
+
+    if (deliveryError) {
+      console.error("ADMIN DELIVERY LOAD ERROR:", deliveryError);
+
+      setDeliveryId(null);
+    } else {
+      setDeliveryId(deliveryData?.id ?? null);
+    }
+
     setLoading(false);
   }
 
@@ -159,6 +188,50 @@ export default function AdminOrderDetailScreen() {
       <Text style={{ fontSize: 28, fontWeight: "800", marginBottom: 20 }}>
         Order Detail
       </Text>
+
+      {deliveryId ? (
+        <Pressable
+          onPress={handleOpenDeliveryConsole}
+          style={{
+            minHeight: 56,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            paddingHorizontal: 18,
+            borderRadius: 16,
+            backgroundColor: "#2DD4BF",
+            marginBottom: 24,
+          }}
+        >
+          <Text
+            style={{
+              color: "#FFFFFF",
+              fontSize: 16,
+              fontWeight: "800",
+            }}
+          >
+            Abrir Delivery Console
+          </Text>
+        </Pressable>
+      ) : (
+        <View
+          style={{
+            padding: 16,
+            borderRadius: 14,
+            backgroundColor: "#FEF3C7",
+            marginBottom: 24,
+          }}
+        >
+          <Text
+            style={{
+              color: "#92400E",
+              fontWeight: "700",
+            }}
+          >
+            Este pedido todavía no tiene una entrega creada.
+          </Text>
+        </View>
+      )}
 
       <View style={{ marginBottom: 24 }}>
         <Text style={{ fontSize: 20, fontWeight: "800" }}>Pedido</Text>

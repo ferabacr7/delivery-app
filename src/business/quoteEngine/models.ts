@@ -1,4 +1,3 @@
-
 export type QuoteSource = "AUTO" | "MANUAL";
 
 export type ServiceType =
@@ -6,6 +5,11 @@ export type ServiceType =
   | "PHARMACY"
   | "FOOD_PICKUP"
   | "GENERAL_MESSAGING";
+
+export type CourierWeight =
+  | "LIGHT"
+  | "MEDIUM"
+  | "HEAVY";
 
 export type LocationZone =
   | "LOCAL"
@@ -22,6 +26,7 @@ export type QuoteInput = {
   description: string;
   serviceType: ServiceType;
   locationText?: string | null;
+  courierWeight?: CourierWeight | null;
 };
 
 export type ResolvedLocation = {

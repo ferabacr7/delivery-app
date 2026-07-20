@@ -63,23 +63,30 @@ export const translations = {
       english: "Inglés",
 
       myAddress: "Mi dirección",
-      myAddressSubtitle: "Administra tu dirección de entrega",
+      myAddressSubtitle:
+        "Administra tu dirección de entrega",
 
       aboutApp: "Acerca de la app",
-      aboutAppSubtitle: "Información, términos y versión",
+      aboutAppSubtitle:
+        "Información, términos y versión",
 
-      contactSupport: "Contactar al servicio al cliente",
-      contactSupportSubtitle: "Estamos aquí para ayudarte",
+      contactSupport:
+        "Contactar al servicio al cliente",
+      contactSupportSubtitle:
+        "Estamos aquí para ayudarte",
     },
 
     addresses: {
       title: "Mis Direcciones",
-      subtitle: "Administra tu dirección de entrega.",
+      subtitle:
+        "Administra tu dirección de entrega.",
       loading: "Cargando dirección...",
-      loadError: "No pudimos cargar tu dirección.",
+      loadError:
+        "No pudimos cargar tu dirección.",
       errorTitle: "Ocurrió un problema",
       retry: "Intentar nuevamente",
-      emptyTitle: "No tienes una dirección registrada",
+      emptyTitle:
+        "No tienes una dirección registrada",
       emptyDescription:
         "Agrega una dirección para poder realizar tus pedidos.",
       add: "Agregar dirección",
@@ -88,7 +95,8 @@ export const translations = {
 
     orders: {
       title: "Mis Pedidos",
-      empty: "Todavía no tenés pedidos registrados.",
+      empty:
+        "Todavía no tenés pedidos registrados.",
       firstOrder: "Hacer mi primer pedido",
       order: "Pedido",
       accepted: "Aceptado",
@@ -98,89 +106,188 @@ export const translations = {
 
     createOrder: {
       title: "Crear Pedido",
-      placeholder: "¿Qué necesitás que te traigamos?",
+      placeholder:
+        "¿Qué necesitás que te traigamos?",
       button: "Enviar Pedido",
       successTitle: "Pedido creado",
-      successMessage: "Tu pedido fue enviado correctamente.",
+      successMessage:
+        "Tu pedido fue enviado correctamente.",
       errorTitle: "Error",
-      errorMessage: "No se pudo crear el pedido.",
-      subtitle: "Contanos qué necesitás y lo resolvemos por vos.",
+      errorMessage:
+        "No se pudo crear el pedido.",
+      subtitle:
+        "Contanos qué necesitás y lo resolvemos por vos.",
       question: "¿Qué necesitás?",
-      required: "Por favor escribí tu pedido.",
-      optionalDetails: "Detalles opcionales",
-      referencePhoto: "Foto de referencia",
-      deliveryAddress: "Dirección de entrega",
-      additionalNotes: "Notas adicionales",
+      required:
+        "Por favor escribí tu pedido.",
+      optionalDetails:
+        "Detalles opcionales",
+      referencePhoto:
+        "Foto de referencia",
+      deliveryAddress:
+        "Dirección de entrega",
+      additionalNotes:
+        "Notas adicionales",
       creating: "Creando...",
-      selectAddress: "Selecciona una dirección.",
-      selectService: "Selecciona un tipo de servicio.",
-      moreDetail: "El pedido debe tener más detalle.",
-      noAddresses: "No tienes direcciones registradas todavía.",
+      selectAddress:
+        "Selecciona una dirección.",
+      selectService:
+        "Selecciona un tipo de servicio.",
+      moreDetail:
+        "El pedido debe tener más detalle.",
+      noAddresses:
+        "No tienes direcciones registradas todavía.",
       serviceType: "Tipo de servicio",
       supermarket: "Supermercado",
       pharmacy: "Farmacia",
       foodPickup: "Recoger comida",
       messaging: "Mensajería",
+
+      courierWeightTitle:
+        "Peso aproximado",
+
+      courierLightTitle:
+        "Ligero (0–2 kg)",
+      courierLightDescription:
+        "Documentos, medicamentos, llaves o paquetes pequeños.",
+
+      courierMediumTitle:
+        "Mediano (2–10 kg)",
+      courierMediumDescription:
+        "Compras pequeñas, cajas o electrodomésticos pequeños.",
+
+      courierHeavyTitle:
+        "Pesado (10–25 kg)",
+      courierHeavyDescription:
+        "Cajas grandes, hieleras o sacos de alimento.",
+
+      courierManualReview:
+        "Si el paquete supera los 25 kg o es demasiado voluminoso, la cotización requerirá revisión manual.",
+
+      estimatedPurchaseTitle:
+        "Monto estimado de la compra",
+      estimatedPurchaseApproximately:
+        "Aproximadamente",
+      estimatedPurchaseHelper:
+        "Mueva la barra para seleccionar un monto aproximado. El monto final se confirmará con la factura del comercio.",
+      estimatedPurchaseAccessibility:
+        "Monto estimado de la compra",
+
+      foodPaymentTitle: "¿Su pedido ya fue pagado?",
+      foodPaymentYes: "Sí, ya fue pagado",
+      foodPaymentYesDescription:
+        "El repartidor solamente recogerá y entregará el pedido.",
+
+      foodPaymentNo: "No, falta pagarlo",
+      foodPaymentNoDescription:
+        "El repartidor deberá pagar el pedido al recogerlo.",
+
+      foodPaymentRequired:
+        "Indique si el pedido de comida ya fue pagado.",
+
+      estimatedPurchaseValidationHelper:
+        "Seleccione un monto aproximado para validar que la compra esté dentro del límite permitido.",
+      estimatedPurchaseSeparateCharge:
+        "Este monto no forma parte de la tarifa del servicio de entrega. La compra se paga por separado según la factura del comercio.",
+      minimumPurchaseAmount: "Mínimo",
+      maximumPurchaseAmount: "Máximo",
+      purchaseAmountOutOfRange:
+        "El monto estimado debe estar entre $10 y $100.",
+
       comingSoon: "Próximamente",
     },
 
     orderDetail: {
       title: "Detalle del Pedido",
-      accepted: "🟢 Pedido Aceptado",
-      rejected: "🔴 Pedido Rechazado",
-      pending: "🟡 Cotización Pendiente",
-      quoteReceived: "Cotización Recibida",
+      accepted:
+        "🟢 Pedido Aceptado",
+      rejected:
+        "🔴 Pedido Rechazado",
+      pending:
+        "🟡 Cotización Pendiente",
+      quoteReceived:
+        "Cotización Recibida",
       quoteStatus: "Estado",
-      description: "Descripción del pedido",
-      createdAt: "Fecha de creación",
+      description:
+        "Descripción del pedido",
+      createdAt:
+        "Fecha de creación",
       accept: "Aceptar",
       reject: "Rechazar",
 
-      waitingTitle: "Cotización pendiente",
+      waitingTitle:
+        "Cotización pendiente",
       waitingQuote:
         "Estamos revisando tu pedido. Pronto recibirás una cotización.",
 
-      acceptedMessage: "Tu pedido fue confirmado.",
-      rejectedMessage: "Este pedido fue cancelado.",
-      processingMessage: "Estamos procesando tu solicitud.",
+      acceptedMessage:
+        "Tu pedido fue confirmado.",
+      rejectedMessage:
+        "Este pedido fue cancelado.",
+      processingMessage:
+        "Estamos procesando tu solicitud.",
 
-      backHome: "Volver al inicio",
-      backOrders: "Volver a Mis Pedidos",
-      currentStatus: "Estado actual",
+      backHome:
+        "Volver al inicio",
+      backOrders:
+        "Volver a Mis Pedidos",
+      currentStatus:
+        "Estado actual",
 
-      quoteAcceptedTitle: "Cotización aceptada",
-      quoteAcceptedMessage: "Tu pedido fue aceptado correctamente.",
-      quoteRejectedTitle: "Cotización rechazada",
-      quoteRejectedMessage: "Rechazaste esta cotización.",
+      quoteAcceptedTitle:
+        "Cotización aceptada",
+      quoteAcceptedMessage:
+        "Tu pedido fue aceptado correctamente.",
+      quoteRejectedTitle:
+        "Cotización rechazada",
+      quoteRejectedMessage:
+        "Rechazaste esta cotización.",
 
-      acceptError: "No se pudo aceptar la cotización.",
-      rejectError: "No se pudo rechazar la cotización.",
-      notFound: "No se encontró el pedido.",
+      acceptError:
+        "No se pudo aceptar la cotización.",
+      rejectError:
+        "No se pudo rechazar la cotización.",
+      notFound:
+        "No se encontró el pedido.",
 
-      trackingTitle: "Seguimiento de entrega",
-      trackingDelivered: "Tu pedido fue entregado",
-      trackingLive: "Ubicación actualizada en tiempo real",
+      trackingTitle:
+        "Seguimiento de entrega",
+      trackingDelivered:
+        "Tu pedido fue entregado",
+      trackingLive:
+        "Ubicación actualizada en tiempo real",
       trackingWaiting:
         "Disponible cuando el motorizado inicie la entrega",
       trackingUnavailable:
         "Seguimiento no disponible para este pedido",
-      updatedRecently: "Actualizado recientemente",
-      notAvailable: "Aún no disponible",
+      updatedRecently:
+        "Actualizado recientemente",
+      notAvailable:
+        "Aún no disponible",
 
-      yourDriver: "Tu repartidor",
-      driverOnTheWay: "En camino a tu dirección",
-      driverNotStarted: "La entrega aún no ha comenzado",
+      yourDriver:
+        "Tu repartidor",
+      driverOnTheWay:
+        "En camino a tu dirección",
+      driverNotStarted:
+        "La entrega aún no ha comenzado",
 
-      yourAddress: "Tu dirección",
+      yourAddress:
+        "Tu dirección",
 
-      estimatedArrival: "Llegada estimada",
-      estimatedMinutes: "12–18 min",
-      pendingEstimate: "Pendiente",
+      estimatedArrival:
+        "Llegada estimada",
+      estimatedMinutes:
+        "12–18 min",
+      pendingEstimate:
+        "Pendiente",
 
-      deliveryStatus: "Estado de entrega",
+      deliveryStatus:
+        "Estado de entrega",
       delivered: "Entregado",
       onTheWay: "En camino",
-      preparing: "Preparando pedido",
+      preparing:
+        "Preparando pedido",
     },
 
     addressForm: {
@@ -188,11 +295,14 @@ export const translations = {
       subtitle:
         "Registra una única dirección para recibir tus pedidos durante la beta.",
 
-      labelName: "Nombre de la dirección",
+      labelName:
+        "Nombre de la dirección",
       address: "Dirección",
-      reference: "Referencia adicional",
+      reference:
+        "Referencia adicional",
 
-      placeholderLabel: "Casa, trabajo, apartamento...",
+      placeholderLabel:
+        "Casa, trabajo, apartamento...",
       placeholderAddress:
         "Ej: 200m norte del supermercado...",
       placeholderReference:
@@ -201,7 +311,8 @@ export const translations = {
       save: "Guardar dirección",
       saving: "Guardando...",
 
-      savedTitle: "Dirección guardada",
+      savedTitle:
+        "Dirección guardada",
       savedMessage:
         "Tu dirección fue guardada correctamente.",
 
@@ -221,6 +332,7 @@ export const translations = {
       error: "Error",
       address: "Dirección",
     },
+
   },
 
   en: {
@@ -228,10 +340,12 @@ export const translations = {
       title: "Delivery App",
       createOrder: "Create Order",
       myOrders: "My Orders",
-      slogan: "Whatever you need,\njust order it.",
+      slogan:
+        "Whatever you need,\njust order it.",
       description:
         "Shopping, food, errands, and local services from one app.",
-      question: "What do you need?",
+      question:
+        "What do you need?",
       shopping: "Shopping",
       food: "Food",
       errands: "Errands",
@@ -244,10 +358,13 @@ export const translations = {
       email: "Email",
       password: "Password",
       button: "Sign In",
-      noAccount: "Don't have an account?",
+      noAccount:
+        "Don't have an account?",
       register: "Register",
-      createAccount: "Create Account",
-      requiredTitle: "Required Fields",
+      createAccount:
+        "Create Account",
+      requiredTitle:
+        "Required Fields",
       requiredMessage:
         "Please enter email and password.",
       errorTitle: "Login Error",
@@ -257,16 +374,21 @@ export const translations = {
       title: "Create Account",
       email: "Email",
       password: "Password",
-      confirmPassword: "Confirm Password",
+      confirmPassword:
+        "Confirm Password",
       button: "Create Account",
       subtitle:
         "Register to place orders and track your deliveries.",
-      requiredTitle: "Required Fields",
+      requiredTitle:
+        "Required Fields",
       requiredMessage:
         "Please enter email and password.",
-      errorTitle: "Registration Error",
-      successTitle: "Registration Successful",
-      successMessage: "User created successfully.",
+      errorTitle:
+        "Registration Error",
+      successTitle:
+        "Registration Successful",
+      successMessage:
+        "User created successfully.",
       registerButton: "Register",
       backHome: "Back to Home",
     },
@@ -275,15 +397,20 @@ export const translations = {
       title: "My Profile",
       email: "Email",
       userId: "User ID",
-      profileName: "Profile Name",
+      profileName:
+        "Profile Name",
       status: "Status",
       logout: "Sign Out",
       loading: "Loading...",
-      noUser: "No authenticated user.",
-      notFound: "Profile not found or blocked by RLS.",
+      noUser:
+        "No authenticated user.",
+      notFound:
+        "Profile not found or blocked by RLS.",
       noName: "No name",
-      loaded: "Profile loaded successfully.",
-      notAvailable: "Not available",
+      loaded:
+        "Profile loaded successfully.",
+      notAvailable:
+        "Not available",
       language: "Language",
       spanish: "Spanish",
       english: "English",
@@ -292,7 +419,8 @@ export const translations = {
       myAddressSubtitle:
         "Manage your delivery address",
 
-      aboutApp: "About the App",
+      aboutApp:
+        "About the App",
       aboutAppSubtitle:
         "Information, terms, and version",
 
@@ -304,24 +432,30 @@ export const translations = {
 
     addresses: {
       title: "My Addresses",
-      subtitle: "Manage your delivery address.",
-      loading: "Loading address...",
+      subtitle:
+        "Manage your delivery address.",
+      loading:
+        "Loading address...",
       loadError:
         "We could not load your address.",
-      errorTitle: "Something went wrong",
+      errorTitle:
+        "Something went wrong",
       retry: "Try Again",
       emptyTitle:
         "You do not have a saved address",
       emptyDescription:
         "Add an address so you can place your orders.",
       add: "Add Address",
-      editAccessibility: "Edit address",
+      editAccessibility:
+        "Edit address",
     },
 
     orders: {
       title: "My Orders",
-      empty: "You don't have any orders yet.",
-      firstOrder: "Place My First Order",
+      empty:
+        "You don't have any orders yet.",
+      firstOrder:
+        "Place My First Order",
       order: "Order",
       accepted: "Accepted",
       rejected: "Rejected",
@@ -333,7 +467,8 @@ export const translations = {
       placeholder:
         "What do you need us to bring?",
       button: "Submit Order",
-      successTitle: "Order Created",
+      successTitle:
+        "Order Created",
       successMessage:
         "Your order was submitted successfully.",
       errorTitle: "Error",
@@ -341,40 +476,110 @@ export const translations = {
         "The order could not be created.",
       subtitle:
         "Tell us what you need and we will take care of it.",
-      question: "What do you need?",
-      required: "Please enter your order.",
-      optionalDetails: "Optional Details",
-      referencePhoto: "Reference Photo",
-      deliveryAddress: "Delivery Address",
-      additionalNotes: "Additional Notes",
+      question:
+        "What do you need?",
+      required:
+        "Please enter your order.",
+      optionalDetails:
+        "Optional Details",
+      referencePhoto:
+        "Reference Photo",
+      deliveryAddress:
+        "Delivery Address",
+      additionalNotes:
+        "Additional Notes",
       creating: "Creating...",
-      selectAddress: "Select an address.",
-      selectService: "Select a service type.",
+      selectAddress:
+        "Select an address.",
+      selectService:
+        "Select a service type.",
       moreDetail:
         "Please provide more details about the order.",
       noAddresses:
         "You do not have any saved addresses yet.",
-      serviceType: "Service Type",
-      supermarket: "Supermarket",
+      serviceType:
+        "Service Type",
+      supermarket:
+        "Supermarket",
       pharmacy: "Pharmacy",
-      foodPickup: "Food Pickup",
+      foodPickup:
+        "Food Pickup",
       messaging: "Messaging",
-      comingSoon: "Coming Soon",
+
+      courierWeightTitle:
+        "Approximate weight",
+
+      courierLightTitle:
+        "Light (0–4.4 lb)",
+      courierLightDescription:
+        "Documents, medications, keys, or small packages.",
+
+      courierMediumTitle:
+        "Medium (4.4–22 lb)",
+      courierMediumDescription:
+        "Small grocery orders, boxes, or small appliances.",
+
+      courierHeavyTitle:
+        "Heavy (22–55 lb)",
+      courierHeavyDescription:
+        "Large boxes, coolers, or pet food bags.",
+
+      courierManualReview:
+        "If the package weighs more than 55 lb or is too bulky, the quote will require manual review.",
+
+      estimatedPurchaseTitle:
+        "Estimated purchase amount",
+      estimatedPurchaseApproximately:
+        "Approximately",
+      estimatedPurchaseHelper:
+        "Move the slider to select an approximate amount. The final amount will be confirmed using the store receipt.",
+      estimatedPurchaseAccessibility:
+        "Estimated purchase amount",
+
+      foodPaymentTitle: "Has the food order already been paid?",
+      foodPaymentYes: "Yes, it has already been paid",
+      foodPaymentYesDescription:
+        "The driver will only pick up and deliver the order.",
+
+      foodPaymentNo: "No, it still needs to be paid",
+      foodPaymentNoDescription:
+        "The driver will need to pay for the order when picking it up.",
+
+      foodPaymentRequired:
+        "Please indicate whether the food order has already been paid.",
+
+      estimatedPurchaseValidationHelper:
+        "Select an approximate amount to validate that the purchase is within the permitted limit.",
+      estimatedPurchaseSeparateCharge:
+        "This amount is not part of the delivery service fee. The purchase is paid separately according to the merchant invoice.",
+      minimumPurchaseAmount: "Minimum",
+      maximumPurchaseAmount: "Maximum",
+      purchaseAmountOutOfRange:
+        "The estimated amount must be between $10 and $100.",
+
+      comingSoon:
+        "Coming Soon",
     },
 
     orderDetail: {
       title: "Order Details",
-      accepted: "🟢 Order Accepted",
-      rejected: "🔴 Order Rejected",
-      pending: "🟡 Quote Pending",
-      quoteReceived: "Quote Received",
+      accepted:
+        "🟢 Order Accepted",
+      rejected:
+        "🔴 Order Rejected",
+      pending:
+        "🟡 Quote Pending",
+      quoteReceived:
+        "Quote Received",
       quoteStatus: "Status",
-      description: "Order Description",
+      description:
+        "Order Description",
       createdAt: "Created At",
       accept: "Accept",
       reject: "Reject",
 
-      waitingTitle: "Quote Pending",
+      waitingTitle:
+        "Quote Pending",
       waitingQuote:
         "We are reviewing your order. You will receive a quote soon.",
 
@@ -385,14 +590,19 @@ export const translations = {
       processingMessage:
         "We are processing your request.",
 
-      backHome: "Back to Home",
-      backOrders: "Back to My Orders",
-      currentStatus: "Current Status",
+      backHome:
+        "Back to Home",
+      backOrders:
+        "Back to My Orders",
+      currentStatus:
+        "Current Status",
 
-      quoteAcceptedTitle: "Quote Accepted",
+      quoteAcceptedTitle:
+        "Quote Accepted",
       quoteAcceptedMessage:
         "Your order was accepted successfully.",
-      quoteRejectedTitle: "Quote Rejected",
+      quoteRejectedTitle:
+        "Quote Rejected",
       quoteRejectedMessage:
         "You rejected this quote.",
 
@@ -400,9 +610,11 @@ export const translations = {
         "The quote could not be accepted.",
       rejectError:
         "The quote could not be rejected.",
-      notFound: "Order not found.",
+      notFound:
+        "Order not found.",
 
-      trackingTitle: "Delivery tracking",
+      trackingTitle:
+        "Delivery tracking",
       trackingDelivered:
         "Your order was delivered",
       trackingLive:
@@ -411,26 +623,34 @@ export const translations = {
         "Available when the driver starts the delivery",
       trackingUnavailable:
         "Tracking is unavailable for this order",
-      updatedRecently: "Updated recently",
-      notAvailable: "Not available yet",
+      updatedRecently:
+        "Updated recently",
+      notAvailable:
+        "Not available yet",
 
-      yourDriver: "Your driver",
+      yourDriver:
+        "Your driver",
       driverOnTheWay:
         "On the way to your address",
       driverNotStarted:
         "The delivery has not started yet",
 
-      yourAddress: "Your address",
+      yourAddress:
+        "Your address",
 
       estimatedArrival:
         "Estimated arrival",
-      estimatedMinutes: "12–18 min",
-      pendingEstimate: "Pending",
+      estimatedMinutes:
+        "12–18 min",
+      pendingEstimate:
+        "Pending",
 
-      deliveryStatus: "Delivery status",
+      deliveryStatus:
+        "Delivery status",
       delivered: "Delivered",
       onTheWay: "On the way",
-      preparing: "Preparing order",
+      preparing:
+        "Preparing order",
     },
 
     addressForm: {
@@ -438,9 +658,11 @@ export const translations = {
       subtitle:
         "Register a single delivery address for the beta version.",
 
-      labelName: "Address name",
+      labelName:
+        "Address name",
       address: "Address",
-      reference: "Additional reference",
+      reference:
+        "Additional reference",
 
       placeholderLabel:
         "Home, work, apartment...",
@@ -452,7 +674,8 @@ export const translations = {
       save: "Save Address",
       saving: "Saving...",
 
-      savedTitle: "Address Saved",
+      savedTitle:
+        "Address Saved",
       savedMessage:
         "Your address was saved successfully.",
 
@@ -472,7 +695,10 @@ export const translations = {
       error: "Error",
       address: "Address",
     },
+
+    
   },
 };
 
-export type Language = keyof typeof translations;
+export type Language =
+  keyof typeof translations;

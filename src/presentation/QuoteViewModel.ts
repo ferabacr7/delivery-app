@@ -14,6 +14,7 @@ export type QuoteStatusTone =
 
 export type QuoteViewModel = {
   orderNumber: string;
+
   header: {
     title: string;
     subtitle: string;
@@ -42,6 +43,12 @@ export type QuoteViewModel = {
     wazeUrl?: string;
   };
 
+  /*
+   * Contiene únicamente los cargos del servicio de entrega.
+   *
+   * El monto estimado de la compra nunca se incluye
+   * dentro de esta sección.
+   */
   pricing: {
     title: string;
     subtotalLabel: string;
@@ -50,6 +57,25 @@ export type QuoteViewModel = {
     deliveryFee: string;
     totalLabel: string;
     total: string;
+  };
+
+  /*
+   * Información operativa de la compra.
+   *
+   * estimatedPurchaseAmount sirve únicamente
+   * para validar los límites permitidos.
+   */
+  purchaseValidation: {
+    shouldShow: boolean;
+    title: string;
+    amountLabel: string;
+    amount: string | null;
+    helperText: string;
+
+    paymentStatusLabel: string;
+    paymentStatus: string | null;
+
+    isFoodPickup: boolean;
   };
 
   customerMessage: {

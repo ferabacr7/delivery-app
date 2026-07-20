@@ -1,18 +1,31 @@
-import {
-  QuoteCalculationResult,
-  ResolvedLocation,
-  ServiceType,
-} from "./models";
+import { QuoteCalculationResult } from "./models";
+
+export type QuoteCalculatorInput = {
+  serviceFee: number;
+  deliveryFee: number;
+};
 
 export class QuoteCalculator {
-  calculate(
-    serviceType: ServiceType,
-    location: ResolvedLocation
-  ): QuoteCalculationResult {
-    const baseFee = this.getBaseFeeByService(serviceType);
-    const deliveryFee = this.getDeliveryFeeByZone(location.zone);
+  calculate({
+    serviceFee,
+    deliveryFee,
+  }: QuoteCalculatorInput): QuoteCalculationResult {
+    if (!Number.isFinite(serviceFee) || serviceFee < 0) {
+      throw new Error(
+        "La tarifa del servicio no es válida.",
+      );
+    }
 
-    const subtotal = baseFee;
+    if (
+      !Number.isFinite(deliveryFee) ||
+      deliveryFee < 0
+    ) {
+      throw new Error(
+        "La tarifa de entrega no es válida.",
+      );
+    }
+
+    const subtotal = serviceFee;
     const total = subtotal + deliveryFee;
 
     return {
@@ -20,40 +33,5 @@ export class QuoteCalculator {
       deliveryFee,
       total,
     };
-  }
-
-  private getBaseFeeByService(serviceType: ServiceType): number {
-    switch (serviceType) {
-      case "SUPERMARKET":
-        return 1500;
-
-      case "PHARMACY":
-        return 1200;
-
-      case "FOOD_PICKUP":
-        return 1000;
-
-      case "GENERAL_MESSAGING":
-        return 1300;
-
-      default:
-        return 1500;
-    }
-  }
-
-  private getDeliveryFeeByZone(zone: ResolvedLocation["zone"]): number {
-    switch (zone) {
-      case "LOCAL":
-        return 1000;
-
-      case "NEARBY":
-        return 2000;
-
-      case "EXTENDED":
-        return 3500;
-
-      default:
-        return 3500;
-    }
   }
 }

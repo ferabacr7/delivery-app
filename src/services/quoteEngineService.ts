@@ -6,8 +6,7 @@ export async function generateAutomaticQuote(input: QuoteInput) {
   try {
     const orchestrator = new QuoteOrchestrator();
 
-    const quote = orchestrator.generateQuote(input);
-
+    const quote = await orchestrator.generateQuote(input);
     const { data, error } = await supabase
       .from("quotes")
       .insert({

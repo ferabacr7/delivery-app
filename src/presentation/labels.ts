@@ -41,7 +41,7 @@ export const quoteLabels = {
       GENERAL_MESSAGING: "Mensajería",
       SUPERMARKET: "Supermercado",
       PHARMACY: "Farmacia",
-      FOOD: "Comida",
+      FOOD_PICKUP: "Recoger comida",
       PACKAGE: "Encomienda",
       ERRAND: "Mandado",
     },
@@ -86,10 +86,10 @@ export const quoteLabels = {
     statusPrefix: "Status",
 
     serviceTypes: {
-      GENERAL_MESSAGING: "Messaging",
+      GENERAL_MESSAGING: "Courier service",
       SUPERMARKET: "Supermarket",
       PHARMACY: "Pharmacy",
-      FOOD: "Food",
+      FOOD_PICKUP: "Food pickup",
       PACKAGE: "Package delivery",
       ERRAND: "Errand",
     },
