@@ -6,15 +6,9 @@ export type ServiceType =
   | "FOOD_PICKUP"
   | "GENERAL_MESSAGING";
 
-export type CourierWeight =
-  | "LIGHT"
-  | "MEDIUM"
-  | "HEAVY";
+export type CourierWeight = "LIGHT" | "MEDIUM" | "HEAVY";
 
-export type LocationZone =
-  | "LOCAL"
-  | "NEARBY"
-  | "EXTENDED";
+export type LocationZone = "LOCAL" | "NEARBY" | "EXTENDED";
 
 export type QuoteValidationResult = {
   isValid: boolean;
@@ -25,7 +19,16 @@ export type QuoteInput = {
   orderId: string;
   description: string;
   serviceType: ServiceType;
+
+  currency: "CRC" | "USD";
+
+  latitude?: number | null;
+  longitude?: number | null;
+
+  // Se conserva para mostrar o registrar la dirección,
+  // pero ya no se utilizará para calcular la zona.
   locationText?: string | null;
+
   courierWeight?: CourierWeight | null;
 };
 
@@ -35,8 +38,11 @@ export type ResolvedLocation = {
 };
 
 export type QuoteCalculationResult = {
-  subtotal: number;
+  serviceFee: number;
   deliveryFee: number;
+  commission: number;
+  surcharges: number;
+  subtotal: number;
   total: number;
 };
 
@@ -47,9 +53,14 @@ export type GeneratedQuote = {
   zone: LocationZone;
   estimatedDistanceKm: number;
 
-  subtotal: number;
+  serviceFee: number;
   deliveryFee: number;
+  commission: number;
+  surcharges: number;
+  subtotal: number;
   total: number;
+
+  currency: "CRC" | "USD";
 
   quoteSource: QuoteSource;
   calculationVersion: number;

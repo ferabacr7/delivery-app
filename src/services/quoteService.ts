@@ -13,6 +13,7 @@ type CreateQuoteInput = {
   orderId: string;
   subtotal: number;
   deliveryFee: number;
+  currency: "CRC" | "USD";
   notes?: string;
 };
 
@@ -32,6 +33,7 @@ export async function createQuoteForOrder({
   orderId,
   subtotal,
   deliveryFee,
+  currency,
   notes,
 }: CreateQuoteInput) {
   const total = subtotal + deliveryFee;
@@ -44,6 +46,7 @@ export async function createQuoteForOrder({
       subtotal,
       delivery_fee: deliveryFee,
       total,
+      currency,
       notes: notes ?? "",
       internal_notes: notes ?? null,
       quote_source: "MANUAL",
@@ -134,36 +137,36 @@ async function updateQuoteDecision(
     .maybeSingle();
 
   if (updateOrderError) {
-  return {
-    data: null,
-    error: updateOrderError,
-  };
-}
-
-let delivery = null;
-
-if (quoteStatus === QUOTE_STATUS_ACCEPTED) {
-  const { data: createdDelivery, error: deliveryError } =
-    await createDeliveryForOrder(quote.order_id);
-
-  if (deliveryError) {
     return {
       data: null,
-      error: deliveryError,
+      error: updateOrderError,
     };
   }
 
-  delivery = createdDelivery;
-}
+  let delivery = null;
 
-return {
-  data: {
-    quote: updatedQuote,
-    order: updatedOrder,
-    delivery,
-  },
-  error: null,
-};
+  if (quoteStatus === QUOTE_STATUS_ACCEPTED) {
+    const { data: createdDelivery, error: deliveryError } =
+      await createDeliveryForOrder(quote.order_id);
+
+    if (deliveryError) {
+      return {
+        data: null,
+        error: deliveryError,
+      };
+    }
+
+    delivery = createdDelivery;
+  }
+
+  return {
+    data: {
+      quote: updatedQuote,
+      order: updatedOrder,
+      delivery,
+    },
+    error: null,
+  };
 }
 
 export async function acceptQuote(quoteId: string) {

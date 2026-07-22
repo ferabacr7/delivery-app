@@ -1,6 +1,8 @@
-import { router } from "expo-router";
-import { useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import { router, useLocalSearchParams } from "expo-router";
+import { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -12,74 +14,178 @@ import {
   View,
 } from "react-native";
 
+import LocationPicker, { SelectedLocation } from "../components/LocationPicker";
 import { useTranslation } from "../i18n/useTranslation";
-import { createAddress } from "../services/addressService";
+import {
+  createAddress,
+  getAddressById,
+  updateAddress,
+} from "../services/addressService";
 import { colors } from "../styles/theme";
 
+type AddressRecord = {
+  id: string;
+  label: string;
+  address_line: string;
+  reference: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  is_default: boolean;
+};
+
+type Coordinates = {
+  latitude: number;
+  longitude: number;
+};
+
 export default function MyAddressScreen() {
-  const [label, setLabel] = useState("Casa");
+  const params = useLocalSearchParams<{
+    addressId?: string | string[];
+  }>();
+
+  const rawAddressId = params.addressId;
+
+  const addressId = Array.isArray(rawAddressId)
+    ? rawAddressId[0]
+    : rawAddressId;
+
+  const isEditing = Boolean(addressId);
+
   const [addressLine, setAddressLine] = useState("");
   const [reference, setReference] = useState("");
-  const [loading, setLoading] = useState(false);
+
+  const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
+
+  const [isLoadingAddress, setIsLoadingAddress] = useState(isEditing);
+
+  const [isSaving, setIsSaving] = useState(false);
 
   const { t } = useTranslation();
 
+  useEffect(() => {
+    if (isEditing && addressId) {
+      loadAddress(addressId);
+    }
+  }, [addressId, isEditing]);
+
+  async function loadAddress(currentAddressId: string) {
+    try {
+      setIsLoadingAddress(true);
+
+      const { data, error } = await getAddressById(currentAddressId);
+
+      if (error) {
+        console.error("Error loading address:", error);
+
+        Alert.alert(t("common.error"), t("addressForm.loadError"));
+
+        router.replace("/my-addresses" as never);
+        return;
+      }
+
+      if (!data) {
+        Alert.alert(t("common.error"), t("addressForm.notFound"));
+
+        router.replace("/my-addresses" as never);
+        return;
+      }
+
+      const address = data as AddressRecord;
+
+      setAddressLine(address.address_line ?? "");
+      setReference(address.reference ?? "");
+
+      if (
+        typeof address.latitude === "number" &&
+        typeof address.longitude === "number"
+      ) {
+        setCoordinates({
+          latitude: address.latitude,
+          longitude: address.longitude,
+        });
+      }
+    } catch (error) {
+      console.error("Unexpected error loading address:", error);
+
+      Alert.alert(t("common.error"), t("addressForm.loadError"));
+    } finally {
+      setIsLoadingAddress(false);
+    }
+  }
+
+  function handleLocationChange(selectedLocation: SelectedLocation) {
+    setAddressLine(selectedLocation.addressLine);
+
+    setCoordinates({
+      latitude: selectedLocation.latitude,
+      longitude: selectedLocation.longitude,
+    });
+  }
+
   async function handleSaveAddress() {
-    const trimmedLabel = label.trim();
-    const trimmedAddress = addressLine.trim();
+    const trimmedAddressLine = addressLine.trim();
     const trimmedReference = reference.trim();
 
-    if (!trimmedLabel) {
-      Alert.alert(
-        t("common.error"),
-        t("addressForm.nameRequired"),
-      );
-      return;
-    }
+    if (!coordinates || !trimmedAddressLine) {
+      Alert.alert(t("common.error"), t("addressForm.locationRequired"));
 
-    if (!trimmedAddress) {
-      Alert.alert(
-        t("common.error"),
-        t("addressForm.addressRequired"),
-      );
       return;
     }
 
     try {
-      setLoading(true);
+      setIsSaving(true);
 
-      const { error } = await createAddress({
-        label: trimmedLabel,
-        addressLine: trimmedAddress,
+      const addressInput = {
+        label: "Casa",
+        addressLine: trimmedAddressLine,
         reference: trimmedReference,
+        latitude: coordinates.latitude,
+        longitude: coordinates.longitude,
         isDefault: true,
-      });
+      };
 
-      if (error) {
-        Alert.alert(t("common.error"), error.message);
+      const result =
+        isEditing && addressId
+          ? await updateAddress(addressId, addressInput)
+          : await createAddress(addressInput);
+
+      if (result.error) {
+        console.error("Error saving address:", result.error);
+
+        Alert.alert(t("common.error"), result.error.message);
+
         return;
       }
 
       Alert.alert(
         t("addressForm.savedTitle"),
-        t("addressForm.savedMessage"),
+        isEditing
+          ? t("addressForm.updatedMessage")
+          : t("addressForm.savedMessage"),
       );
 
       router.replace("/my-addresses" as never);
     } catch (error) {
       console.error("Unexpected error saving address:", error);
 
-      Alert.alert(
-        t("common.error"),
-        t("addressForm.saveError"),
-      );
+      Alert.alert(t("common.error"), t("addressForm.saveError"));
     } finally {
-      setLoading(false);
+      setIsSaving(false);
     }
   }
 
   function handleBack() {
     router.replace("/my-addresses" as never);
+  }
+
+  if (isLoadingAddress) {
+    return (
+      <View style={styles.loadingScreen}>
+        <ActivityIndicator size="large" color={colors.primary} />
+
+        <Text style={styles.loadingText}>{t("addressForm.loading")}</Text>
+      </View>
+    );
   }
 
   return (
@@ -97,77 +203,62 @@ export default function MyAddressScreen() {
           style={styles.backButton}
           onPress={handleBack}
           hitSlop={10}
+          accessibilityRole="button"
+          accessibilityLabel={t("common.back")}
         >
-          <Text style={styles.back}>
-            ← {t("common.back")}
-          </Text>
+          <Text style={styles.back}>← {t("common.back")}</Text>
         </Pressable>
 
         <Text style={styles.title}>
-          {t("addressForm.title")}
+          {isEditing ? t("addressForm.editTitle") : t("addressForm.title")}
         </Text>
 
-        <Text style={styles.subtitle}>
-          {t("addressForm.subtitle")}
-        </Text>
-
-        <Text style={styles.label}>
-          {t("addressForm.labelName")}
-        </Text>
-
-        <TextInput
-          style={styles.input}
-          value={label}
-          onChangeText={setLabel}
-          placeholder={t("addressForm.placeholderLabel")}
-          placeholderTextColor={colors.muted}
-          returnKeyType="next"
+        <LocationPicker
+          initialLatitude={coordinates?.latitude}
+          initialLongitude={coordinates?.longitude}
+          initialAddressLine={addressLine}
+          onLocationChange={handleLocationChange}
         />
 
-        <Text style={styles.label}>
-          {t("addressForm.address")}
-        </Text>
-
-        <TextInput
-          style={styles.textArea}
-          value={addressLine}
-          onChangeText={setAddressLine}
-          placeholder={t("addressForm.placeholderAddress")}
-          placeholderTextColor={colors.muted}
-          multiline
-          textAlignVertical="top"
-          blurOnSubmit
-        />
-
-        <Text style={styles.label}>
-          {t("addressForm.reference")}
-        </Text>
+        <Text style={styles.label}>{t("addressForm.additionalNotes")}</Text>
 
         <TextInput
           style={styles.textArea}
           value={reference}
           onChangeText={setReference}
-          placeholder={t("addressForm.placeholderReference")}
+          placeholder={t("addressForm.additionalNotesPlaceholder")}
           placeholderTextColor={colors.muted}
           multiline
           textAlignVertical="top"
           returnKeyType="done"
           blurOnSubmit
+          maxLength={300}
         />
+
+        <Text style={styles.characterCount}>{reference.length}/300</Text>
 
         <Pressable
           style={[
             styles.button,
-            loading && styles.buttonDisabled,
+            (!coordinates || isSaving) && styles.buttonDisabled,
           ]}
           onPress={handleSaveAddress}
-          disabled={loading}
+          disabled={!coordinates || isSaving}
+          accessibilityRole="button"
         >
-          <Text style={styles.buttonText}>
-            {loading
-              ? t("addressForm.saving")
-              : t("addressForm.save")}
-          </Text>
+          {isSaving ? (
+            <ActivityIndicator size="small" color={colors.white} />
+          ) : (
+            <>
+              <Ionicons
+                name="checkmark-circle-outline"
+                size={22}
+                color={colors.white}
+              />
+
+              <Text style={styles.buttonText}>{t("addressForm.save")}</Text>
+            </>
+          )}
         </Pressable>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -192,6 +283,19 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
 
+  loadingScreen: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.white,
+  },
+
+  loadingText: {
+    marginTop: 12,
+    fontSize: 15,
+    color: colors.muted,
+  },
+
   backButton: {
     alignSelf: "flex-start",
   },
@@ -205,46 +309,37 @@ const styles = StyleSheet.create({
   title: {
     marginTop: 24,
     fontSize: 32,
+    lineHeight: 39,
     fontWeight: "900",
     color: colors.primary,
   },
 
-  subtitle: {
-    marginTop: 12,
-    fontSize: 16,
-    lineHeight: 24,
-    color: colors.muted,
-  },
-
   label: {
-    marginTop: 22,
+    marginTop: 24,
     marginBottom: 8,
     fontSize: 14,
     fontWeight: "900",
     color: colors.dark,
   },
 
-  input: {
-    height: 54,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    fontSize: 16,
-    color: colors.dark,
-    backgroundColor: colors.white,
-  },
-
   textArea: {
-    minHeight: 92,
+    minHeight: 112,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 16,
     padding: 16,
     fontSize: 16,
+    lineHeight: 23,
     color: colors.dark,
     backgroundColor: colors.white,
     textAlignVertical: "top",
+  },
+
+  characterCount: {
+    marginTop: 6,
+    textAlign: "right",
+    fontSize: 12,
+    color: colors.muted,
   },
 
   button: {
@@ -252,12 +347,14 @@ const styles = StyleSheet.create({
     height: 58,
     borderRadius: 16,
     backgroundColor: colors.primary,
+    flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
+    gap: 9,
   },
 
   buttonDisabled: {
-    opacity: 0.7,
+    opacity: 0.55,
   },
 
   buttonText: {

@@ -1,12 +1,13 @@
-import { supabase } from "@/lib/supabase";
-import { QuoteOrchestrator } from "@/business/quoteEngine/quoteOrchestrator";
 import { QuoteInput } from "@/business/quoteEngine/models";
+import { QuoteOrchestrator } from "@/business/quoteEngine/quoteOrchestrator";
+import { supabase } from "@/lib/supabase";
 
 export async function generateAutomaticQuote(input: QuoteInput) {
   try {
     const orchestrator = new QuoteOrchestrator();
 
     const quote = await orchestrator.generateQuote(input);
+
     const { data, error } = await supabase
       .from("quotes")
       .insert({
@@ -16,9 +17,14 @@ export async function generateAutomaticQuote(input: QuoteInput) {
         zone: quote.zone,
         estimated_distance_km: quote.estimatedDistanceKm,
 
-        subtotal: quote.subtotal,
+        service_fee: quote.serviceFee,
         delivery_fee: quote.deliveryFee,
+        commission: quote.commission,
+        surcharges: quote.surcharges,
+        subtotal: quote.subtotal,
         total: quote.total,
+
+        currency: quote.currency,
 
         quote_source: quote.quoteSource,
         calculation_version: quote.calculationVersion,
@@ -31,9 +37,27 @@ export async function generateAutomaticQuote(input: QuoteInput) {
       .select()
       .single();
 
-    return { data, error };
+    if (error) {
+      console.error(
+        "Automatic quote insert failed:",
+        error,
+      );
+
+      return {
+        data: null,
+        error,
+      };
+    }
+
+    return {
+      data,
+      error: null,
+    };
   } catch (error) {
-    console.error("Automatic quote generation failed:", error);
+    console.error(
+      "Automatic quote generation failed:",
+      error,
+    );
 
     return {
       data: null,

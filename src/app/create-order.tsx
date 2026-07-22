@@ -18,6 +18,7 @@ import { useTranslation } from "../i18n/useTranslation";
 import { getMyAddresses } from "../services/addressService";
 import { createOrder } from "../services/orderService";
 import { colors } from "../styles/theme";
+import { businessConfig, SupportedCurrency } from "@/constants/businessConfig";
 
 type ServiceTranslationKey =
   | "createOrder.supermarket"
@@ -78,22 +79,12 @@ export default function CreateOrderScreen() {
 
   const { t, language } = useTranslation();
 
+  const selectedCurrency: SupportedCurrency = language === "es" ? "CRC" : "USD";
+
   const purchaseLimits =
-    language === "es"
-      ? {
-          minimum: 5000,
-          maximum: 50000,
-          step: 1000,
-          currency: "CRC",
-          locale: "es-CR",
-        }
-      : {
-          minimum: 10,
-          maximum: 100,
-          step: 5,
-          currency: "USD",
-          locale: "en-US",
-        };
+    selectedCurrency === "CRC"
+      ? businessConfig.purchase.crc
+      : businessConfig.purchase.usd;
 
   const [estimatedPurchaseAmount, setEstimatedPurchaseAmount] = useState(
     language === "es" ? 5000 : 10,
@@ -210,10 +201,17 @@ export default function CreateOrderScreen() {
     try {
       setLoading(true);
 
+      console.warn("ORDER CURRENCY DEBUG:", {
+        language,
+        selectedCurrency,
+        selectedServiceType,
+        estimatedPurchaseAmount,
+      });
       const { error } = await createOrder({
         description: trimmedDescription,
         addressId: selectedAddressId,
         serviceType: selectedServiceType,
+        currency: selectedCurrency,
 
         courierWeight:
           selectedServiceType === "GENERAL_MESSAGING"
@@ -243,7 +241,7 @@ export default function CreateOrderScreen() {
       setDescription("");
       setSelectedServiceType(null);
       setCourierWeight("LIGHT");
-      setEstimatedPurchaseAmount(10);
+      setEstimatedPurchaseAmount(purchaseLimits.minimum);
       setFoodOrderPaid(null);
 
       router.replace("/orders" as never);
@@ -561,11 +559,21 @@ export default function CreateOrderScreen() {
 
               <View style={styles.sliderLabels}>
                 <Text style={styles.sliderLabel}>
-                  {t("createOrder.minimumPurchaseAmount")} $10
+                  {t("createOrder.minimumPurchaseAmount")}{" "}
+                  {formatCurrency(
+                    purchaseLimits.minimum,
+                    purchaseLimits.locale,
+                    purchaseLimits.currency,
+                  )}
                 </Text>
 
                 <Text style={styles.sliderLabel}>
-                  {t("createOrder.maximumPurchaseAmount")} $100
+                  {t("createOrder.maximumPurchaseAmount")}{" "}
+                  {formatCurrency(
+                    purchaseLimits.maximum,
+                    purchaseLimits.locale,
+                    purchaseLimits.currency,
+                  )}
                 </Text>
               </View>
             </View>
@@ -909,17 +917,17 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
 
- sliderLabels: {
-  flexDirection: "row",
-  alignItems: "center",
-  justifyContent: "space-between",
-},
+  sliderLabels: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
 
   sliderLabel: {
-  fontSize: 11,
-  fontWeight: "700",
-  color: colors.muted,
-},
+    fontSize: 11,
+    fontWeight: "700",
+    color: colors.muted,
+  },
   option: {
     minHeight: 58,
     borderWidth: 1,

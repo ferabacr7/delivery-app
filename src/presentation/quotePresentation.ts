@@ -43,6 +43,7 @@ type QuoteLike = {
   subtotal?: number | string | null;
   delivery_fee?: number | string | null;
   total?: number | string | null;
+  currency?: "CRC" | "USD" | null;
   notes?: string | null;
   status?: string | null;
 };
@@ -139,22 +140,22 @@ function getStatusTone(status: QuoteStatusType): QuoteStatusTone {
   }
 }
 
-function formatMoney(value?: number | string | null): string {
+function formatMoney(
+  value: number | string | null | undefined,
+  currency: "CRC" | "USD",
+): string {
   const numericValue = Number(value ?? 0);
 
-  if (!Number.isFinite(numericValue)) {
-    return new Intl.NumberFormat("es-CR", {
-      style: "currency",
-      currency: "CRC",
-      maximumFractionDigits: 0,
-    }).format(0);
-  }
+  const safeValue = Number.isFinite(numericValue) ? numericValue : 0;
 
-  return new Intl.NumberFormat("es-CR", {
+  const locale = currency === "USD" ? "en-US" : "es-CR";
+
+  return new Intl.NumberFormat(locale, {
     style: "currency",
-    currency: "CRC",
-    maximumFractionDigits: 0,
-  }).format(numericValue);
+    currency,
+    minimumFractionDigits: currency === "USD" ? 2 : 0,
+    maximumFractionDigits: currency === "USD" ? 2 : 0,
+  }).format(safeValue);
 }
 
 function buildMapUrls(
@@ -197,6 +198,12 @@ export function buildQuoteViewModel({
 }: BuildQuoteViewModelInput): QuoteViewModel {
   const labels = quoteLabels[language];
 
+  console.warn("BUILD QUOTE VIEW MODEL:", {
+  language,
+  quoteCurrency: quote?.currency,
+  quote,
+});
+
   const statusType = normalizeStatus(quote?.status);
 
   const statusTone = getStatusTone(statusType);
@@ -212,6 +219,8 @@ export function buildQuoteViewModel({
     labels.serviceTypes[
       normalizedServiceType as keyof typeof labels.serviceTypes
     ] ?? labels.unknownServiceType;
+
+  const currency: "CRC" | "USD" = quote?.currency === "USD" ? "USD" : "CRC";
 
   return {
     orderNumber: order.id?.slice(-6).toUpperCase() ?? "------",
@@ -263,15 +272,15 @@ export function buildQuoteViewModel({
      */
     pricing: {
       title: labels.pricingTitle,
+
       subtotalLabel: labels.subtotal,
-      subtotal: formatMoney(quote?.subtotal),
+      subtotal: formatMoney(quote?.subtotal, currency),
 
       deliveryFeeLabel: labels.deliveryFee,
-
-      deliveryFee: formatMoney(quote?.delivery_fee),
+      deliveryFee: formatMoney(quote?.delivery_fee, currency),
 
       totalLabel: labels.total,
-      total: formatMoney(quote?.total),
+      total: formatMoney(quote?.total, currency),
     },
 
     purchaseValidation: {

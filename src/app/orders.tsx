@@ -6,7 +6,9 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextStyle,
   View,
+  ViewStyle,
 } from "react-native";
 
 import AppHeader from "../components/ui/AppHeader";
@@ -21,8 +23,30 @@ import {
 import { useTranslation } from "../i18n/useTranslation";
 import { getMyOrders } from "../services/orderService";
 
+type OrderStatus =
+  | "VALIDATION"
+  | "QUOTED"
+  | "ACCEPTED"
+  | "IN_PROGRESS"
+  | "ON_ROUTE"
+  | "DELIVERED"
+  | "REJECTED"
+  | "CANCELLED";
+
+type OrderRecord = {
+  id: string;
+  description: string;
+  status: OrderStatus | string;
+  created_at: string;
+};
+
+type StatusStyle = {
+  container: ViewStyle;
+  text: TextStyle;
+};
+
 export default function OrdersScreen() {
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
   const { t } = useTranslation();
@@ -44,37 +68,148 @@ export default function OrdersScreen() {
         return;
       }
 
-      setOrders(data ?? []);
+      setOrders((data ?? []) as OrderRecord[]);
     } catch (error) {
-      console.error("Unexpected error loading orders:", error);
+      console.error(
+        "Unexpected error loading orders:",
+        error,
+      );
     } finally {
       setLoading(false);
     }
   }
 
-  function getStatusLabel(status: string) {
-    const normalizedStatus = status?.toLowerCase();
+  function normalizeStatus(status?: string): OrderStatus {
+    const normalizedStatus =
+      status?.trim().toUpperCase();
 
-    if (normalizedStatus === "accepted") {
-      return t("orders.accepted");
+    switch (normalizedStatus) {
+      case "VALIDATION":
+      case "QUOTED":
+      case "ACCEPTED":
+      case "IN_PROGRESS":
+      case "ON_ROUTE":
+      case "DELIVERED":
+      case "REJECTED":
+      case "CANCELLED":
+        return normalizedStatus;
+
+      /*
+       * Compatibilidad temporal con datos antiguos.
+       */
+      case "PENDING":
+        return "VALIDATION";
+
+      default:
+        return "VALIDATION";
     }
+  }
 
-    if (normalizedStatus === "rejected") {
-      return t("orders.rejected");
+  function getStatusLabel(status?: string) {
+    const normalizedStatus =
+      normalizeStatus(status);
+
+    switch (normalizedStatus) {
+      case "VALIDATION":
+        return t("orderStatus.validation");
+
+      case "QUOTED":
+        return t("orderStatus.quoted");
+
+      case "ACCEPTED":
+        return t("orderStatus.accepted");
+
+      case "IN_PROGRESS":
+        return t("orderStatus.inProgress");
+
+      case "ON_ROUTE":
+        return t("orderStatus.onRoute");
+
+      case "DELIVERED":
+        return t("orderStatus.delivered");
+
+      case "REJECTED":
+        return t("orderStatus.rejected");
+
+      case "CANCELLED":
+        return t("orderStatus.cancelled");
+
+      default:
+        return t("orderStatus.validation");
     }
+  }
 
-    if (normalizedStatus === "pending") {
-      return t("orders.pending");
+  function getStatusStyle(
+    status?: string,
+  ): StatusStyle {
+    const normalizedStatus =
+      normalizeStatus(status);
+
+    switch (normalizedStatus) {
+      case "VALIDATION":
+        return {
+          container: styles.statusValidation,
+          text: styles.statusValidationText,
+        };
+
+      case "QUOTED":
+        return {
+          container: styles.statusQuoted,
+          text: styles.statusQuotedText,
+        };
+
+      case "ACCEPTED":
+        return {
+          container: styles.statusAccepted,
+          text: styles.statusAcceptedText,
+        };
+
+      case "IN_PROGRESS":
+        return {
+          container: styles.statusInProgress,
+          text: styles.statusInProgressText,
+        };
+
+      case "ON_ROUTE":
+        return {
+          container: styles.statusOnRoute,
+          text: styles.statusOnRouteText,
+        };
+
+      case "DELIVERED":
+        return {
+          container: styles.statusDelivered,
+          text: styles.statusDeliveredText,
+        };
+
+      case "REJECTED":
+        return {
+          container: styles.statusRejected,
+          text: styles.statusRejectedText,
+        };
+
+      case "CANCELLED":
+        return {
+          container: styles.statusCancelled,
+          text: styles.statusCancelledText,
+        };
+
+      default:
+        return {
+          container: styles.statusValidation,
+          text: styles.statusValidationText,
+        };
     }
-
-    return status;
   }
 
   if (loading) {
     return (
       <View style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.brand} />
+          <ActivityIndicator
+            size="large"
+            color={colors.brand}
+          />
 
           <Text style={styles.loadingText}>
             {t("common.loading")}
@@ -96,7 +231,9 @@ export default function OrdersScreen() {
           title={t("orders.title")}
           showBackButton
           backLabel={t("common.back")}
-          onBack={() => router.replace("/" as never)}
+          onBack={() =>
+            router.replace("/" as never)
+          }
         />
 
         <View style={styles.content}>
@@ -108,50 +245,80 @@ export default function OrdersScreen() {
 
               <Pressable
                 style={styles.emptyButton}
-                onPress={() => router.push("/create-order" as never)}
+                onPress={() =>
+                  router.push(
+                    "/create-order" as never,
+                  )
+                }
               >
-                <Text style={styles.emptyButtonText}>
+                <Text
+                  style={styles.emptyButtonText}
+                >
                   {t("orders.firstOrder")}
                 </Text>
               </Pressable>
             </View>
           ) : (
-            orders.map((order) => (
-              <Pressable
-                key={order.id}
-                style={styles.card}
-                onPress={() =>
-                  router.push({
-                    pathname: "/order-detail",
-                    params: {
-                      orderId: order.id,
-                    },
-                  } as never)
-                }
-              >
-                <View style={styles.cardHeader}>
-                  <Text style={styles.orderId}>
-                    {t("orders.order")} #
-                    {order.id.slice(-6).toUpperCase()}
-                  </Text>
+            orders.map((order) => {
+              const statusStyle =
+                getStatusStyle(order.status);
 
-                  <Text style={styles.status}>
-                    {getStatusLabel(order.status)}
-                  </Text>
-                </View>
-
-                <Text
-                  style={styles.description}
-                  numberOfLines={3}
+              return (
+                <Pressable
+                  key={order.id}
+                  style={styles.card}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/order-detail",
+                      params: {
+                        orderId: order.id,
+                      },
+                    } as never)
+                  }
                 >
-                  {order.description}
-                </Text>
+                  <View style={styles.cardHeader}>
+                    <Text style={styles.orderId}>
+                      {t("orders.order")} #
+                      {order.id
+                        .slice(-6)
+                        .toUpperCase()}
+                    </Text>
 
-                <Text style={styles.time}>
-                  {new Date(order.created_at).toLocaleString()}
-                </Text>
-              </Pressable>
-            ))
+                    <View
+                      style={[
+                        styles.statusBadge,
+                        statusStyle.container,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.statusText,
+                          statusStyle.text,
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {getStatusLabel(
+                          order.status,
+                        )}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <Text
+                    style={styles.description}
+                    numberOfLines={3}
+                  >
+                    {order.description}
+                  </Text>
+
+                  <Text style={styles.time}>
+                    {new Date(
+                      order.created_at,
+                    ).toLocaleString()}
+                  </Text>
+                </Pressable>
+              );
+            })
           )}
         </View>
       </ScrollView>
@@ -164,8 +331,8 @@ export default function OrdersScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
     position: "relative",
+    backgroundColor: colors.background,
   },
 
   scrollContent: {
@@ -199,43 +366,43 @@ const styles = StyleSheet.create({
   },
 
   emptyState: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.xl,
     padding: spacing.xl,
     borderWidth: 1,
     borderColor: colors.border,
+    borderRadius: radius.xl,
+    backgroundColor: colors.surface,
     ...shadows.sm,
   },
 
   emptyText: {
     ...typography.body,
-    color: colors.textMuted,
     marginBottom: spacing.md,
+    color: colors.textMuted,
   },
 
   emptyButton: {
     minHeight: 52,
-    backgroundColor: colors.brand,
+    alignItems: "center",
+    justifyContent: "center",
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     borderRadius: radius.lg,
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: colors.brand,
   },
 
   emptyButtonText: {
     ...typography.button,
-    color: colors.textInverse,
     textAlign: "center",
+    color: colors.textInverse,
   },
 
   card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.xl,
     padding: spacing.lg,
     marginBottom: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
+    borderRadius: radius.xl,
+    backgroundColor: colors.surface,
     ...shadows.sm,
   },
 
@@ -256,8 +423,8 @@ const styles = StyleSheet.create({
   description: {
     ...typography.body,
     marginTop: spacing.sm,
-    color: colors.text,
     fontWeight: "600",
+    color: colors.text,
   },
 
   time: {
@@ -266,16 +433,83 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
   },
 
-  status: {
-    backgroundColor: colors.brandSoft,
-    color: colors.brandDark,
+  statusBadge: {
+    maxWidth: 135,
+    minHeight: 28,
+    alignItems: "center",
+    justifyContent: "center",
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     borderRadius: radius.pill,
-    fontWeight: "700",
+  },
+
+  statusText: {
     fontSize: 12,
-    maxWidth: 120,
+    fontWeight: "800",
     textAlign: "center",
-    overflow: "hidden",
+  },
+
+  statusValidation: {
+    backgroundColor: "#FEF3C7",
+  },
+
+  statusValidationText: {
+    color: "#92400E",
+  },
+
+  statusQuoted: {
+    backgroundColor: "#EDE9FE",
+  },
+
+  statusQuotedText: {
+    color: "#6D28D9",
+  },
+
+  statusAccepted: {
+    backgroundColor: colors.brandSoft,
+  },
+
+  statusAcceptedText: {
+    color: colors.brandDark,
+  },
+
+  statusInProgress: {
+    backgroundColor: "#FFEDD5",
+  },
+
+  statusInProgressText: {
+    color: "#C2410C",
+  },
+
+  statusOnRoute: {
+    backgroundColor: "#DBEAFE",
+  },
+
+  statusOnRouteText: {
+    color: "#1D4ED8",
+  },
+
+  statusDelivered: {
+    backgroundColor: "#DCFCE7",
+  },
+
+  statusDeliveredText: {
+    color: "#166534",
+  },
+
+  statusRejected: {
+    backgroundColor: "#FEE2E2",
+  },
+
+  statusRejectedText: {
+    color: "#B91C1C",
+  },
+
+  statusCancelled: {
+    backgroundColor: "#F3F4F6",
+  },
+
+  statusCancelledText: {
+    color: "#4B5563",
   },
 });

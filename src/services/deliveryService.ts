@@ -22,11 +22,15 @@ export type DeliveryRow = {
 
 function validateId(id: string, fieldName: string) {
   if (!id.trim()) {
-    throw new Error(`A valid ${fieldName} is required`);
+    throw new Error(
+      `A valid ${fieldName} is required`,
+    );
   }
 }
 
-export async function getDeliveryById(deliveryId: string) {
+export async function getDeliveryById(
+  deliveryId: string,
+) {
   validateId(deliveryId, "deliveryId");
 
   const { data, error } = await supabase
@@ -41,7 +45,9 @@ export async function getDeliveryById(deliveryId: string) {
   };
 }
 
-export async function getDeliveryByOrderId(orderId: string) {
+export async function getDeliveryByOrderId(
+  orderId: string,
+) {
   validateId(orderId, "orderId");
 
   const { data, error } = await supabase
@@ -56,11 +62,15 @@ export async function getDeliveryByOrderId(orderId: string) {
   };
 }
 
-export async function createDeliveryForOrder(orderId: string) {
+export async function createDeliveryForOrder(
+  orderId: string,
+) {
   validateId(orderId, "orderId");
 
-  const { data: existingDelivery, error: existingDeliveryError } =
-    await getDeliveryByOrderId(orderId);
+  const {
+    data: existingDelivery,
+    error: existingDeliveryError,
+  } = await getDeliveryByOrderId(orderId);
 
   if (existingDeliveryError) {
     return {
@@ -94,18 +104,28 @@ export async function createDeliveryForOrder(orderId: string) {
   };
 }
 
-export async function startDelivery(deliveryId: string) {
+export async function startDelivery(
+  deliveryId: string,
+) {
   validateId(deliveryId, "deliveryId");
 
-  const { data: currentDelivery, error: readError } = await supabase
+  /*
+   * Primero obtenemos la entrega actual para conocer
+   * su estado y el order_id relacionado.
+   */
+  const {
+    data: currentDelivery,
+    error: readError,
+  } = await supabase
     .from("deliveries")
     .select("*")
     .eq("id", deliveryId)
     .maybeSingle();
 
-  console.log("START DELIVERY CURRENT ROW:", currentDelivery);
-
-  console.log("START DELIVERY EXPECTED STATUS:", DELIVERY_STATUS.PENDING);
+  console.log(
+    "START DELIVERY CURRENT ROW:",
+    currentDelivery,
+  );
 
   if (readError) {
     return {
@@ -117,13 +137,21 @@ export async function startDelivery(deliveryId: string) {
   if (!currentDelivery) {
     return {
       data: null,
-      error: new Error("No se encontró la entrega."),
+      error: new Error(
+        "No se encontró la entrega.",
+      ),
     };
   }
 
-  const currentStatus = String(currentDelivery.status).trim().toUpperCase();
+  const currentStatus = String(
+    currentDelivery.status,
+  )
+    .trim()
+    .toUpperCase();
 
-  if (currentStatus !== DELIVERY_STATUS.PENDING) {
+  if (
+    currentStatus !== DELIVERY_STATUS.PENDING
+  ) {
     return {
       data: null,
       error: new Error(
@@ -134,7 +162,14 @@ export async function startDelivery(deliveryId: string) {
 
   const now = new Date().toISOString();
 
-  const { data, error } = await supabase
+  /*
+   * Paso 1: cambiar deliveries.status
+   * de PENDING a IN_PROGRESS.
+   */
+  const {
+    data: updatedDelivery,
+    error: deliveryUpdateError,
+  } = await supabase
     .from("deliveries")
     .update({
       status: DELIVERY_STATUS.IN_PROGRESS,
@@ -142,18 +177,96 @@ export async function startDelivery(deliveryId: string) {
       updated_at: now,
     })
     .eq("id", deliveryId)
+    .eq("status", DELIVERY_STATUS.PENDING)
     .select()
-    .single();
+    .maybeSingle();
 
-  console.log("START DELIVERY UPDATED ROW:", data);
+  if (deliveryUpdateError) {
+    return {
+      data: null,
+      error: deliveryUpdateError,
+    };
+  }
+
+  if (!updatedDelivery) {
+    return {
+      data: null,
+      error: new Error(
+        "La entrega ya no está disponible para iniciarse.",
+      ),
+    };
+  }
+
+  /*
+   * Paso 2: sincronizar orders.status.
+   */
+  const { error: orderUpdateError } =
+    await supabase
+      .from("orders")
+      .update({
+        status: "IN_PROGRESS",
+        updated_at: now,
+      })
+      .eq("id", updatedDelivery.order_id);
+
+  if (orderUpdateError) {
+    console.error(
+      "START DELIVERY ORDER UPDATE ERROR:",
+      orderUpdateError,
+    );
+
+    /*
+     * Si falla la actualización del pedido,
+     * intentamos devolver la entrega a PENDING
+     * para evitar estados desincronizados.
+     */
+    const { error: rollbackError } =
+      await supabase
+        .from("deliveries")
+        .update({
+          status: DELIVERY_STATUS.PENDING,
+          started_at: null,
+          updated_at:
+            new Date().toISOString(),
+        })
+        .eq("id", deliveryId)
+        .eq(
+          "status",
+          DELIVERY_STATUS.IN_PROGRESS,
+        );
+
+    if (rollbackError) {
+      console.error(
+        "START DELIVERY ROLLBACK ERROR:",
+        rollbackError,
+      );
+    }
+
+    return {
+      data: null,
+      error: orderUpdateError,
+    };
+  }
+
+  console.log(
+    "START DELIVERY UPDATED ROW:",
+    updatedDelivery,
+  );
+
+  console.log(
+    "START DELIVERY ORDER STATUS:",
+    "IN_PROGRESS",
+  );
 
   return {
-    data: data as DeliveryRow | null,
-    error,
+    data: updatedDelivery as DeliveryRow,
+    error: null,
   };
 }
 
-export async function completeDelivery(deliveryId: string) {
+export async function completeDelivery(
+  deliveryId: string,
+) {
   validateId(deliveryId, "deliveryId");
 
   const now = new Date().toISOString();
@@ -166,7 +279,10 @@ export async function completeDelivery(deliveryId: string) {
       updated_at: now,
     })
     .eq("id", deliveryId)
-    .eq("status", DELIVERY_STATUS.IN_PROGRESS)
+    .eq(
+      "status",
+      DELIVERY_STATUS.IN_PROGRESS,
+    )
     .select()
     .maybeSingle();
 
@@ -176,7 +292,9 @@ export async function completeDelivery(deliveryId: string) {
   };
 }
 
-export async function cancelDelivery(deliveryId: string) {
+export async function cancelDelivery(
+  deliveryId: string,
+) {
   validateId(deliveryId, "deliveryId");
 
   const now = new Date().toISOString();
@@ -188,7 +306,10 @@ export async function cancelDelivery(deliveryId: string) {
       updated_at: now,
     })
     .eq("id", deliveryId)
-    .neq("status", DELIVERY_STATUS.DELIVERED)
+    .neq(
+      "status",
+      DELIVERY_STATUS.DELIVERED,
+    )
     .select()
     .maybeSingle();
 

@@ -1,7 +1,10 @@
 import {
-  CourierWeight,
-  ServiceType,
-} from "@/business/quoteEngine/models";
+  BASE_CURRENCY,
+  isValidPurchaseAmount,
+  SupportedCurrency,
+} from "@/constants/businessConfig";
+
+import { CourierWeight, ServiceType } from "@/business/quoteEngine/models";
 
 import { supabase } from "../lib/supabase";
 import { getAddressById } from "./addressService";
@@ -9,12 +12,8 @@ import { generateAutomaticQuote } from "./quoteEngineService";
 
 const ORDER_STATUS_VALIDATION = "VALIDATION";
 
-const MIN_ESTIMATED_PURCHASE_AMOUNT = 10;
-const MAX_ESTIMATED_PURCHASE_AMOUNT = 100;
-
 async function getAuthenticatedUser() {
-  const { data: sessionData, error } =
-    await supabase.auth.getSession();
+  const { data: sessionData, error } = await supabase.auth.getSession();
 
   if (error) {
     return {
@@ -43,16 +42,16 @@ type CreateOrderInput = {
   addressId: string;
   serviceType: ServiceType;
 
+  currency?: SupportedCurrency;
   courierWeight?: CourierWeight;
   estimatedPurchaseAmount?: number;
   foodOrderPaid?: boolean;
 };
 
-export async function createOrder(
-  input: CreateOrderInput,
-) {
-  const { user, error: authError } =
-    await getAuthenticatedUser();
+export async function createOrder(input: CreateOrderInput) {
+  console.warn("CREATE ORDER INPUT:", input);
+
+  const { user, error: authError } = await getAuthenticatedUser();
 
   if (authError || !user) {
     return {
@@ -61,15 +60,12 @@ export async function createOrder(
     };
   }
 
-  if (
-    input.serviceType === "GENERAL_MESSAGING" &&
-    !input.courierWeight
-  ) {
+  const currency = input.currency ?? BASE_CURRENCY;
+
+  if (input.serviceType === "GENERAL_MESSAGING" && !input.courierWeight) {
     return {
       data: null,
-      error: new Error(
-        "Debe seleccionar el peso aproximado de la mensajería.",
-      ),
+      error: new Error("Debe seleccionar el peso aproximado de la mensajería."),
     };
   }
 
@@ -79,17 +75,14 @@ export async function createOrder(
   ) {
     return {
       data: null,
-      error: new Error(
-        "Debe indicar si el pedido de comida ya fue pagado.",
-      ),
+      error: new Error("Debe indicar si el pedido de comida ya fue pagado."),
     };
   }
 
   const requiresEstimatedPurchaseAmount =
     input.serviceType === "SUPERMARKET" ||
     input.serviceType === "PHARMACY" ||
-    (input.serviceType === "FOOD_PICKUP" &&
-      input.foodOrderPaid === false);
+    (input.serviceType === "FOOD_PICKUP" && input.foodOrderPaid === false);
 
   if (
     requiresEstimatedPurchaseAmount &&
@@ -97,27 +90,18 @@ export async function createOrder(
   ) {
     return {
       data: null,
-      error: new Error(
-        "Debe indicar el monto estimado de la compra.",
-      ),
+      error: new Error("Debe indicar el monto estimado de la compra."),
     };
   }
 
   if (
     requiresEstimatedPurchaseAmount &&
     input.estimatedPurchaseAmount !== undefined &&
-    (
-      input.estimatedPurchaseAmount <
-        MIN_ESTIMATED_PURCHASE_AMOUNT ||
-      input.estimatedPurchaseAmount >
-        MAX_ESTIMATED_PURCHASE_AMOUNT
-    )
+    !isValidPurchaseAmount(input.estimatedPurchaseAmount, currency)
   ) {
     return {
       data: null,
-      error: new Error(
-        `El monto estimado debe estar entre $${MIN_ESTIMATED_PURCHASE_AMOUNT} y $${MAX_ESTIMATED_PURCHASE_AMOUNT}.`,
-      ),
+      error: new Error("El monto estimado está fuera del rango permitido."),
     };
   }
 
@@ -131,18 +115,19 @@ export async function createOrder(
 
       courier_weight:
         input.serviceType === "GENERAL_MESSAGING"
-          ? input.courierWeight ?? null
+          ? (input.courierWeight ?? null)
           : null,
 
-      estimated_purchase_amount:
-        requiresEstimatedPurchaseAmount
-          ? input.estimatedPurchaseAmount ?? null
-          : null,
+      estimated_purchase_amount: requiresEstimatedPurchaseAmount
+        ? (input.estimatedPurchaseAmount ?? null)
+        : null,
+
+      estimated_purchase_currency: requiresEstimatedPurchaseAmount
+        ? currency
+        : null,
 
       food_order_paid:
-        input.serviceType === "FOOD_PICKUP"
-          ? input.foodOrderPaid
-          : null,
+        input.serviceType === "FOOD_PICKUP" ? input.foodOrderPaid : null,
 
       status: ORDER_STATUS_VALIDATION,
     })
@@ -158,8 +143,9 @@ export async function createOrder(
 
   console.log("ORDER CREATED:", data);
 
-  const { data: address, error: addressError } =
-    await getAddressById(input.addressId);
+  const { data: address, error: addressError } = await getAddressById(
+    input.addressId,
+  );
 
   console.log("ADDRESS FOUND:", address);
   console.log("ADDRESS ERROR:", addressError);
@@ -168,66 +154,64 @@ export async function createOrder(
     return {
       data,
       error:
-        addressError ??
-        new Error(
-          "No se encontró la dirección del pedido.",
-        ),
+        addressError ?? new Error("No se encontró la dirección del pedido."),
     };
   }
 
-  const serviceType =
-    data.service_type as ServiceType;
+  const serviceType = data.service_type as ServiceType;
 
-  const locationText = [
-    address.address_line,
-    address.reference,
-    address.label,
-  ]
+  const locationText = [address.address_line, address.reference, address.label]
     .filter(Boolean)
     .join(" ");
 
-  console.log(
-    "LOCATION RECEIVED:",
+  console.log("LOCATION RECEIVED:", locationText);
+
+  console.log("COURIER WEIGHT RECEIVED:", input.courierWeight);
+
+  const latitude = Number(address.latitude);
+  const longitude = Number(address.longitude);
+
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    return {
+      data,
+      error: new Error(
+        "La dirección seleccionada no tiene coordenadas válidas.",
+      ),
+    };
+  }
+
+  console.log("ORDER COORDINATES:", {
+    latitude,
+    longitude,
+  });
+
+  const quoteResult = await generateAutomaticQuote({
+    orderId: data.id,
+    description: data.description,
+    serviceType,
+    currency,
+
+    latitude,
+    longitude,
+
+    // Se conserva únicamente como referencia descriptiva.
     locationText,
-  );
 
-  console.log(
-    "COURIER WEIGHT RECEIVED:",
-    input.courierWeight,
-  );
+    courierWeight:
+      serviceType === "GENERAL_MESSAGING" ? input.courierWeight : undefined,
+  });
 
-  const quoteResult =
-    await generateAutomaticQuote({
-      orderId: data.id,
-      description: data.description,
-      serviceType,
-      locationText,
-
-      courierWeight:
-        serviceType === "GENERAL_MESSAGING"
-          ? input.courierWeight
-          : undefined,
-    });
-
-  console.log(
-    "AUTOMATIC QUOTE RESULT:",
-    quoteResult,
-  );
+  console.log("AUTOMATIC QUOTE RESULT:", quoteResult);
 
   if (quoteResult.error) {
-    console.error(
-      "Quote generation failed:",
-      quoteResult.error,
-    );
+    console.error("Quote generation failed:", quoteResult.error);
 
     return {
       data,
       error:
         quoteResult.error instanceof Error
           ? quoteResult.error
-          : new Error(
-              "No se pudo generar la cotización automática.",
-            ),
+          : new Error("No se pudo generar la cotización automática."),
     };
   }
 
@@ -238,8 +222,7 @@ export async function createOrder(
 }
 
 export async function getMyOrders() {
-  const { user, error: authError } =
-    await getAuthenticatedUser();
+  const { user, error: authError } = await getAuthenticatedUser();
 
   if (authError || !user) {
     return {
@@ -262,11 +245,8 @@ export async function getMyOrders() {
   };
 }
 
-export async function getOrderById(
-  orderId: string,
-) {
-  const { user, error: authError } =
-    await getAuthenticatedUser();
+export async function getOrderById(orderId: string) {
+  const { user, error: authError } = await getAuthenticatedUser();
 
   if (authError || !user) {
     return {

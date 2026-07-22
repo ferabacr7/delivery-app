@@ -12,12 +12,28 @@ export const quoteLabels = {
 
     serviceTitle: "Servicio solicitado",
     locationTitle: "Dirección de entrega",
-    pricingTitle: "Resumen del pago",
+
+    /*
+     * Esta sección representa únicamente
+     * lo que cobra Delivery App.
+     */
+    pricingTitle: "Detalle del servicio",
+
     customerMessageTitle: "Mensaje para el cliente",
 
-    subtotal: "Subtotal",
+    subtotal: "Tarifa base",
     deliveryFee: "Costo de entrega",
-    total: "Total",
+    total: "Total del servicio",
+
+    purchaseValidationTitle: "Referencia de compra",
+    estimatedPurchaseAmount: "Monto estimado de compra",
+
+    purchaseValidationHelper:
+      "Este monto se utiliza únicamente para validar que el pedido se encuentre dentro del límite permitido. No forma parte del total del servicio de entrega.",
+
+    paymentStatusLabel: "Estado del pago del restaurante",
+    foodOrderPaid: "Ya pagado",
+    foodOrderNotPaid: "Pendiente de pago",
 
     accept: "Aceptar cotización",
     reject: "Rechazar",
@@ -60,12 +76,28 @@ export const quoteLabels = {
 
     serviceTitle: "Requested service",
     locationTitle: "Delivery address",
-    pricingTitle: "Payment summary",
+
+    /*
+     * This section contains only
+     * the Delivery App service charges.
+     */
+    pricingTitle: "Service details",
+
     customerMessageTitle: "Message for the customer",
 
-    subtotal: "Subtotal",
+    subtotal: "Base fee",
     deliveryFee: "Delivery fee",
-    total: "Total",
+    total: "Service total",
+
+    purchaseValidationTitle: "Purchase reference",
+    estimatedPurchaseAmount: "Estimated purchase amount",
+
+    purchaseValidationHelper:
+      "This amount is used only to validate that the order is within the permitted limit. It is not part of the delivery service total.",
+
+    paymentStatusLabel: "Restaurant payment status",
+    foodOrderPaid: "Already paid",
+    foodOrderNotPaid: "Payment pending",
 
     accept: "Accept quote",
     reject: "Reject",
