@@ -11,32 +11,64 @@ import {
 } from "react-native";
 
 import { useTranslation } from "../i18n/useTranslation";
-import { signIn } from "../services/authService";
+import { getMyProfile, signIn } from "../services/authService";
 import { colors } from "../styles/theme";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const [loading, setLoading] = useState(false);
+
   const { t } = useTranslation();
 
   async function handleLogin() {
+    if (loading) {
+      return;
+    }
+
     if (!email.trim() || !password.trim()) {
       Alert.alert(t("login.requiredTitle"), t("login.requiredMessage"));
       return;
     }
 
-    const { data, error } = await signIn(email.trim(), password.trim());
+    try {
+      setLoading(true);
 
-    if (error) {
-      Alert.alert(t("login.errorTitle"), error.message);
-      return;
+      const { data, error } = await signIn(email.trim(), password.trim());
+
+      if (error) {
+        Alert.alert(t("login.errorTitle"), error.message);
+        return;
+      }
+
+      console.log("LOGIN SUCCESS:", data.user?.id);
+
+      const { data: profile, error: profileError } = await getMyProfile();
+
+      if (profileError || !profile) {
+        Alert.alert(
+          t("login.errorTitle"),
+          profileError?.message ?? "No se pudo cargar el perfil del usuario.",
+        );
+        return;
+      }
+
+      console.log("LOGIN ROLE:", profile.role);
+
+      if (profile.role === "driver") {
+        router.replace("/driver" as never);
+        return;
+      }
+
+      router.replace("/home" as never);
+    } catch (error) {
+      console.error("LOGIN ERROR:", error);
+
+      Alert.alert(t("login.errorTitle"), "Ocurrió un error al iniciar sesión.");
+    } finally {
+      setLoading(false);
     }
-
-    console.log("LOGIN USER:", data.user);
-    console.log("LOGIN SESSION:", data.session);
-
-    router.replace("/profile" as never);
   }
 
   return (
@@ -71,8 +103,14 @@ export default function LoginScreen() {
             onChangeText={setPassword}
           />
 
-          <Pressable style={styles.button} onPress={handleLogin}>
-            <Text style={styles.buttonText}>{t("login.button")}</Text>
+          <Pressable
+            style={[styles.button, loading && styles.buttonDisabled]}
+            onPress={handleLogin}
+            disabled={loading}
+          >
+            <Text style={styles.buttonText}>
+              {loading ? "Ingresando..." : t("login.button")}
+            </Text>
           </Pressable>
 
           <Pressable onPress={() => router.push("/register" as never)}>
@@ -91,19 +129,19 @@ const styles = StyleSheet.create({
   },
 
   backgroundImage: {
-  position: "absolute",
-  width: "125%",
-  height: "125%",
-  alignSelf: "center",
-  top: -185,
-},
+    position: "absolute",
+    width: "125%",
+    height: "125%",
+    alignSelf: "center",
+    top: -185,
+  },
 
   overlay: {
-  flex: 1,
-  justifyContent: "center",
-  paddingHorizontal: 28,
-  backgroundColor: "rgba(255,255,255,0.82)",
-},
+    flex: 1,
+    justifyContent: "center",
+    paddingHorizontal: 28,
+    backgroundColor: "rgba(255,255,255,0.82)",
+  },
 
   formContainer: {
     width: "100%",
@@ -134,6 +172,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginTop: 8,
+  },
+
+  buttonDisabled: {
+    opacity: 0.65,
   },
 
   buttonText: {

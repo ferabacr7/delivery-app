@@ -341,7 +341,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginRight: 18,
     borderWidth: 5,
-    borderColor: colors.softTeal,
+    borderColor: colors.brandSoft,
   },
 
   avatarText: {
@@ -372,7 +372,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     borderRadius: 30,
     overflow: "hidden",
-    backgroundColor: colors.softTeal,
+    backgroundColor: colors.brandSoft,
     position: "relative",
   },
 
@@ -429,7 +429,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 18,
-    backgroundColor: colors.softTeal,
+    backgroundColor: colors.brandSoft,
     alignItems: "center",
     justifyContent: "center",
     marginRight: 14,

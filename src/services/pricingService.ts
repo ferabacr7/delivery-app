@@ -30,14 +30,11 @@ export type SupportedCurrency = "CRC" | "USD";
 export type PricingCategory =
   (typeof PRICING_CATEGORY)[keyof typeof PRICING_CATEGORY];
 
-export type DeliveryZone =
-  (typeof DELIVERY_ZONE)[keyof typeof DELIVERY_ZONE];
+export type DeliveryZone = (typeof DELIVERY_ZONE)[keyof typeof DELIVERY_ZONE];
 
-export type ServiceType =
-  (typeof SERVICE_TYPE)[keyof typeof SERVICE_TYPE];
+export type ServiceType = (typeof SERVICE_TYPE)[keyof typeof SERVICE_TYPE];
 
-export type CourierSize =
-  (typeof COURIER_SIZE)[keyof typeof COURIER_SIZE];
+export type CourierSize = (typeof COURIER_SIZE)[keyof typeof COURIER_SIZE];
 
 export type PricingRule = {
   id: string;
@@ -54,9 +51,9 @@ export type ExchangeRate = {
   id: string;
   currency_from: "USD";
   currency_to: "CRC";
-  crc_per_usd: number;
+  crc_per_usd: number | string;
   effective_date: string;
-  source: string;
+  source: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -68,11 +65,39 @@ export type CalculateQuoteInput = {
   currency: SupportedCurrency;
 };
 
+export type PricingAdjustmentType =
+  | "commission"
+  | "surcharge"
+  | "discount"
+  | "promotion"
+  | "tax"
+  | "other";
+
+export type PricingAdjustment = {
+  id: string;
+  type: PricingAdjustmentType;
+  label: string;
+  amount: number;
+};
+
 export type QuoteBreakdown = {
   serviceFee: number;
   deliveryFee: number;
+
+  /**
+   * Se mantienen por compatibilidad con las pantallas
+   * y cotizaciones actuales.
+   */
   commission: number;
   surcharges: number;
+
+  /**
+   * Ajustes dinámicos futuros:
+   * descuentos, promociones, recargos, impuestos, etc.
+   */
+  adjustments: PricingAdjustment[];
+
+  adjustmentsTotal: number;
   total: number;
 };
 
@@ -112,22 +137,37 @@ function roundUsdAmount(amount: number) {
   return Math.ceil(amount * 2) / 2;
 }
 
-function convertCrcToUsd(
-  amountInCrc: number,
-  crcPerUsd: number,
-) {
-  if (
-    !Number.isFinite(crcPerUsd) ||
-    crcPerUsd <= 0
-  ) {
-    throw new Error(
-      "El tipo de cambio configurado no es válido.",
-    );
+function convertCrcToUsd(amountInCrc: number, crcPerUsd: number) {
+  if (!Number.isFinite(crcPerUsd) || crcPerUsd <= 0) {
+    throw new Error("El tipo de cambio configurado no es válido.");
   }
 
-  return roundUsdAmount(
-    amountInCrc / crcPerUsd,
+  return roundUsdAmount(amountInCrc / crcPerUsd);
+}
+
+function sumPricingAdjustments(adjustments: PricingAdjustment[]) {
+  return adjustments.reduce(
+    (total, adjustment) => total + adjustment.amount,
+    0,
   );
+}
+
+function validatePricingAdjustments(adjustments: PricingAdjustment[]) {
+  for (const adjustment of adjustments) {
+    if (!adjustment.id.trim()) {
+      throw new Error("Todos los ajustes deben tener un identificador.");
+    }
+
+    if (!adjustment.label.trim()) {
+      throw new Error("Todos los ajustes deben tener una descripción.");
+    }
+
+    if (!Number.isFinite(adjustment.amount)) {
+      throw new Error(
+        `El ajuste "${adjustment.label}" tiene un monto inválido.`,
+      );
+    }
+  }
 }
 
 export async function getActivePricingRules() {
@@ -168,8 +208,8 @@ export async function getPricingRule(
 /**
  * Obtiene el tipo de cambio más reciente disponible.
  *
- * No exige que exista uno para hoy:
- * si todavía no fue actualizado, utiliza el último guardado.
+ * No exige que exista una tasa para el día actual:
+ * si todavía no fue actualizada, utiliza la última guardada.
  */
 export async function getLatestExchangeRate() {
   const { data, error } = await supabase
@@ -186,10 +226,10 @@ export async function getLatestExchangeRate() {
     .limit(1)
     .maybeSingle();
 
-    console.warn("EXCHANGE RATE RESULT:", {
-  data,
-  error,
-});
+  console.warn("EXCHANGE RATE RESULT:", {
+    data,
+    error,
+  });
 
   return {
     data: data as ExchangeRate | null,
@@ -207,39 +247,19 @@ export async function calculateAutomaticQuote({
   error: Error | null;
 }> {
   try {
-    validateRequiredValue(
-      serviceType,
-      "serviceType",
-    );
-
-    validateRequiredValue(
-      deliveryZone,
-      "deliveryZone",
-    );
-
-    validateRequiredValue(
-      currency,
-      "currency",
-    );
+    validateRequiredValue(serviceType, "serviceType");
+    validateRequiredValue(deliveryZone, "deliveryZone");
+    validateRequiredValue(currency, "currency");
 
     const serviceRuleKey =
-      serviceType === SERVICE_TYPE.COURIER
-        ? courierSize
-        : serviceType;
+      serviceType === SERVICE_TYPE.COURIER ? courierSize : serviceType;
 
-    if (
-      serviceType === SERVICE_TYPE.COURIER &&
-      !courierSize
-    ) {
-      throw new Error(
-        "Debe seleccionar el tamaño o peso de la mensajería.",
-      );
+    if (serviceType === SERVICE_TYPE.COURIER && !courierSize) {
+      throw new Error("Debe seleccionar el tamaño o peso de la mensajería.");
     }
 
     if (!serviceRuleKey) {
-      throw new Error(
-        "No se pudo determinar la tarifa del servicio.",
-      );
+      throw new Error("No se pudo determinar la tarifa del servicio.");
     }
 
     const serviceCategory =
@@ -247,28 +267,19 @@ export async function calculateAutomaticQuote({
         ? PRICING_CATEGORY.COURIER
         : PRICING_CATEGORY.SERVICE;
 
-    const [
-      serviceResult,
-      deliveryZoneResult,
-      exchangeRateResult,
-    ] = await Promise.all([
-      getPricingRule(
-        serviceCategory,
-        serviceRuleKey,
-      ),
+    const [serviceResult, deliveryZoneResult, exchangeRateResult] =
+      await Promise.all([
+        getPricingRule(serviceCategory, serviceRuleKey),
 
-      getPricingRule(
-        PRICING_CATEGORY.DELIVERY_ZONE,
-        deliveryZone,
-      ),
+        getPricingRule(PRICING_CATEGORY.DELIVERY_ZONE, deliveryZone),
 
-      currency === "USD"
-        ? getLatestExchangeRate()
-        : Promise.resolve({
-            data: null,
-            error: null,
-          }),
-    ]);
+        currency === "USD"
+          ? getLatestExchangeRate()
+          : Promise.resolve({
+              data: null,
+              error: null,
+            }),
+      ]);
 
     if (serviceResult.error) {
       throw serviceResult.error;
@@ -294,97 +305,91 @@ export async function calculateAutomaticQuote({
       );
     }
 
-    if (
-      currency === "USD" &&
-      !exchangeRateResult.data
-    ) {
+    if (currency === "USD" && !exchangeRateResult.data) {
       throw new Error(
         "No existe un tipo de cambio configurado para generar cotizaciones en dólares.",
       );
     }
 
-    const baseServiceFeeCrc = Number(
-      serviceResult.data.amount,
-    );
+    const baseServiceFeeCrc = Number(serviceResult.data.amount);
 
-    const baseDeliveryFeeCrc = Number(
-      deliveryZoneResult.data.amount,
-    );
+    const baseDeliveryFeeCrc = Number(deliveryZoneResult.data.amount);
 
     if (
       !Number.isFinite(baseServiceFeeCrc) ||
       !Number.isFinite(baseDeliveryFeeCrc)
     ) {
-      throw new Error(
-        "Uno de los precios configurados no es válido.",
-      );
+      throw new Error("Uno de los precios configurados no es válido.");
     }
 
     const exchangeRate =
-      currency === "USD"
-        ? Number(
-            exchangeRateResult.data
-              ?.crc_per_usd,
-          )
-        : null;
+      currency === "USD" ? Number(exchangeRateResult.data?.crc_per_usd) : null;
+
+    if (
+      currency === "USD" &&
+      (!Number.isFinite(exchangeRate) ||
+        exchangeRate === null ||
+        exchangeRate <= 0)
+    ) {
+      throw new Error("El tipo de cambio configurado no es válido.");
+    }
 
     const serviceFee =
       currency === "USD"
-        ? convertCrcToUsd(
-            baseServiceFeeCrc,
-            exchangeRate!,
-          )
+        ? convertCrcToUsd(baseServiceFeeCrc, exchangeRate!)
         : baseServiceFeeCrc;
 
     const deliveryFee =
       currency === "USD"
-        ? convertCrcToUsd(
-            baseDeliveryFeeCrc,
-            exchangeRate!,
-          )
+        ? convertCrcToUsd(baseDeliveryFeeCrc, exchangeRate!)
         : baseDeliveryFeeCrc;
 
     const commission = 0;
     const surcharges = 0;
 
+    /**
+     * Aquí se agregarán en el futuro:
+     *
+     * - recargo nocturno
+     * - recargo por lluvia
+     * - promociones
+     * - descuentos
+     * - cupones
+     * - impuestos
+     */
+    const adjustments: PricingAdjustment[] = [];
+
+    validatePricingAdjustments(adjustments);
+
+    const adjustmentsTotal = sumPricingAdjustments(adjustments);
+
     const total =
-      serviceFee +
-      deliveryFee +
-      commission +
-      surcharges;
+      serviceFee + deliveryFee + commission + surcharges + adjustmentsTotal;
 
-    console.warn(
-      "PRICING CURRENCY CONVERSION:",
-      {
-        currency,
-
-        baseServiceFeeCrc,
-        baseDeliveryFeeCrc,
-
-        exchangeRate,
-
-        serviceFee,
-        deliveryFee,
-        total,
-      },
-    );
+    console.warn("PRICING CALCULATION:", {
+      currency,
+      baseServiceFeeCrc,
+      baseDeliveryFeeCrc,
+      exchangeRate,
+      serviceFee,
+      deliveryFee,
+      commission,
+      surcharges,
+      adjustments,
+      adjustmentsTotal,
+      total,
+    });
 
     return {
       data: {
         serviceType,
         deliveryZone,
 
-        courierSize:
-          serviceType ===
-          SERVICE_TYPE.COURIER
-            ? courierSize
-            : null,
+        courierSize: serviceType === SERVICE_TYPE.COURIER ? courierSize : null,
 
-        serviceName:
-          serviceResult.data.name,
+        serviceName: serviceResult.data.name,
 
-        deliveryZoneName:
-          deliveryZoneResult.data.name,
+        deliveryZoneName: deliveryZoneResult.data.name,
 
         currency,
 
@@ -395,6 +400,8 @@ export async function calculateAutomaticQuote({
           deliveryFee,
           commission,
           surcharges,
+          adjustments,
+          adjustmentsTotal,
           total,
         },
       },
@@ -402,15 +409,16 @@ export async function calculateAutomaticQuote({
       error: null,
     };
   } catch (error) {
+    const normalizedError =
+      error instanceof Error
+        ? error
+        : new Error("No se pudo calcular la cotización.");
+
+    console.error("CALCULATE AUTOMATIC QUOTE ERROR:", normalizedError);
+
     return {
       data: null,
-
-      error:
-        error instanceof Error
-          ? error
-          : new Error(
-              "No se pudo calcular la cotización.",
-            ),
+      error: normalizedError,
     };
   }
 }

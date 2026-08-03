@@ -3,9 +3,15 @@ export const quoteLabels = {
     headerTitle: "Detalle del pedido",
 
     headerSubtitle: {
+      validation: "Estamos revisando la información de tu pedido.",
+      quoted: "Revisá la cotización antes de responder.",
       pending: "Revisá la cotización antes de responder.",
       accepted: "Tu pedido fue confirmado.",
-      rejected: "Has rechazado esta cotización.",
+      in_progress: "Estamos preparando tu pedido.",
+      on_route: "Tu pedido está en camino.",
+      delivered: "Tu pedido fue entregado.",
+      rejected: "La cotización fue rechazada.",
+      cancelled: "Este pedido fue cancelado.",
       expired: "Esta cotización ha expirado.",
       unknown: "",
     },
@@ -21,18 +27,24 @@ export const quoteLabels = {
 
     customerMessageTitle: "Mensaje para el cliente",
 
+    estimatedArrival: "Llegada estimada",
+    estimatedMinutes: "12–18 minutos",
+    pendingEstimate: "Pendiente",
+    lastUpdate: "Última actualización",
+    delivered: "Entregado",
+
     subtotal: "Tarifa base",
     deliveryFee: "Costo de entrega",
     total: "Total del servicio",
 
-    purchaseValidationTitle: "Referencia de compra",
-    estimatedPurchaseAmount: "Monto estimado de compra",
+    purchaseValidationTitle: "Detalles de la compra",
+    estimatedPurchaseAmount: "Monto estimado",
 
     purchaseValidationHelper:
-      "Este monto se utiliza únicamente para validar que el pedido se encuentre dentro del límite permitido. No forma parte del total del servicio de entrega.",
+      "Este monto corresponde a una estimación de los productos y no forma parte del costo del servicio de entrega.",
 
-    paymentStatusLabel: "Estado del pago del restaurante",
-    foodOrderPaid: "Ya pagado",
+    paymentStatusLabel: "Estado del pago",
+    foodOrderPaid: "Pagado",
     foodOrderNotPaid: "Pendiente de pago",
 
     accept: "Aceptar cotización",
@@ -42,10 +54,16 @@ export const quoteLabels = {
     noMessage: "Sin mensaje adicional",
 
     status: {
+      validation: "En validación",
+      quoted: "Cotización disponible",
       pending: "Pendiente",
-      accepted: "Aceptada",
-      rejected: "Rechazada",
-      expired: "Expirada",
+      accepted: "Aceptado",
+      in_progress: "En preparación",
+      on_route: "En camino",
+      delivered: "Entregado",
+      rejected: "Rechazado",
+      cancelled: "Cancelado",
+      expired: "Expirado",
       unknown: "Sin estado",
     },
 
@@ -67,9 +85,15 @@ export const quoteLabels = {
     headerTitle: "Order details",
 
     headerSubtitle: {
+      validation: "We are reviewing your order information.",
+      quoted: "Review the quote before responding.",
       pending: "Review the quote before responding.",
       accepted: "Your order has been confirmed.",
-      rejected: "You rejected this quote.",
+      in_progress: "We are preparing your order.",
+      on_route: "Your order is on the way.",
+      delivered: "Your order has been delivered.",
+      rejected: "The quote was rejected.",
+      cancelled: "This order was cancelled.",
       expired: "This quote has expired.",
       unknown: "",
     },
@@ -85,18 +109,24 @@ export const quoteLabels = {
 
     customerMessageTitle: "Message for the customer",
 
+    estimatedArrival: "Estimated arrival",
+    estimatedMinutes: "12–18 min",
+    pendingEstimate: "Pending",
+    lastUpdate: "Last update",
+    delivered: "Delivered",
+
     subtotal: "Base fee",
     deliveryFee: "Delivery fee",
     total: "Service total",
 
-    purchaseValidationTitle: "Purchase reference",
-    estimatedPurchaseAmount: "Estimated purchase amount",
+    purchaseValidationTitle: "Purchase details",
+    estimatedPurchaseAmount: "Estimated amount",
 
     purchaseValidationHelper:
-      "This amount is used only to validate that the order is within the permitted limit. It is not part of the delivery service total.",
+      "This amount is an estimate of the purchased products and is not included in the delivery service cost.",
 
-    paymentStatusLabel: "Restaurant payment status",
-    foodOrderPaid: "Already paid",
+    paymentStatusLabel: "Payment status",
+    foodOrderPaid: "Paid",
     foodOrderNotPaid: "Payment pending",
 
     accept: "Accept quote",
@@ -106,9 +136,15 @@ export const quoteLabels = {
     noMessage: "No additional message",
 
     status: {
+      validation: "Under review",
+      quoted: "Quote available",
       pending: "Pending",
       accepted: "Accepted",
+      in_progress: "In preparation",
+      on_route: "On the way",
+      delivered: "Delivered",
       rejected: "Rejected",
+      cancelled: "Cancelled",
       expired: "Expired",
       unknown: "No status",
     },

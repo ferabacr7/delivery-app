@@ -1,18 +1,24 @@
 export const translations = {
   es: {
     home: {
-      title: "Delivery App",
-      createOrder: "Crear Pedido",
-      myOrders: "Mis Pedidos",
-      slogan: "Lo que necesites,\nlo pedís.",
-      description:
-        "Compras, comida, mandados y servicios locales desde una sola app.",
-      question: "¿Qué necesitás?",
-      shopping: "Compras",
-      food: "Comida",
-      errands: "Mandados",
-      services: "Servicios",
-      makeOrder: "Hacer Pedido",
+      title: "Boomerang",
+      slogan: "Lo que necesites, lo pedís.",
+      description: "Pedí lo que necesités y nosotros nos encargamos.",
+      question: "¿Qué necesitás hoy?",
+
+      supermarket: "Supermercado",
+      restaurant: "Restaurante",
+      pharmacy: "Farmacia",
+      messaging: "Mensajería",
+
+      makeOrder: "Hacer pedido",
+    },
+
+    bottomNavigation: {
+      home: "Inicio",
+      orders: "Pedidos",
+      create: "Nuevo",
+      profile: "Perfil",
     },
 
     login: {
@@ -42,7 +48,10 @@ export const translations = {
       successTitle: "Registro exitoso",
       successMessage: "Usuario creado correctamente.",
       registerButton: "Registrarme",
+      registering: "Creando cuenta...",
       backHome: "Volver al inicio",
+      fullName: "Nombre completo",
+      phone: "Número de teléfono",
     },
 
     profile: {
@@ -118,7 +127,7 @@ export const translations = {
       serviceType: "Tipo de servicio",
       supermarket: "Supermercado",
       pharmacy: "Farmacia",
-      foodPickup: "Recoger comida",
+      foodPickup: "Restaurante",
       messaging: "Mensajería",
 
       courierWeightTitle: "Peso aproximado",
@@ -156,13 +165,34 @@ export const translations = {
 
       estimatedPurchaseValidationHelper:
         "Seleccione un monto aproximado para validar que la compra esté dentro del límite permitido.",
+
       estimatedPurchaseSeparateCharge:
         "Este monto no forma parte de la tarifa del servicio de entrega. La compra se paga por separado según la factura del comercio.",
+
       minimumPurchaseAmount: "Mínimo",
       maximumPurchaseAmount: "Máximo",
+
       purchaseAmountOutOfRange:
         "El monto estimado está fuera del rango permitido.",
+
       comingSoon: "Próximamente",
+
+      addAddress: "Agregar dirección",
+
+      pickupLocation: "Lugar de retiro",
+
+      preferredSupermarket: "Supermercado de preferencia",
+      preferredSupermarketPlaceholder:
+        "Ej: Super Compro, Maxi Palí, Automercado",
+
+      preferredPharmacy: "Farmacia de preferencia",
+      preferredPharmacyPlaceholder: "Ej: Farmacia La Bomba, Fischel",
+
+      restaurantPickupPlaceholder: "Ej: Restaurante El Tiki, Flamingo",
+
+      messagingPickupPlaceholder: "Ej: Hotel, comercio, casa o punto de retiro",
+
+      pickupLocationRequired: "Indica el lugar de retiro.",
     },
 
     orderDetail: {
@@ -215,6 +245,9 @@ export const translations = {
       estimatedArrival: "Llegada estimada",
       estimatedMinutes: "12–18 min",
       pendingEstimate: "Pendiente",
+
+      showPriceDetail: "Ver detalle",
+      hidePriceDetail: "Ocultar detalle",
 
       deliveryStatus: "Estado de entrega",
       delivered: "Entregado",
@@ -328,17 +361,24 @@ export const translations = {
 
   en: {
     home: {
-      title: "Delivery App",
-      createOrder: "Create Order",
-      myOrders: "My Orders",
-      slogan: "Whatever you need,\njust order it.",
-      description: "Shopping, food, errands, and local services from one app.",
-      question: "What do you need?",
-      shopping: "Shopping",
-      food: "Food",
-      errands: "Errands",
-      services: "Services",
-      makeOrder: "Place Order",
+      title: "Boomerang",
+      slogan: "Whatever you need, just ask.",
+      description: "Tell us what you need and we'll take care of it.",
+      question: "What do you need today?",
+
+      supermarket: "Supermarket",
+      restaurant: "Restaurant",
+      pharmacy: "Pharmacy",
+      messaging: "Courier",
+
+      makeOrder: "Place order",
+    },
+
+    bottomNavigation: {
+      home: "Home",
+      orders: "Orders",
+      create: "New",
+      profile: "Profile",
     },
 
     login: {
@@ -367,7 +407,10 @@ export const translations = {
       successTitle: "Registration Successful",
       successMessage: "User created successfully.",
       registerButton: "Register",
+      registering: "Creating account...",
       backHome: "Back to Home",
+      fullName: "Full name",
+      phone: "Phone number",
     },
 
     profile: {
@@ -443,8 +486,8 @@ export const translations = {
       serviceType: "Service Type",
       supermarket: "Supermarket",
       pharmacy: "Pharmacy",
-      foodPickup: "Food Pickup",
-      messaging: "Messaging",
+      foodPickup: "Restaurant",
+      messaging: "Courier",
 
       courierWeightTitle: "Approximate weight",
 
@@ -464,16 +507,21 @@ export const translations = {
 
       estimatedPurchaseTitle: "Estimated purchase amount",
       estimatedPurchaseApproximately: "Approximately",
+
       estimatedPurchaseHelper:
         "Move the slider to select an approximate amount. The final amount will be confirmed using the store receipt.",
+
       estimatedPurchaseAccessibility: "Estimated purchase amount",
 
       foodPaymentTitle: "Has the food order already been paid?",
+
       foodPaymentYes: "Yes, it has already been paid",
+
       foodPaymentYesDescription:
         "The driver will only pick up and deliver the order.",
 
       foodPaymentNo: "No, it still needs to be paid",
+
       foodPaymentNoDescription:
         "The driver will need to pay for the order when picking it up.",
 
@@ -482,14 +530,35 @@ export const translations = {
 
       estimatedPurchaseValidationHelper:
         "Select an approximate amount to validate that the purchase is within the permitted limit.",
+
       estimatedPurchaseSeparateCharge:
         "This amount is not part of the delivery service fee. The purchase is paid separately according to the merchant invoice.",
+
       minimumPurchaseAmount: "Minimum",
       maximumPurchaseAmount: "Maximum",
+
       purchaseAmountOutOfRange:
         "The estimated amount is outside the allowed range.",
 
       comingSoon: "Coming Soon",
+
+      addAddress: "Add address",
+
+      pickupLocation: "Pickup location",
+
+      preferredSupermarket: "Preferred supermarket",
+      preferredSupermarketPlaceholder:
+        "Example: Super Compro, Maxi Palí, Automercado",
+
+      preferredPharmacy: "Preferred pharmacy",
+      preferredPharmacyPlaceholder: "Example: Farmacia La Bomba, Fischel",
+
+      restaurantPickupPlaceholder: "Example: El Tiki Restaurant, Flamingo",
+
+      messagingPickupPlaceholder:
+        "Example: Hotel, store, house, or pickup point",
+
+      pickupLocationRequired: "Please enter the pickup location.",
     },
 
     orderDetail: {
@@ -547,6 +616,9 @@ export const translations = {
       delivered: "Delivered",
       onTheWay: "On the way",
       preparing: "Preparing order",
+
+      showPriceDetail: "Show details",
+      hidePriceDetail: "Hide details",
     },
 
     addressForm: {

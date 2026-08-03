@@ -1,68 +1,59 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useRef, useState } from "react";
 import {
+  Animated,
+  Easing,
   StyleSheet,
   Text,
   View,
 } from "react-native";
-import MapView, {
-  Marker,
-  Polyline,
-} from "react-native-maps";
+import MapView, { Marker, Polyline } from "react-native-maps";
 
-import {
-  colors,
-  radius,
-  spacing,
-  typography,
-} from "../../../constants/theme";
-import {
-  getLatestTrackingLocation,
-  subscribeToTrackingLocation,
-  unsubscribeFromTrackingLocation,
-} from "../../../services/trackingService";
+import { colors, radius, spacing, typography } from "../../../constants/theme";
+
+import type { DeliveryTrackingLocation } from "../../../hooks/useDeliveryTracking";
 
 type TrackingMapProps = {
   deliveryId?: string | null;
+
   latitude?: number | null;
   longitude?: number | null;
-};
 
-type DriverLocation = {
-  latitude: number;
-  longitude: number;
-  heading: number | null;
+  location?: DeliveryTrackingLocation | null;
+
+  history?: DeliveryTrackingLocation[];
 };
 
 const DEFAULT_LATITUDE = 10.4239;
 const DEFAULT_LONGITUDE = -85.7937;
 
-function normalizeHeading(
-  heading: number | null | undefined,
-): number | null {
-  if (
-    heading === null ||
-    heading === undefined ||
-    !Number.isFinite(heading) ||
-    heading < 0
-  ) {
-    return null;
-  }
+/*
+ * Calcula el destino angular más corto.
+ *
+ * Ejemplos:
+ * 350° → 10° = 350° → 370°
+ * 10° → 350° = 10° → -10°
+ */
+function getShortestHeadingTarget(
+  currentHeading: number,
+  nextHeading: number,
+) {
+  const difference =
+    ((nextHeading - currentHeading + 540) % 360) - 180;
 
-  return heading % 360;
+  return currentHeading + difference;
 }
 
 export default function TrackingMap({
   deliveryId,
   latitude,
   longitude,
+  location,
+  history = [],
 }: TrackingMapProps) {
   const mapRef = useRef<MapView>(null);
 
   const hasAdjustedMap = useRef(false);
-
-  const [driverLocation, setDriverLocation] =
-    useState<DriverLocation | null>(null);
 
   const destinationLatitude =
     latitude ?? DEFAULT_LATITUDE;
@@ -70,185 +61,188 @@ export default function TrackingMap({
   const destinationLongitude =
     longitude ?? DEFAULT_LONGITUDE;
 
+  const activeLocation = location;
+
   const driverLatitude =
-    driverLocation?.latitude ??
+    activeLocation?.latitude ??
     destinationLatitude - 0.0015;
 
   const driverLongitude =
-    driverLocation?.longitude ??
+    activeLocation?.longitude ??
     destinationLongitude - 0.0015;
 
   const driverHeading =
-    driverLocation?.heading ?? 0;
+    activeLocation?.heading ?? 0;
 
   /*
-   * Cuando cambia la entrega:
-   * - reinicia la ubicación;
-   * - permite volver a ajustar el mapa.
+   * Convierte el historial de tracking
+   * al formato esperado por Polyline.
+   */
+  const routeCoordinates = history.map((point) => ({
+    latitude: point.latitude,
+    longitude: point.longitude,
+  }));
+
+  /*
+   * Movimiento animado del repartidor.
+   */
+  const animatedLatitude = useRef(
+    new Animated.Value(driverLatitude),
+  ).current;
+
+  const animatedLongitude = useRef(
+    new Animated.Value(driverLongitude),
+  ).current;
+
+  const [animatedDriverLocation, setAnimatedDriverLocation] =
+    useState({
+      latitude: driverLatitude,
+      longitude: driverLongitude,
+    });
+
+  /*
+   * Heading animado.
+   */
+  const animatedHeading = useRef(
+    new Animated.Value(driverHeading),
+  ).current;
+
+  const currentHeadingRef =
+    useRef(driverHeading);
+
+  const [displayHeading, setDisplayHeading] =
+    useState(driverHeading);
+
+  /*
+   * Al cambiar de delivery reiniciamos
+   * el ajuste inicial del mapa.
    */
   useEffect(() => {
     hasAdjustedMap.current = false;
-    setDriverLocation(null);
   }, [deliveryId]);
 
   /*
-   * Obtiene la última ubicación conocida
-   * al abrir el mapa.
+   * Escucha latitude/longitude animados
+   * y actualiza la coordenada visible.
    */
   useEffect(() => {
-    if (!deliveryId) {
-      console.warn(
-        "TRACKING MAP: No se recibió un deliveryId válido.",
-      );
+    const latitudeListener =
+      animatedLatitude.addListener(({ value }) => {
+        setAnimatedDriverLocation((current) => ({
+          ...current,
+          latitude: value,
+        }));
+      });
 
-      return;
-    }
-
-    const validDeliveryId = deliveryId;
-
-    let isMounted = true;
-
-    async function loadLatestTrackingLocation() {
-      try {
-        const { data, error } =
-          await getLatestTrackingLocation(
-            validDeliveryId,
-          );
-
-        if (error) {
-          throw error;
-        }
-
-        if (!data || !isMounted) {
-          return;
-        }
-
-        const parsedLatitude = Number(
-          data.latitude,
-        );
-
-        const parsedLongitude = Number(
-          data.longitude,
-        );
-
-        const parsedHeading =
-          data.heading === null
-            ? null
-            : Number(data.heading);
-
-        if (
-          !Number.isFinite(parsedLatitude) ||
-          !Number.isFinite(parsedLongitude)
-        ) {
-          throw new Error(
-            "La ubicación recibida desde Supabase no es válida.",
-          );
-        }
-
-        setDriverLocation({
-          latitude: parsedLatitude,
-          longitude: parsedLongitude,
-          heading: normalizeHeading(
-            parsedHeading,
-          ),
-        });
-
-        console.log(
-          "LATEST TRACKING LOCATION:",
-          data,
-        );
-      } catch (error) {
-        console.error(
-          "LOAD TRACKING LOCATION ERROR:",
-          error,
-        );
-      }
-    }
-
-    void loadLatestTrackingLocation();
+    const longitudeListener =
+      animatedLongitude.addListener(({ value }) => {
+        setAnimatedDriverLocation((current) => ({
+          ...current,
+          longitude: value,
+        }));
+      });
 
     return () => {
-      isMounted = false;
+      animatedLatitude.removeListener(
+        latitudeListener,
+      );
+
+      animatedLongitude.removeListener(
+        longitudeListener,
+      );
     };
-  }, [deliveryId]);
+  }, [
+    animatedLatitude,
+    animatedLongitude,
+  ]);
 
   /*
-   * Escucha nuevas ubicaciones mediante
-   * Supabase Realtime.
+   * Anima el movimiento del repartidor.
    */
   useEffect(() => {
-    if (!deliveryId) {
+    if (!activeLocation) {
       return;
     }
 
-    const validDeliveryId = deliveryId;
+    animatedLatitude.stopAnimation();
+    animatedLongitude.stopAnimation();
 
-    const channel =
-      subscribeToTrackingLocation(
-        validDeliveryId,
-        (newLocation) => {
-          const newLatitude = Number(
-            newLocation.latitude,
-          );
+    Animated.parallel([
+      Animated.timing(animatedLatitude, {
+        toValue: driverLatitude,
+        duration: 900,
+        easing: Easing.linear,
+        useNativeDriver: false,
+      }),
 
-          const newLongitude = Number(
-            newLocation.longitude,
-          );
+      Animated.timing(animatedLongitude, {
+        toValue: driverLongitude,
+        duration: 900,
+        easing: Easing.linear,
+        useNativeDriver: false,
+      }),
+    ]).start();
+  }, [
+    activeLocation,
+    animatedLatitude,
+    animatedLongitude,
+    driverLatitude,
+    driverLongitude,
+  ]);
 
-          const rawHeading =
-            newLocation.heading === null
-              ? null
-              : Number(newLocation.heading);
-
-          if (
-            !Number.isFinite(newLatitude) ||
-            !Number.isFinite(newLongitude)
-          ) {
-            console.warn(
-              "REALTIME TRACKING LOCATION INVALID:",
-              newLocation,
-            );
-
-            return;
-          }
-
-          const normalizedHeading =
-            normalizeHeading(rawHeading);
-
-          console.log(
-            "REALTIME TRACKING LOCATION:",
-            newLocation,
-          );
-
-          console.log(
-            "DRIVER HEADING:",
-            normalizedHeading,
-          );
-
-          setDriverLocation(
-            (currentLocation) => ({
-              latitude: newLatitude,
-              longitude: newLongitude,
-
-              /*
-               * Si iOS devuelve -1 o null,
-               * conservamos el último rumbo válido.
-               */
-              heading:
-                normalizedHeading ??
-                currentLocation?.heading ??
-                null,
-            }),
-          );
-        },
-      );
+  /*
+   * Escucha el heading animado.
+   */
+  useEffect(() => {
+    const headingListener =
+      animatedHeading.addListener(({ value }) => {
+        currentHeadingRef.current = value;
+        setDisplayHeading(value);
+      });
 
     return () => {
-      void unsubscribeFromTrackingLocation(
-        channel,
+      animatedHeading.removeListener(
+        headingListener,
       );
     };
-  }, [deliveryId]);
+  }, [animatedHeading]);
+
+  /*
+   * Anima el heading utilizando siempre
+   * el giro más corto posible.
+   */
+  useEffect(() => {
+    const nextHeading =
+      activeLocation?.heading;
+
+    if (
+      nextHeading === null ||
+      nextHeading === undefined
+    ) {
+      return;
+    }
+
+    const currentHeading =
+      currentHeadingRef.current;
+
+    const targetHeading =
+      getShortestHeadingTarget(
+        currentHeading,
+        nextHeading,
+      );
+
+    animatedHeading.stopAnimation();
+
+    Animated.timing(animatedHeading, {
+      toValue: targetHeading,
+      duration: 500,
+      easing: Easing.out(Easing.ease),
+      useNativeDriver: false,
+    }).start();
+  }, [
+    activeLocation?.heading,
+    animatedHeading,
+  ]);
 
   /*
    * Ajusta el mapa una sola vez por entrega.
@@ -306,40 +300,27 @@ export default function TrackingMap({
         showsUserLocation={false}
         initialRegion={{
           latitude:
-            (
-              destinationLatitude +
-              driverLatitude
-            ) / 2,
+            (destinationLatitude +
+              driverLatitude) /
+            2,
           longitude:
-            (
-              destinationLongitude +
-              driverLongitude
-            ) / 2,
+            (destinationLongitude +
+              driverLongitude) /
+            2,
           latitudeDelta: 0.01,
           longitudeDelta: 0.01,
         }}
       >
-        <Polyline
-          coordinates={[
-            {
-              latitude: driverLatitude,
-              longitude: driverLongitude,
-            },
-            {
-              latitude: destinationLatitude,
-              longitude: destinationLongitude,
-            },
-          ]}
-          strokeColor={colors.brand}
-          strokeWidth={5}
-          lineDashPattern={[1]}
-        />
+        {routeCoordinates.length >= 2 && (
+          <Polyline
+            coordinates={routeCoordinates}
+            strokeColor={colors.brand}
+            strokeWidth={5}
+          />
+        )}
 
         <Marker
-          coordinate={{
-            latitude: driverLatitude,
-            longitude: driverLongitude,
-          }}
+          coordinate={animatedDriverLocation}
           anchor={{
             x: 0.5,
             y: 0.5,
@@ -351,7 +332,7 @@ export default function TrackingMap({
                 style={{
                   transform: [
                     {
-                      rotate: `${driverHeading}deg`,
+                      rotate: `${displayHeading}deg`,
                     },
                   ],
                 }}
@@ -373,7 +354,8 @@ export default function TrackingMap({
         <Marker
           coordinate={{
             latitude: destinationLatitude,
-            longitude: destinationLongitude,
+            longitude:
+              destinationLongitude,
           }}
           anchor={{
             x: 0.5,
@@ -382,7 +364,9 @@ export default function TrackingMap({
         >
           <View style={styles.markerWrapper}>
             <View
-              style={styles.destinationMarker}
+              style={
+                styles.destinationMarker
+              }
             >
               <Ionicons
                 name="home"
@@ -407,8 +391,7 @@ const styles = StyleSheet.create({
     height: 320,
     overflow: "hidden",
     borderRadius: radius.xl,
-    backgroundColor:
-      colors.surfaceSoft,
+    backgroundColor: colors.surfaceSoft,
   },
 
   map: {
@@ -444,8 +427,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor:
-      colors.brandDark,
+    backgroundColor: colors.brandDark,
     borderWidth: 4,
     borderColor: colors.surface,
     shadowColor: "#000",

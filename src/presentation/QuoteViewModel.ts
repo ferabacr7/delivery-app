@@ -1,7 +1,13 @@
 export type QuoteStatusType =
+  | "validation"
+  | "quoted"
   | "pending"
   | "accepted"
+  | "in_progress"
+  | "on_route"
+  | "delivered"
   | "rejected"
+  | "cancelled"
   | "expired"
   | "unknown";
 
@@ -43,8 +49,15 @@ export type QuoteViewModel = {
     wazeUrl?: string;
   };
 
+  tracking: {
+    estimatedArrival: string;
+    estimatedArrivalLabel: string;
+    lastUpdate: string;
+    lastUpdateLabel: string;
+  };
+
   /*
-   * Contiene únicamente los cargos del servicio de entrega.
+   * Contiene únicamente los cargos del servicio.
    *
    * El monto estimado de la compra nunca se incluye
    * dentro de esta sección.

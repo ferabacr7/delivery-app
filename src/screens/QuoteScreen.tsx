@@ -19,12 +19,7 @@ import TrackingCard from "../components/features/tracking/TrackingCard";
 import Card from "../components/ui/Card";
 import Spacer from "../components/ui/Spacer";
 
-import {
-  colors,
-  radius,
-  spacing,
-  typography,
-} from "../constants/theme";
+import { colors, radius, spacing, typography } from "../constants/theme";
 
 import { useTranslation } from "../i18n/useTranslation";
 import { QuoteViewModel } from "../presentation/QuoteViewModel";
@@ -34,7 +29,13 @@ type Props = {
   deliveryId?: string | null;
   onAccept: () => void;
   onReject: () => void;
+  onCancelOrder?: () => void;
+  canCancelOrder?: boolean;
   isSubmitting?: boolean;
+};
+
+type PurchaseValidationCardProps = {
+  purchaseValidation: QuoteViewModel["purchaseValidation"];
 };
 
 export default function QuoteScreen({
@@ -42,45 +43,15 @@ export default function QuoteScreen({
   deliveryId,
   onAccept,
   onReject,
+  onCancelOrder,
+  canCancelOrder = false,
   isSubmitting = false,
 }: Props) {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
 
-  const quoteStatus =
-    quote.service.statusType;
-
-  const isAccepted =
-    quoteStatus === "accepted";
-
-  const isRejected =
-    quoteStatus === "rejected";
-
   function handleBackToOrders() {
     router.replace("/orders" as never);
-  }
-
-  function handleOpenDeliveryConsole() {
-    if (!deliveryId) {
-      return;
-    }
-
-    router.push(
-      `/internal/delivery-console/${deliveryId}` as never,
-    );
-  }
-
-  function getStatusIcon():
-    keyof typeof Ionicons.glyphMap {
-    if (isAccepted) {
-      return "checkmark-circle";
-    }
-
-    if (isRejected) {
-      return "close-circle";
-    }
-
-    return "time-outline";
   }
 
   return (
@@ -89,8 +60,7 @@ export default function QuoteScreen({
         contentContainerStyle={[
           styles.content,
           {
-            paddingTop:
-              insets.top + spacing.md,
+            paddingTop: insets.top + spacing.md,
           },
         ]}
         showsVerticalScrollIndicator={false}
@@ -99,6 +69,8 @@ export default function QuoteScreen({
           style={styles.backButton}
           onPress={handleBackToOrders}
           hitSlop={10}
+          accessibilityRole="button"
+          accessibilityLabel={t("common.back")}
         >
           <Ionicons
             name="arrow-back"
@@ -111,40 +83,16 @@ export default function QuoteScreen({
           </Text>
         </Pressable>
 
-        <View style={styles.titleRow}>
-          <View style={styles.titleContent}>
-            <Text style={styles.screenTitle}>
-              {t("orders.order")} #
-              {quote.orderNumber}
-            </Text>
+        <View style={styles.titleSection}>
+          <Text style={styles.screenTitle}>
+            {t("orders.order")} #{quote.orderNumber}
+          </Text>
 
-            <Text style={styles.screenSubtitle}>
-              {quote.header.subtitle}
-            </Text>
-          </View>
-
-          <View style={styles.statusBadge}>
-            <Ionicons
-              name={getStatusIcon()}
-              size={16}
-              color={colors.brandDark}
-            />
-
-            <Text
-              style={styles.statusBadgeText}
-              numberOfLines={2}
-            >
-              {quote.service.statusLabel}
-            </Text>
-          </View>
+          <Text style={styles.screenSubtitle}>
+            {quote.header.subtitle}
+          </Text>
         </View>
 
-        {/*
-         * Resumen principal.
-         *
-         * El precio mostrado aquí es únicamente
-         * el total del servicio de entrega.
-         */}
         <Card>
           <View style={styles.serviceSummary}>
             <View style={styles.serviceIcon}>
@@ -163,13 +111,6 @@ export default function QuoteScreen({
               <Text style={styles.serviceValue}>
                 {quote.service.type}
               </Text>
-
-              <Text
-                style={styles.serviceDescription}
-                numberOfLines={2}
-              >
-                {quote.service.description}
-              </Text>
             </View>
 
             <View style={styles.totalInformation}>
@@ -187,9 +128,7 @@ export default function QuoteScreen({
         <Spacer size="lg" />
 
         <OrderTimeline
-          currentStatus={
-            quote.service.statusType
-          }
+          currentStatus={quote.service.statusType}
         />
 
         <Spacer size="lg" />
@@ -199,161 +138,92 @@ export default function QuoteScreen({
           status={quote.service.statusType}
           latitude={quote.location.latitude}
           longitude={quote.location.longitude}
-          trackingTitle={t(
-            "orderDetail.trackingTitle",
-          )}
-          waitingText={t(
-            "orderDetail.trackingWaiting",
-          )}
-          activeText={t(
-            "orderDetail.trackingLive",
-          )}
+          trackingTitle={t("orderDetail.trackingTitle")}
+          waitingText={t("orderDetail.trackingWaiting")}
+          activeText={t("orderDetail.trackingLive")}
           unavailableText={t(
             "orderDetail.trackingUnavailable",
           )}
-          updatedText={t(
-            "orderDetail.updatedRecently",
-          )}
-          eta={
-            quote.service.statusType ===
-            "accepted"
-              ? t(
-                  "orderDetail.estimatedMinutes",
-                )
-              : t(
-                  "orderDetail.pendingEstimate",
-                )
-          }
-          updatedAt={
-            quote.service.statusType ===
-            "accepted"
-              ? t(
-                  "orderDetail.updatedRecently",
-                )
-              : t(
-                  "orderDetail.notAvailable",
-                )
-          }
+          eta={quote.tracking.estimatedArrival}
+          etaLabel={quote.tracking.estimatedArrivalLabel}
         />
-
-        {deliveryId ? (
-          <>
-            <Spacer size="md" />
-
-            <Pressable
-              style={
-                styles.deliveryConsoleButton
-              }
-              onPress={
-                handleOpenDeliveryConsole
-              }
-            >
-              <Ionicons
-                name="construct-outline"
-                size={22}
-                color={colors.textInverse}
-              />
-
-              <Text
-                style={
-                  styles.deliveryConsoleButtonText
-                }
-              >
-                Abrir Delivery Console
-              </Text>
-            </Pressable>
-          </>
-        ) : null}
 
         <Spacer size="lg" />
 
         <DescriptionCard
-          title={t(
-            "orderDetail.description",
-          )}
-          description={
-            quote.service.description
-          }
+          title={t("orderDetail.description")}
+          description={quote.service.description}
         />
 
         <Spacer size="lg" />
 
-        {/*
-         * Esta tarjeta contiene solamente:
-         *
-         * - Tarifa base
-         * - Costo de entrega
-         * - Total del servicio
-         */}
         <PriceSummaryCard
           title={quote.pricing.title}
-          subtotalLabel={
-            quote.pricing.subtotalLabel
-          }
-          subtotal={
-            quote.pricing.subtotal
-          }
-          deliveryFeeLabel={
-            quote.pricing.deliveryFeeLabel
-          }
-          deliveryFee={
-            quote.pricing.deliveryFee
-          }
-          totalLabel={
-            quote.pricing.totalLabel
-          }
+          subtotalLabel={quote.pricing.subtotalLabel}
+          subtotal={quote.pricing.subtotal}
+          deliveryFeeLabel={quote.pricing.deliveryFeeLabel}
+          deliveryFee={quote.pricing.deliveryFee}
+          totalLabel={quote.pricing.totalLabel}
           total={quote.pricing.total}
+          showDetailLabel={t("orderDetail.showPriceDetail")}
+          hideDetailLabel={t("orderDetail.hidePriceDetail")}
         />
 
-        {/*
-         * Referencia de compra independiente.
-         *
-         * Nunca forma parte de PriceSummaryCard
-         * ni del total del servicio.
-         */}
         {quote.purchaseValidation.shouldShow ? (
           <>
             <Spacer size="lg" />
 
             <PurchaseValidationCard
-              purchaseValidation={
-                quote.purchaseValidation
-              }
+              purchaseValidation={quote.purchaseValidation}
             />
           </>
         ) : null}
 
         <Spacer size="lg" />
 
-        <SupportCard
-          phoneNumber="50688888888"
-        />
-
-        <Spacer size="xl" />
-
         <QuoteActions
-          acceptLabel={
-            quote.actions.acceptLabel
-          }
-          rejectLabel={
-            quote.actions.rejectLabel
-          }
-          canRespond={
-            quote.actions.canRespond
-          }
+          acceptLabel={quote.actions.acceptLabel}
+          rejectLabel={quote.actions.rejectLabel}
+          canRespond={quote.actions.canRespond}
           isSubmitting={isSubmitting}
           onAccept={onAccept}
           onReject={onReject}
         />
+
+        {canCancelOrder && onCancelOrder ? (
+  <>
+    <Spacer size="md" />
+
+    <Pressable
+      style={[
+        styles.cancelOrderButton,
+        isSubmitting && styles.cancelOrderButtonDisabled,
+      ]}
+      onPress={onCancelOrder}
+      disabled={isSubmitting}
+      accessibilityRole="button"
+      accessibilityLabel="Cancelar pedido"
+    >
+      <Ionicons
+        name="close-circle-outline"
+        size={21}
+        color="#DC2626"
+      />
+
+      <Text style={styles.cancelOrderButtonText}>
+        Cancelar pedido
+      </Text>
+    </Pressable>
+  </>
+) : null}
+
+        <SupportCard phoneNumber="50688888888" />
+
+        <Spacer size="xl" />
       </ScrollView>
     </View>
   );
 }
-
-type PurchaseValidationCardProps = {
-  purchaseValidation:
-    QuoteViewModel["purchaseValidation"];
-};
 
 function PurchaseValidationCard({
   purchaseValidation,
@@ -363,7 +233,7 @@ function PurchaseValidationCard({
       <View style={styles.purchaseHeader}>
         <View style={styles.purchaseIcon}>
           <Ionicons
-            name="shield-checkmark-outline"
+            name="basket-outline"
             size={26}
             color={colors.brand}
           />
@@ -372,10 +242,6 @@ function PurchaseValidationCard({
         <View style={styles.purchaseHeaderContent}>
           <Text style={styles.purchaseTitle}>
             {purchaseValidation.title}
-          </Text>
-
-          <Text style={styles.purchaseSubtitle}>
-            Validación operativa
           </Text>
         </View>
       </View>
@@ -396,16 +262,12 @@ function PurchaseValidationCard({
       purchaseValidation.paymentStatus ? (
         <View style={styles.purchaseRow}>
           <Text style={styles.purchaseRowLabel}>
-            {
-              purchaseValidation.paymentStatusLabel
-            }
+            {purchaseValidation.paymentStatusLabel}
           </Text>
 
           <View style={styles.paymentBadge}>
             <Text style={styles.paymentBadgeText}>
-              {
-                purchaseValidation.paymentStatus
-              }
+              {purchaseValidation.paymentStatus}
             </Text>
           </View>
         </View>
@@ -452,16 +314,8 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
 
-  titleRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    gap: spacing.md,
+  titleSection: {
     marginBottom: spacing.lg,
-  },
-
-  titleContent: {
-    flex: 1,
   },
 
   screenTitle: {
@@ -473,25 +327,6 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.textMuted,
     marginTop: spacing.xs,
-  },
-
-  statusBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.xs,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.pill,
-    backgroundColor: colors.brandSoft,
-    maxWidth: 145,
-  },
-
-  statusBadgeText: {
-    flexShrink: 1,
-    fontSize: 13,
-    lineHeight: 17,
-    fontWeight: "800",
-    color: colors.brandDark,
   },
 
   serviceSummary: {
@@ -524,12 +359,6 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
-  serviceDescription: {
-    ...typography.caption,
-    color: colors.textMuted,
-    marginTop: 2,
-  },
-
   totalInformation: {
     alignItems: "flex-end",
     maxWidth: 125,
@@ -547,23 +376,6 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     marginTop: 2,
     textAlign: "right",
-  },
-
-  deliveryConsoleButton: {
-    minHeight: 56,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: spacing.sm,
-    paddingHorizontal: spacing.lg,
-    borderRadius: radius.lg,
-    backgroundColor: colors.brandDark,
-  },
-
-  deliveryConsoleButtonText: {
-    ...typography.button,
-    color: colors.textInverse,
-    fontWeight: "800",
   },
 
   purchaseHeader: {
@@ -588,12 +400,6 @@ const styles = StyleSheet.create({
   purchaseTitle: {
     ...typography.subtitle,
     color: colors.text,
-  },
-
-  purchaseSubtitle: {
-    ...typography.caption,
-    color: colors.textMuted,
-    marginTop: 2,
   },
 
   purchaseRow: {
@@ -648,4 +454,27 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     lineHeight: 19,
   },
+
+  cancelOrderButton: {
+  width: "100%",
+  minHeight: 54,
+  borderRadius: radius.lg,
+  borderWidth: 1,
+  borderColor: "#DC2626",
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: spacing.sm,
+  backgroundColor: colors.background,
+},
+
+cancelOrderButtonDisabled: {
+  opacity: 0.55,
+},
+
+cancelOrderButtonText: {
+  ...typography.button,
+  color: "#DC2626",
+  textAlign: "center",
+},
 });

@@ -60,6 +60,19 @@ export async function getLatestTrackingLocation(deliveryId: string) {
   };
 }
 
+export async function getTrackingHistory(deliveryId: string) {
+  const { data, error } = await supabase
+    .from("delivery_tracking")
+    .select("*")
+    .eq("delivery_id", deliveryId)
+    .order("recorded_at", { ascending: true });
+
+  return {
+    data: (data ?? []) as TrackingLocationRow[],
+    error,
+  };
+}
+
 export function subscribeToTrackingLocation(
   deliveryId: string,
   onLocationReceived: (location: TrackingLocationRow) => void,

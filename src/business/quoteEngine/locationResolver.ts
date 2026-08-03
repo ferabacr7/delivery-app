@@ -31,6 +31,33 @@ type DeliveryZonePolygon = {
  */
 const DELIVERY_ZONE_POLYGONS: DeliveryZonePolygon[] = [
   {
+  name: "Las Catalinas",
+  zone: "EXTENDED",
+  distanceKm: 12,
+  coordinates: [
+    {
+      latitude: 10.495,
+      longitude: -85.8,
+    },
+    {
+      latitude: 10.495,
+      longitude: -85.772,
+    },
+    {
+      latitude: 10.468,
+      longitude: -85.772,
+    },
+    {
+      latitude: 10.465,
+      longitude: -85.785,
+    },
+    {
+      latitude: 10.475,
+      longitude: -85.8,
+    },
+  ],
+},
+  {
     name: "Potrero",
     zone: "LOCAL",
     distanceKm: 3,
@@ -58,37 +85,41 @@ const DELIVERY_ZONE_POLYGONS: DeliveryZonePolygon[] = [
     ],
   },
 
-  {
-    name: "Flamingo",
-    zone: "NEARBY",
-    distanceKm: 8,
-    coordinates: [
-      {
-        latitude: 10.452,
-        longitude: -85.806,
-      },
-      {
-        latitude: 10.452,
-        longitude: -85.783,
-      },
-      {
-        latitude: 10.442,
-        longitude: -85.783,
-      },
-      {
-        latitude: 10.425,
-        longitude: -85.775,
-      },
-      {
-        latitude: 10.417,
-        longitude: -85.793,
-      },
-      {
-        latitude: 10.425,
-        longitude: -85.806,
-      },
-    ],
-  },
+ {
+  name: "Flamingo",
+  zone: "NEARBY",
+  distanceKm: 8,
+  coordinates: [
+    {
+      latitude: 10.452,
+      longitude: -85.806,
+    },
+    {
+      latitude: 10.452,
+      longitude: -85.783,
+    },
+    {
+      latitude: 10.442,
+      longitude: -85.783,
+    },
+    {
+      latitude: 10.425,
+      longitude: -85.775,
+    },
+    {
+      latitude: 10.414,
+      longitude: -85.775,
+    },
+    {
+      latitude: 10.414,
+      longitude: -85.806,
+    },
+    {
+      latitude: 10.425,
+      longitude: -85.806,
+    },
+  ],
+},
 
   {
     name: "Brasilito",

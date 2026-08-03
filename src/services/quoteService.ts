@@ -1,5 +1,9 @@
 import { supabase } from "../lib/supabase";
-import { createDeliveryForOrder } from "./deliveryService";
+import {
+  cancelDelivery,
+  createDeliveryForOrder,
+  getDeliveryByOrderId,
+} from "./deliveryService";
 
 const QUOTE_STATUS_PENDING = "PENDING";
 const QUOTE_STATUS_ACCEPTED = "ACCEPTED";
@@ -91,80 +95,35 @@ export async function createQuoteForOrder({
 
 async function updateQuoteDecision(
   quoteId: string,
-  quoteStatus: typeof QUOTE_STATUS_ACCEPTED | typeof QUOTE_STATUS_REJECTED,
-  orderStatus: typeof ORDER_STATUS_ACCEPTED | typeof ORDER_STATUS_REJECTED,
+  quoteStatus:
+    | typeof QUOTE_STATUS_ACCEPTED
+    | typeof QUOTE_STATUS_REJECTED,
+  orderStatus:
+    | typeof ORDER_STATUS_ACCEPTED
+    | typeof ORDER_STATUS_REJECTED,
 ) {
-  const { data: quote, error: quoteError } = await supabase
-    .from("quotes")
-    .select("*")
-    .eq("id", quoteId)
-    .maybeSingle();
+  const { data, error } = await supabase.rpc(
+    "process_quote_decision",
+    {
+      target_quote_id: quoteId,
+      decision: quoteStatus,
+    },
+  );
 
-  if (quoteError || !quote) {
+  if (error) {
+    console.error(
+      "PROCESS QUOTE DECISION RPC ERROR:",
+      error,
+    );
+
     return {
       data: null,
-      error: quoteError ?? new Error("Quote not found"),
+      error,
     };
-  }
-
-  const now = new Date().toISOString();
-
-  const { data: updatedQuote, error: updateQuoteError } = await supabase
-    .from("quotes")
-    .update({
-      status: quoteStatus,
-      updated_at: now,
-    })
-    .eq("id", quoteId)
-    .select()
-    .maybeSingle();
-
-  if (updateQuoteError) {
-    return {
-      data: null,
-      error: updateQuoteError,
-    };
-  }
-
-  const { data: updatedOrder, error: updateOrderError } = await supabase
-    .from("orders")
-    .update({
-      status: orderStatus,
-      updated_at: now,
-    })
-    .eq("id", quote.order_id)
-    .select()
-    .maybeSingle();
-
-  if (updateOrderError) {
-    return {
-      data: null,
-      error: updateOrderError,
-    };
-  }
-
-  let delivery = null;
-
-  if (quoteStatus === QUOTE_STATUS_ACCEPTED) {
-    const { data: createdDelivery, error: deliveryError } =
-      await createDeliveryForOrder(quote.order_id);
-
-    if (deliveryError) {
-      return {
-        data: null,
-        error: deliveryError,
-      };
-    }
-
-    delivery = createdDelivery;
   }
 
   return {
-    data: {
-      quote: updatedQuote,
-      order: updatedOrder,
-      delivery,
-    },
+    data,
     error: null,
   };
 }

@@ -5,6 +5,7 @@ import {
   stopWatchingLocation,
   watchCurrentLocation,
 } from "./locationService";
+
 import { insertTrackingLocation } from "./trackingService";
 
 let activeLocationSubscription: LocationSubscription | null =
@@ -13,6 +14,17 @@ let activeLocationSubscription: LocationSubscription | null =
 let activeDeliveryId: string | null = null;
 
 let isSavingLocation = false;
+
+/*
+ * Identifica la sesión actual de tracking.
+ *
+ * Cada vez que iniciamos o detenemos tracking,
+ * cambia este número.
+ *
+ * Esto evita que callbacks antiguos continúen
+ * comportándose como si todavía fueran válidos.
+ */
+let trackingSessionId = 0;
 
 export function isDriverTrackingActive(): boolean {
   return activeLocationSubscription !== null;
@@ -27,7 +39,7 @@ export function isTrackingDelivery(
 ): boolean {
   return (
     activeLocationSubscription !== null &&
-    activeDeliveryId === deliveryId
+    activeDeliveryId === deliveryId.trim()
   );
 }
 
@@ -42,18 +54,38 @@ export async function startDriverLocationTracking(
     );
   }
 
-  if (activeLocationSubscription) {
-    if (activeDeliveryId === normalizedDeliveryId) {
-      console.warn(
-        "DRIVER TRACKING: Tracking is already active for this delivery",
-      );
-
-      return activeLocationSubscription;
-    }
-
-    throw new Error(
-      `Tracking is already active for delivery ${activeDeliveryId}`,
+  /*
+   * Si ya estamos transmitiendo exactamente
+   * esta entrega, no creamos otra suscripción.
+   */
+  if (
+    activeLocationSubscription &&
+    activeDeliveryId === normalizedDeliveryId
+  ) {
+    console.log(
+      "DRIVER TRACKING: Tracking already active for this delivery",
     );
+
+    return activeLocationSubscription;
+  }
+
+  /*
+   * Solo permitimos una entrega transmitiendo
+   * ubicación por dispositivo.
+   *
+   * Si quedó una suscripción anterior activa,
+   * la limpiamos antes de iniciar la nueva.
+   */
+  if (activeLocationSubscription) {
+    console.warn(
+      "DRIVER TRACKING: Replacing previous tracking session",
+      {
+        previousDeliveryId: activeDeliveryId,
+        nextDeliveryId: normalizedDeliveryId,
+      },
+    );
+
+    stopDriverLocationTracking();
   }
 
   await requestLocationPermission();
@@ -63,22 +95,50 @@ export async function startDriverLocationTracking(
     normalizedDeliveryId,
   );
 
+  const currentSessionId = ++trackingSessionId;
+
   activeDeliveryId = normalizedDeliveryId;
+  isSavingLocation = false;
 
   try {
-    activeLocationSubscription =
-      await watchCurrentLocation(async (location) => {
-        if (isSavingLocation) {
-          console.warn(
-            "DRIVER TRACKING: Previous location is still being saved",
-          );
+    const subscription = await watchCurrentLocation(
+      async (location) => {
+        /*
+         * Ignorar callbacks pertenecientes
+         * a una sesión que ya fue cerrada.
+         */
+        if (
+          currentSessionId !== trackingSessionId ||
+          activeDeliveryId !== normalizedDeliveryId
+        ) {
+          return;
+        }
 
+        /*
+         * Si todavía estamos guardando el punto
+         * anterior, descartamos este punto.
+         *
+         * Esto evita escrituras simultáneas
+         * innecesarias en Supabase.
+         */
+        if (isSavingLocation) {
           return;
         }
 
         isSavingLocation = true;
 
         try {
+          /*
+           * Volvemos a comprobar la sesión antes
+           * de escribir.
+           */
+          if (
+            currentSessionId !== trackingSessionId ||
+            activeDeliveryId !== normalizedDeliveryId
+          ) {
+            return;
+          }
+
           await insertTrackingLocation({
             deliveryId: normalizedDeliveryId,
             latitude: location.latitude,
@@ -101,37 +161,67 @@ export async function startDriverLocationTracking(
             error,
           );
         } finally {
-          isSavingLocation = false;
+          /*
+           * Solo la sesión actual puede modificar
+           * este estado.
+           */
+          if (currentSessionId === trackingSessionId) {
+            isSavingLocation = false;
+          }
         }
-      });
+      },
+    );
 
-    return activeLocationSubscription;
+    /*
+     * Es posible que la sesión haya sido detenida
+     * mientras Expo estaba creando la suscripción.
+     */
+    if (currentSessionId !== trackingSessionId) {
+      stopWatchingLocation(subscription);
+
+      throw new Error(
+        "Tracking session was cancelled before it could start.",
+      );
+    }
+
+    activeLocationSubscription = subscription;
+
+    return subscription;
   } catch (error) {
-    activeLocationSubscription = null;
-    activeDeliveryId = null;
-    isSavingLocation = false;
+    if (currentSessionId === trackingSessionId) {
+      activeLocationSubscription = null;
+      activeDeliveryId = null;
+      isSavingLocation = false;
+
+      trackingSessionId += 1;
+    }
 
     throw error;
   }
 }
 
 export function stopDriverLocationTracking(): void {
-  if (!activeLocationSubscription) {
-    console.log(
-      "DRIVER TRACKING: No active tracking subscription",
-    );
+  /*
+   * Invalidamos primero todos los callbacks
+   * pertenecientes a la sesión anterior.
+   */
+  trackingSessionId += 1;
 
-    activeDeliveryId = null;
-    isSavingLocation = false;
-
-    return;
-  }
-
-  stopWatchingLocation(activeLocationSubscription);
+  const subscription = activeLocationSubscription;
 
   activeLocationSubscription = null;
   activeDeliveryId = null;
   isSavingLocation = false;
+
+  if (!subscription) {
+    console.log(
+      "DRIVER TRACKING: No active tracking subscription",
+    );
+
+    return;
+  }
+
+  stopWatchingLocation(subscription);
 
   console.log(
     "DRIVER TRACKING: Tracking stopped",

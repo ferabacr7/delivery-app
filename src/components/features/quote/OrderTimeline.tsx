@@ -1,12 +1,15 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 
-import Card from "../../ui/Card";
 import { colors, radius, spacing, typography } from "../../../constants/theme";
+
+import { useTranslation } from "../../../i18n/useTranslation";
 import { QuoteStatusType } from "../../../presentation/QuoteViewModel";
 
+import Card from "../../ui/Card";
+
 type TimelineStep = {
-  key: string;
+  key: QuoteStatusType;
   label: string;
 };
 
@@ -14,26 +17,107 @@ type Props = {
   currentStatus: QuoteStatusType;
 };
 
-const normalSteps: TimelineStep[] = [
-  { key: "pending", label: "Pendiente" },
-  { key: "accepted", label: "Aceptada" },
-  { key: "on_route", label: "En ruta" },
-  { key: "delivered", label: "Entregado" },
-];
-
-const rejectedSteps: TimelineStep[] = [
-  { key: "pending", label: "Pendiente" },
-  { key: "rejected", label: "Rechazada" },
-];
-
 export default function OrderTimeline({ currentStatus }: Props) {
+  const { t } = useTranslation();
+
   const isRejected = currentStatus === "rejected";
-  const steps = isRejected ? rejectedSteps : normalSteps;
-  const currentIndex = getCurrentIndex(currentStatus);
+  const isCancelled = currentStatus === "cancelled";
+  const isExpired = currentStatus === "expired";
+
+  /*
+   * Timeline simplificado para el cliente.
+   *
+   * Estados internos:
+   * VALIDATION / QUOTED
+   * ACCEPTED / IN_PROGRESS
+   * ON_ROUTE
+   * DELIVERED
+   *
+   * Estados visuales:
+   * En revisión
+   * Confirmado
+   * En camino
+   * Entregado
+   */
+  const normalSteps: TimelineStep[] = [
+    {
+      key: "validation",
+      label: t("orderStatus.validation"),
+    },
+    {
+      key: "accepted",
+      label: t("orderStatus.accepted"),
+    },
+    {
+      key: "on_route",
+      label: t("orderStatus.onRoute"),
+    },
+    {
+      key: "delivered",
+      label: t("orderStatus.delivered"),
+    },
+  ];
+
+  const rejectedSteps: TimelineStep[] = [
+    {
+      key: "validation",
+      label: t("orderStatus.validation"),
+    },
+    {
+      key: "quoted",
+      label: t("orderStatus.quoted"),
+    },
+    {
+      key: "rejected",
+      label: t("orderStatus.rejected"),
+    },
+  ];
+
+  const cancelledSteps: TimelineStep[] = [
+    {
+      key: "validation",
+      label: t("orderStatus.validation"),
+    },
+    {
+      key: "accepted",
+      label: t("orderStatus.accepted"),
+    },
+    {
+      key: "cancelled",
+      label: t("orderStatus.cancelled"),
+    },
+  ];
+
+  const expiredSteps: TimelineStep[] = [
+    {
+      key: "validation",
+      label: t("orderStatus.validation"),
+    },
+    {
+      key: "quoted",
+      label: t("orderStatus.quoted"),
+    },
+    {
+      key: "expired",
+      label: t("orderStatus.expired"),
+    },
+  ];
+
+  const steps = isRejected
+    ? rejectedSteps
+    : isCancelled
+      ? cancelledSteps
+      : isExpired
+        ? expiredSteps
+        : normalSteps;
+
+  const currentIndex = getCurrentIndex(currentStatus, steps);
+
+  const hasFinalErrorState = isRejected || isCancelled || isExpired;
 
   return (
     <Card>
-      <Text style={styles.title}>Estado del pedido</Text>
+      <Text style={styles.title}>{t("orderDetail.currentStatus")}</Text>
 
       <View style={styles.timeline}>
         {steps.map((step, index) => {
@@ -41,21 +125,29 @@ export default function OrderTimeline({ currentStatus }: Props) {
           const isCurrent = index === currentIndex;
           const isActive = index <= currentIndex;
 
+          const isFinalErrorStep =
+            hasFinalErrorState && index === steps.length - 1;
+
           return (
             <View key={step.key} style={styles.step}>
               <View
                 style={[
                   styles.dot,
-                  getDotStyle(step.key, isActive, isCurrent, isRejected),
+                  getDotStyle(step.key, isActive, isFinalErrorStep),
                 ]}
               >
-                {isActive ? <Text style={styles.check}>✓</Text> : null}
+                {isCompleted ? (
+                  <Text style={styles.check}>✓</Text>
+                ) : isCurrent ? (
+                  <View style={styles.currentDot} />
+                ) : null}
               </View>
 
               <Text
                 style={[
                   styles.stepLabel,
                   isActive ? styles.stepLabelActive : styles.stepLabelInactive,
+                  isFinalErrorStep && styles.stepLabelDanger,
                 ]}
               >
                 {step.label}
@@ -65,8 +157,9 @@ export default function OrderTimeline({ currentStatus }: Props) {
                 <View
                   style={[
                     styles.line,
-                    isActive ? styles.lineActive : styles.lineInactive,
-                    isRejected && styles.lineRejected,
+                    index < currentIndex
+                      ? styles.lineActive
+                      : styles.lineInactive,
                   ]}
                 />
               ) : null}
@@ -78,26 +171,66 @@ export default function OrderTimeline({ currentStatus }: Props) {
   );
 }
 
-function getCurrentIndex(status: QuoteStatusType) {
-  if (status === "pending") return 0;
-  if (status === "accepted") return 1;
-  if (status === "rejected") return 1;
+function getCurrentIndex(status: QuoteStatusType, steps: TimelineStep[]) {
+  /*
+   * Convierte los estados internos del sistema
+   * en las cuatro etapas visuales del cliente.
+   */
+  const statusMap: Partial<Record<QuoteStatusType, QuoteStatusType>> = {
+    pending: "validation",
+    validation: "validation",
+    quoted: "validation",
+
+    accepted: "accepted",
+    in_progress: "accepted",
+
+    on_route: "on_route",
+    delivered: "delivered",
+
+    rejected: "rejected",
+    cancelled: "cancelled",
+    expired: "expired",
+  };
+
+  const normalizedStatus = statusMap[status] ?? "validation";
+
+  const index = steps.findIndex((step) => step.key === normalizedStatus);
+
+  if (index >= 0) {
+    return index;
+  }
 
   return 0;
 }
 
 function getDotStyle(
-  key: string,
+  key: QuoteStatusType,
   isActive: boolean,
-  isCurrent: boolean,
-  isRejected: boolean,
+  isFinalErrorStep: boolean,
 ) {
-  if (!isActive) return styles.dotInactive;
-  if (isRejected && key === "rejected") return styles.dotRejected;
-  if (key === "pending") return styles.dotPending;
-  if (key === "accepted") return styles.dotAccepted;
-  if (key === "on_route") return styles.dotOnRoute;
-  if (key === "delivered") return styles.dotDelivered;
+  if (!isActive) {
+    return styles.dotInactive;
+  }
+
+  if (isFinalErrorStep) {
+    return styles.dotDanger;
+  }
+
+  if (key === "validation") {
+    return styles.dotValidation;
+  }
+
+  if (key === "accepted") {
+    return styles.dotAccepted;
+  }
+
+  if (key === "on_route") {
+    return styles.dotOnRoute;
+  }
+
+  if (key === "delivered") {
+    return styles.dotDelivered;
+  }
 
   return styles.dotActive;
 }
@@ -105,6 +238,7 @@ function getDotStyle(
 const styles = StyleSheet.create({
   title: {
     ...typography.subtitle,
+    color: colors.text,
     marginBottom: spacing.lg,
   },
 
@@ -129,8 +263,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
+  currentDot: {
+    width: 8,
+    height: 8,
+    borderRadius: radius.pill,
+    backgroundColor: colors.textInverse,
+  },
+
   check: {
-    color: "#FFFFFF",
+    color: colors.textInverse,
     fontSize: 13,
     fontWeight: "900",
   },
@@ -139,24 +280,24 @@ const styles = StyleSheet.create({
     backgroundColor: colors.brand,
   },
 
-  dotPending: {
-    backgroundColor: colors.warning,
+  dotValidation: {
+    backgroundColor: "#F59E0B",
   },
 
   dotAccepted: {
-    backgroundColor: colors.success,
-  },
-
-  dotRejected: {
-    backgroundColor: colors.danger,
+    backgroundColor: "#22C55E",
   },
 
   dotOnRoute: {
-    backgroundColor: colors.brand,
+    backgroundColor: "#3B82F6",
   },
 
   dotDelivered: {
-    backgroundColor: colors.success,
+  backgroundColor: colors.brand,
+},
+
+  dotDanger: {
+    backgroundColor: colors.danger,
   },
 
   dotInactive: {
@@ -173,11 +314,7 @@ const styles = StyleSheet.create({
   },
 
   lineActive: {
-    backgroundColor: colors.brand,
-  },
-
-  lineRejected: {
-    backgroundColor: colors.danger,
+    backgroundColor: "#CBD5E1",
   },
 
   lineInactive: {
@@ -187,6 +324,7 @@ const styles = StyleSheet.create({
   stepLabel: {
     ...typography.caption,
     textAlign: "center",
+    paddingHorizontal: 2,
   },
 
   stepLabelActive: {
@@ -196,5 +334,9 @@ const styles = StyleSheet.create({
 
   stepLabelInactive: {
     color: colors.textSoft,
+  },
+
+  stepLabelDanger: {
+    color: colors.danger,
   },
 });

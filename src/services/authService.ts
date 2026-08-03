@@ -6,26 +6,49 @@ export async function signUp(
   email: string,
   password: string,
   fullName: string = DEFAULT_PROFILE_NAME,
+  phone: string = "",
 ) {
+  const normalizedEmail = email.trim().toLowerCase();
+  const normalizedFullName = fullName.trim() || DEFAULT_PROFILE_NAME;
+  const normalizedPhone = phone.trim();
+
   const { data, error } = await supabase.auth.signUp({
-    email,
+    email: normalizedEmail,
     password,
+    options: {
+      data: {
+        full_name: normalizedFullName,
+        phone: normalizedPhone,
+      },
+    },
   });
 
   if (error || !data.user) {
-    return { data, error };
+    return {
+      data,
+      error,
+    };
   }
 
-  const { error: profileError } = await supabase.from("profiles").insert({
+  const { error: profileError } = await supabase
+  .from("profiles")
+  .insert({
     id: data.user.id,
-    full_name: fullName,
+    full_name: normalizedFullName,
+    phone: normalizedPhone || null,
   });
 
   if (profileError) {
-    return { data, error: profileError };
+    return {
+      data,
+      error: profileError,
+    };
   }
 
-  return { data, error: null };
+  return {
+    data,
+    error: null,
+  };
 }
 
 export async function signIn(email: string, password: string) {

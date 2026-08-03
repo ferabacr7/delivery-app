@@ -13,12 +13,12 @@ import {
 } from "react-native";
 
 import { CourierWeight, ServiceType } from "@/business/quoteEngine/models";
+import { businessConfig, SupportedCurrency } from "@/constants/businessConfig";
 
 import { useTranslation } from "../i18n/useTranslation";
 import { getMyAddresses } from "../services/addressService";
 import { createOrder } from "../services/orderService";
 import { colors } from "../styles/theme";
-import { businessConfig, SupportedCurrency } from "@/constants/businessConfig";
 
 type ServiceTranslationKey =
   | "createOrder.supermarket"
@@ -63,7 +63,7 @@ function formatCurrency(value: number, locale: string, currency: string) {
 
 export default function CreateOrderScreen() {
   const [description, setDescription] = useState("");
-
+  const [pickupLocation, setPickupLocation] = useState("");
   const [selectedAddressId, setSelectedAddressId] = useState("");
 
   const [selectedServiceType, setSelectedServiceType] =
@@ -74,7 +74,6 @@ export default function CreateOrderScreen() {
   const [foodOrderPaid, setFoodOrderPaid] = useState<boolean | null>(null);
 
   const [addresses, setAddresses] = useState<any[]>([]);
-
   const [loading, setLoading] = useState(false);
 
   const { t, language } = useTranslation();
@@ -125,6 +124,42 @@ export default function CreateOrderScreen() {
     selectedServiceType === "PHARMACY" ||
     (selectedServiceType === "FOOD_PICKUP" && foodOrderPaid === false);
 
+  function getPickupLocationLabel() {
+    switch (selectedServiceType) {
+      case "SUPERMARKET":
+        return t("createOrder.preferredSupermarket");
+
+      case "PHARMACY":
+        return t("createOrder.preferredPharmacy");
+
+      case "FOOD_PICKUP":
+      case "GENERAL_MESSAGING":
+        return t("createOrder.pickupLocation");
+
+      default:
+        return t("createOrder.pickupLocation");
+    }
+  }
+
+  function getPickupLocationPlaceholder() {
+    switch (selectedServiceType) {
+      case "SUPERMARKET":
+        return t("createOrder.preferredSupermarketPlaceholder");
+
+      case "PHARMACY":
+        return t("createOrder.preferredPharmacyPlaceholder");
+
+      case "FOOD_PICKUP":
+        return t("createOrder.restaurantPickupPlaceholder");
+
+      case "GENERAL_MESSAGING":
+        return t("createOrder.messagingPickupPlaceholder");
+
+      default:
+        return t("createOrder.pickupLocationPlaceholder");
+    }
+  }
+
   async function loadAddresses() {
     const { data, error } = await getMyAddresses();
 
@@ -152,6 +187,7 @@ export default function CreateOrderScreen() {
 
   function handleSelectService(serviceType: ServiceType) {
     setSelectedServiceType(serviceType);
+    setPickupLocation("");
 
     if (serviceType !== "FOOD_PICKUP") {
       setFoodOrderPaid(null);
@@ -164,6 +200,7 @@ export default function CreateOrderScreen() {
 
   async function handleCreateOrder() {
     const trimmedDescription = description.trim();
+    const trimmedPickupLocation = pickupLocation.trim();
 
     if (!selectedAddressId) {
       Alert.alert(t("common.error"), t("createOrder.selectAddress"));
@@ -172,6 +209,11 @@ export default function CreateOrderScreen() {
 
     if (!selectedServiceType) {
       Alert.alert(t("common.error"), t("createOrder.selectService"));
+      return;
+    }
+
+    if (!trimmedPickupLocation) {
+      Alert.alert(t("common.error"), t("createOrder.pickupLocationRequired"));
       return;
     }
 
@@ -207,10 +249,12 @@ export default function CreateOrderScreen() {
         selectedServiceType,
         estimatedPurchaseAmount,
       });
+
       const { error } = await createOrder({
         description: trimmedDescription,
         addressId: selectedAddressId,
         serviceType: selectedServiceType,
+        pickupLocation: trimmedPickupLocation,
         currency: selectedCurrency,
 
         courierWeight:
@@ -239,6 +283,7 @@ export default function CreateOrderScreen() {
       );
 
       setDescription("");
+      setPickupLocation("");
       setSelectedServiceType(null);
       setCourierWeight("LIGHT");
       setEstimatedPurchaseAmount(purchaseLimits.minimum);
@@ -291,7 +336,26 @@ export default function CreateOrderScreen() {
           <View style={styles.emptyBox}>
             <Ionicons name="location-outline" size={24} color={colors.muted} />
 
-            <Text style={styles.emptyText}>{t("createOrder.noAddresses")}</Text>
+            <View style={styles.emptyContent}>
+              <Text style={styles.emptyText}>
+                {t("createOrder.noAddresses")}
+              </Text>
+
+              <Pressable
+                style={styles.addressButton}
+                onPress={() => router.push("/my-addresses" as never)}
+              >
+                <Text style={styles.addressButtonText}>
+                  {t("createOrder.addAddress")}
+                </Text>
+
+                <Ionicons
+                  name="arrow-forward"
+                  size={18}
+                  color={colors.primary}
+                />
+              </Pressable>
+            </View>
           </View>
         ) : (
           addresses.map((address) => {
@@ -580,6 +644,20 @@ export default function CreateOrderScreen() {
           </>
         )}
 
+        {selectedServiceType ? (
+          <>
+            <Text style={styles.sectionTitle}>{getPickupLocationLabel()}</Text>
+
+            <TextInput
+              style={styles.input}
+              value={pickupLocation}
+              onChangeText={setPickupLocation}
+              placeholder={getPickupLocationPlaceholder()}
+              placeholderTextColor={colors.muted}
+            />
+          </>
+        ) : null}
+
         <Text style={styles.label}>{t("createOrder.question")}</Text>
 
         <TextInput
@@ -721,6 +799,17 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
 
+  input: {
+    height: 56,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    color: colors.dark,
+    backgroundColor: colors.white,
+  },
+
   textArea: {
     height: 140,
     borderWidth: 1,
@@ -755,7 +844,7 @@ const styles = StyleSheet.create({
 
   selectCardActive: {
     borderColor: colors.primary,
-    backgroundColor: colors.softTeal,
+    backgroundColor: colors.brandSoft,
   },
 
   selectContent: {
@@ -826,7 +915,7 @@ const styles = StyleSheet.create({
 
   paymentOptionActive: {
     borderColor: colors.primary,
-    backgroundColor: colors.softTeal,
+    backgroundColor: colors.brandSoft,
   },
 
   emptyBox: {
@@ -839,11 +928,28 @@ const styles = StyleSheet.create({
     gap: 12,
   },
 
-  emptyText: {
+  emptyContent: {
     flex: 1,
+  },
+
+  emptyText: {
     fontSize: 14,
     color: colors.muted,
     lineHeight: 20,
+  },
+
+  addressButton: {
+    marginTop: 10,
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+
+  addressButtonText: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: colors.primary,
   },
 
   amountCard: {
@@ -866,7 +972,7 @@ const styles = StyleSheet.create({
     borderRadius: 23,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.softTeal,
+    backgroundColor: colors.brandSoft,
   },
 
   amountHeaderContent: {
@@ -928,6 +1034,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: colors.muted,
   },
+
   option: {
     minHeight: 58,
     borderWidth: 1,

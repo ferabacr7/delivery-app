@@ -1,3 +1,4 @@
+import { QuoteStatusType } from "../../../presentation/QuoteViewModel";
 import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, Text, View } from "react-native";
 
@@ -10,18 +11,21 @@ import {
 
 type TrackingStatusType =
   | "pending"
+  | "quoted"
   | "accepted"
+  | "in_progress"
+  | "on_route"
+  | "delivered"
   | "rejected"
   | "expired"
   | "unknown";
 
 type TrackingStatusProps = {
-  status: TrackingStatusType;
+  status: QuoteStatusType;
   title: string;
   waitingText: string;
   activeText: string;
   unavailableText: string;
-  updatedText: string;
 };
 
 export default function TrackingStatus({
@@ -30,11 +34,15 @@ export default function TrackingStatus({
   waitingText,
   activeText,
   unavailableText,
-  updatedText,
 }: TrackingStatusProps) {
-  const isActive = status === "accepted";
-  const isUnavailable =
-    status === "rejected" || status === "expired";
+const isActive =
+  status === "accepted" ||
+  status === "in_progress" ||
+  status === "on_route";
+
+const isUnavailable =
+  status === "rejected" ||
+  status === "expired";
 
   function getMessage() {
     if (isActive) {
@@ -89,19 +97,6 @@ export default function TrackingStatus({
             </Text>
           </View>
         </View>
-
-        <View style={styles.updateContainer}>
-          <View
-            style={[
-              styles.statusDot,
-              !isActive && styles.inactiveDot,
-            ]}
-          />
-
-          <Text style={styles.updatedText}>
-            {isActive ? updatedText : "—"}
-          </Text>
-        </View>
       </View>
     </View>
   );
@@ -151,31 +146,6 @@ const styles = StyleSheet.create({
   message: {
     ...typography.caption,
     marginTop: spacing.xs,
-    color: colors.textMuted,
-  },
-
-  updateContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.xs,
-    marginTop: 4,
-    maxWidth: 125,
-  },
-
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#22C55E",
-  },
-
-  inactiveDot: {
-    backgroundColor: colors.textMuted,
-  },
-
-  updatedText: {
-    ...typography.caption,
-    flexShrink: 1,
     color: colors.textMuted,
   },
 });

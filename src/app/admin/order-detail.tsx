@@ -98,11 +98,15 @@ export default function AdminOrderDetailScreen() {
 
     setSaving(true);
 
+    const quoteCurrency: "CRC" | "USD" =
+      order?.currency === "USD" ? "USD" : "CRC";
+
     const { data, error } = await createQuoteForOrder({
       orderId: String(orderId),
       subtotal: subtotalNumber,
       deliveryFee: deliveryFeeNumber,
       notes,
+      currency: quoteCurrency,
     });
 
     setSaving(false);

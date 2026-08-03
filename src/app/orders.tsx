@@ -1,5 +1,5 @@
 import { router, useFocusEffect } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -21,6 +21,7 @@ import {
   typography,
 } from "../constants/theme";
 import { useTranslation } from "../i18n/useTranslation";
+import { supabase } from "../lib/supabase";
 import { getMyOrders } from "../services/orderService";
 
 type OrderStatus =
@@ -51,37 +52,135 @@ export default function OrdersScreen() {
 
   const { t } = useTranslation();
 
-  useFocusEffect(
-    useCallback(() => {
-      loadOrders();
-    }, []),
-  );
-
-  async function loadOrders() {
+  const loadOrders = useCallback(async (showLoader = true) => {
     try {
-      setLoading(true);
+      if (showLoader) {
+        setLoading(true);
+      }
 
       const { data, error } = await getMyOrders();
 
       if (error) {
-        console.error("Error loading orders:", error);
+        console.error("MY ORDERS LOAD ERROR:", error);
         return;
       }
 
+      console.log(
+        "MY ORDERS DATABASE STATUSES:",
+        (data ?? []).map((order) => ({
+          id: order.id,
+          status: order.status,
+        })),
+      );
+
       setOrders((data ?? []) as OrderRecord[]);
     } catch (error) {
-      console.error(
-        "Unexpected error loading orders:",
-        error,
-      );
+      console.error("MY ORDERS UNEXPECTED ERROR:", error);
     } finally {
-      setLoading(false);
+      if (showLoader) {
+        setLoading(false);
+      }
     }
-  }
+  }, []);
+
+  /*
+   * Recarga los pedidos cada vez que la pantalla
+   * vuelve a obtener el foco.
+   */
+  useFocusEffect(
+    useCallback(() => {
+      void loadOrders(true);
+    }, [loadOrders]),
+  );
+
+  useEffect(() => {
+  const channelName = `my-orders-status-${Date.now()}-${Math.random()
+    .toString(36)
+    .slice(2)}`;
+
+  const channel = supabase
+    .channel(channelName)
+
+    /*
+     * Cambios comerciales de la orden:
+     * VALIDATION, QUOTED, ACCEPTED, etc.
+     */
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "orders",
+      },
+      (payload) => {
+        const newOrder = payload.new as {
+          id?: string;
+          status?: string;
+        };
+
+        const oldOrder = payload.old as {
+          id?: string;
+          status?: string;
+        };
+
+        console.log("MY ORDERS REALTIME ORDER:", {
+          eventType: payload.eventType,
+          orderId: newOrder.id ?? oldOrder.id,
+          oldStatus: oldOrder.status,
+          newStatus: newOrder.status,
+        });
+
+        void loadOrders(false);
+      },
+    )
+
+    /*
+     * Cambios operativos de la entrega:
+     * PENDING, IN_PROGRESS, ON_ROUTE, DELIVERED.
+     */
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "deliveries",
+      },
+      (payload) => {
+        const newDelivery = payload.new as {
+          id?: string;
+          order_id?: string;
+          status?: string;
+        };
+
+        const oldDelivery = payload.old as {
+          id?: string;
+          order_id?: string;
+          status?: string;
+        };
+
+        console.log("MY ORDERS REALTIME DELIVERY:", {
+          eventType: payload.eventType,
+          deliveryId: newDelivery.id ?? oldDelivery.id,
+          orderId:
+            newDelivery.order_id ?? oldDelivery.order_id,
+          oldStatus: oldDelivery.status,
+          newStatus: newDelivery.status,
+        });
+
+        void loadOrders(false);
+      },
+    )
+    .subscribe((status) => {
+      console.log("MY ORDERS REALTIME STATUS:", status);
+    });
+
+  return () => {
+    void supabase.removeChannel(channel);
+  };
+}, [loadOrders]);
 
   function normalizeStatus(status?: string): OrderStatus {
-    const normalizedStatus =
-      status?.trim().toUpperCase();
+    const normalizedStatus = status?.trim().toUpperCase();
 
     switch (normalizedStatus) {
       case "VALIDATION":
@@ -100,14 +199,19 @@ export default function OrdersScreen() {
       case "PENDING":
         return "VALIDATION";
 
+      case "EN_ROUTE":
+        return "ON_ROUTE";
+
+      case "CANCELED":
+        return "CANCELLED";
+
       default:
         return "VALIDATION";
     }
   }
 
   function getStatusLabel(status?: string) {
-    const normalizedStatus =
-      normalizeStatus(status);
+    const normalizedStatus = normalizeStatus(status);
 
     switch (normalizedStatus) {
       case "VALIDATION":
@@ -139,11 +243,8 @@ export default function OrdersScreen() {
     }
   }
 
-  function getStatusStyle(
-    status?: string,
-  ): StatusStyle {
-    const normalizedStatus =
-      normalizeStatus(status);
+  function getStatusStyle(status?: string): StatusStyle {
+    const normalizedStatus = normalizeStatus(status);
 
     switch (normalizedStatus) {
       case "VALIDATION":
@@ -206,14 +307,9 @@ export default function OrdersScreen() {
     return (
       <View style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator
-            size="large"
-            color={colors.brand}
-          />
+          <ActivityIndicator size="large" color={colors.brand} />
 
-          <Text style={styles.loadingText}>
-            {t("common.loading")}
-          </Text>
+          <Text style={styles.loadingText}>{t("common.loading")}</Text>
         </View>
 
         <BottomNavigation active="orders" />
@@ -231,37 +327,26 @@ export default function OrdersScreen() {
           title={t("orders.title")}
           showBackButton
           backLabel={t("common.back")}
-          onBack={() =>
-            router.replace("/" as never)
-          }
+          onBack={() => router.replace("/" as never)}
         />
 
         <View style={styles.content}>
           {orders.length === 0 ? (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyText}>
-                {t("orders.empty")}
-              </Text>
+              <Text style={styles.emptyText}>{t("orders.empty")}</Text>
 
               <Pressable
                 style={styles.emptyButton}
-                onPress={() =>
-                  router.push(
-                    "/create-order" as never,
-                  )
-                }
+                onPress={() => router.push("/create-order" as never)}
               >
-                <Text
-                  style={styles.emptyButtonText}
-                >
+                <Text style={styles.emptyButtonText}>
                   {t("orders.firstOrder")}
                 </Text>
               </Pressable>
             </View>
           ) : (
             orders.map((order) => {
-              const statusStyle =
-                getStatusStyle(order.status);
+              const statusStyle = getStatusStyle(order.status);
 
               return (
                 <Pressable
@@ -278,43 +363,25 @@ export default function OrdersScreen() {
                 >
                   <View style={styles.cardHeader}>
                     <Text style={styles.orderId}>
-                      {t("orders.order")} #
-                      {order.id
-                        .slice(-6)
-                        .toUpperCase()}
+                      {t("orders.order")} #{order.id.slice(-6).toUpperCase()}
                     </Text>
 
-                    <View
-                      style={[
-                        styles.statusBadge,
-                        statusStyle.container,
-                      ]}
-                    >
+                    <View style={[styles.statusBadge, statusStyle.container]}>
                       <Text
-                        style={[
-                          styles.statusText,
-                          statusStyle.text,
-                        ]}
+                        style={[styles.statusText, statusStyle.text]}
                         numberOfLines={1}
                       >
-                        {getStatusLabel(
-                          order.status,
-                        )}
+                        {getStatusLabel(order.status)}
                       </Text>
                     </View>
                   </View>
 
-                  <Text
-                    style={styles.description}
-                    numberOfLines={3}
-                  >
+                  <Text style={styles.description} numberOfLines={3}>
                     {order.description}
                   </Text>
 
                   <Text style={styles.time}>
-                    {new Date(
-                      order.created_at,
-                    ).toLocaleString()}
+                    {new Date(order.created_at).toLocaleString()}
                   </Text>
                 </Pressable>
               );

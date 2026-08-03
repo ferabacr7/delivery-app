@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import { useTranslation } from "../../i18n/useTranslation";
 import { colors } from "../../styles/theme";
 
 type BottomNavigationKey = "home" | "orders" | "create" | "profile";
@@ -11,6 +12,11 @@ type BottomNavigationItem = {
   icon: keyof typeof Ionicons.glyphMap;
   activeIcon: keyof typeof Ionicons.glyphMap;
   route: string;
+  labelKey:
+    | "bottomNavigation.home"
+    | "bottomNavigation.orders"
+    | "bottomNavigation.create"
+    | "bottomNavigation.profile";
 };
 
 type Props = {
@@ -23,28 +29,34 @@ const items: BottomNavigationItem[] = [
     icon: "home-outline",
     activeIcon: "home",
     route: "/",
+    labelKey: "bottomNavigation.home",
   },
   {
     key: "orders",
     icon: "receipt-outline",
     activeIcon: "receipt",
     route: "/orders",
+    labelKey: "bottomNavigation.orders",
   },
   {
     key: "create",
     icon: "add-circle-outline",
     activeIcon: "add-circle",
     route: "/create-order",
+    labelKey: "bottomNavigation.create",
   },
   {
     key: "profile",
     icon: "person-outline",
     activeIcon: "person",
     route: "/profile",
+    labelKey: "bottomNavigation.profile",
   },
 ];
 
 export default function BottomNavigation({ active }: Props) {
+  const { t } = useTranslation();
+
   function handleNavigate(item: BottomNavigationItem) {
     if (item.key === active) {
       return;
@@ -70,6 +82,10 @@ export default function BottomNavigation({ active }: Props) {
                 size={22}
                 color={colors.primary}
               />
+
+              <Text style={styles.label}>
+                {t(item.labelKey)}
+              </Text>
             </Pressable>
           );
         })}
@@ -91,7 +107,7 @@ const styles = StyleSheet.create({
 
   navBar: {
     width: "100%",
-    height: 62,
+    height: 68,
     borderRadius: 999,
     backgroundColor: "rgba(255, 255, 255, 0.34)",
     flexDirection: "row",
@@ -99,7 +115,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     paddingHorizontal: 8,
     borderWidth: 1.5,
-    borderColor: "rgba(20, 184, 166, 0.38)",
+    borderColor: "rgba(247, 95, 42, 0.38)",
     shadowColor: "#000",
     shadowOpacity: 0.08,
     shadowRadius: 18,
@@ -108,18 +124,18 @@ const styles = StyleSheet.create({
   },
 
   navItem: {
-    width: 44,
-    height: 44,
+    width: 62,
+    height: 52,
     borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "rgba(255, 255, 255, 0.28)",
     borderWidth: 1,
-    borderColor: "rgba(20, 184, 166, 0.24)",
+    borderColor: "rgba(247, 95, 42, 0.24)",
   },
 
   activeItem: {
-    backgroundColor: colors.softTeal,
+    backgroundColor: colors.brandSoft,
     borderWidth: 1.5,
     borderColor: colors.primary,
     shadowColor: colors.primary,
@@ -127,5 +143,12 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 5 },
     elevation: 6,
+  },
+
+  label: {
+    marginTop: 2,
+    fontSize: 10,
+    fontWeight: "700",
+    color: colors.primaryDark,
   },
 });

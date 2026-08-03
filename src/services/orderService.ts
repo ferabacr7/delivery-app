@@ -41,11 +41,26 @@ type CreateOrderInput = {
   description: string;
   addressId: string;
   serviceType: ServiceType;
+  pickupLocation?: string;
 
   currency?: SupportedCurrency;
   courierWeight?: CourierWeight;
   estimatedPurchaseAmount?: number;
   foodOrderPaid?: boolean;
+};
+
+type DeliveryRelation = {
+  id: string;
+  status: string;
+};
+
+type OrderWithDeliveries = {
+  id: string;
+  description: string;
+  status: string;
+  created_at: string;
+  deliveries?: DeliveryRelation[] | DeliveryRelation | null;
+  [key: string]: unknown;
 };
 
 export async function createOrder(input: CreateOrderInput) {
@@ -112,6 +127,7 @@ export async function createOrder(input: CreateOrderInput) {
       address_id: input.addressId,
       description: input.description,
       service_type: input.serviceType,
+      pickup_location: input.pickupLocation?.trim() || null,
 
       courier_weight:
         input.serviceType === "GENERAL_MESSAGING"
@@ -233,15 +249,91 @@ export async function getMyOrders() {
 
   const { data, error } = await supabase
     .from("orders")
-    .select("*")
+    .select(
+      `
+      *,
+      deliveries (
+        id,
+        status
+      )
+      `,
+    )
     .eq("profile_id", user.id)
     .order("created_at", {
       ascending: false,
     });
 
+  if (error) {
+    return {
+      data: [],
+      error,
+    };
+  }
+
+  const normalizedOrders = ((data ?? []) as OrderWithDeliveries[]).map(
+    (order) => {
+      const delivery = Array.isArray(order.deliveries)
+        ? (order.deliveries[0] ?? null)
+        : (order.deliveries ?? null);
+
+      const orderStatus = String(order.status).trim().toUpperCase();
+
+      const deliveryStatus = delivery?.status
+        ? String(delivery.status).trim().toUpperCase()
+        : null;
+
+      let displayStatus = orderStatus;
+
+      /*
+       * PENDING significa que ya existe una entrega,
+       * pero el repartidor todavía no ha iniciado
+       * la operación.
+       *
+       * Para el cliente la orden continúa visualmente
+       * como ACCEPTED.
+       */
+      if (deliveryStatus === "PENDING") {
+        displayStatus = orderStatus;
+      }
+
+      /*
+       * Cuando comienza la operación,
+       * el estado de delivery tiene prioridad.
+       */
+      if (
+        deliveryStatus === "IN_PROGRESS" ||
+        deliveryStatus === "ON_ROUTE" ||
+        deliveryStatus === "DELIVERED" ||
+        deliveryStatus === "CANCELLED"
+      ) {
+        displayStatus = deliveryStatus;
+      }
+
+      return {
+        ...order,
+        status: displayStatus,
+        delivery_id: delivery?.id ?? null,
+        delivery_status: deliveryStatus,
+      };
+    },
+  );
+
+  console.log(
+    "MY ORDERS RESOLVED STATUSES:",
+    normalizedOrders.map((order) => ({
+      id: order.id,
+      orderStatus:
+        ((data ?? []) as OrderWithDeliveries[]).find(
+          (item) => item.id === order.id,
+        )?.status ?? null,
+      deliveryStatus: order.delivery_status,
+      displayStatus: order.status,
+    })),
+  );
+
   return {
-    data,
-    error,
+    data: normalizedOrders,
+    error: null,
   };
 }
 
@@ -276,5 +368,34 @@ export async function getOrderById(orderId: string) {
   return {
     data,
     error,
+  };
+}
+
+export async function cancelAcceptedOrder(orderId: string) {
+  const { user, error: authError } = await getAuthenticatedUser();
+
+  if (authError || !user) {
+    return {
+      data: null,
+      error: authError ?? new Error("No hay una sesión activa."),
+    };
+  }
+
+  const { data, error } = await supabase.rpc("cancel_accepted_order", {
+    target_order_id: orderId,
+  });
+
+  if (error) {
+    console.error("CANCEL ACCEPTED ORDER RPC ERROR:", error);
+
+    return {
+      data: null,
+      error,
+    };
+  }
+
+  return {
+    data,
+    error: null,
   };
 }

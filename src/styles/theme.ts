@@ -1,14 +1,13 @@
 export const colors = {
-  // Brand
-  primary: "#00A99D",
-  primaryDark: "#008C82",
-  softTeal: "#E6FFFB",
+primary: "#F75F2A",
+primaryDark: "#D3481C",
+primarySoft: "#FFF0E9",
 
   // Backgrounds
   white: "#FFFFFF",
   background: "#F8FAFC",
   surface: "#FFFFFF",
-  surfaceSoft: "#F1F5F4",
+  surfaceSoft: "#F5F1EF",
 
   // Text
   dark: "#111827",
@@ -28,13 +27,13 @@ export const colors = {
   danger: "#EF4444",
   dangerSoft: "#FEE2E2",
 
-  info: "#3B82F6",
+  info: "#2563EB",
   infoSoft: "#DBEAFE",
 
-  // Compatibility aliases
-  brand: "#00A99D",
-  brandDark: "#008C82",
-  brandSoft: "#E6FFFB",
+// Compatibility aliases
+brand: "#F75F2A",
+brandDark: "#D3481C",
+brandSoft: "#FFF0E9",
 
   text: "#111827",
   textMuted: "#6B7280",
@@ -147,12 +146,12 @@ export const shadows = {
   },
 
   brand: {
-    shadowColor: colors.primary,
+    shadowColor: colors.primaryDark,
     shadowOffset: {
       width: 0,
       height: 6,
     },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.20,
     shadowRadius: 12,
     elevation: 4,
   },

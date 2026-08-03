@@ -10,55 +10,31 @@ import {
 
 type TrackingETAProps = {
   eta: string;
-  updatedAt: string;
+  label?: string;
 };
 
 export default function TrackingETA({
   eta,
-  updatedAt,
+  label = "Llegada estimada",
 }: TrackingETAProps) {
   return (
     <View style={styles.container}>
-      <View style={styles.card}>
-        <View style={styles.iconContainer}>
-          <Ionicons
-            name="time-outline"
-            size={24}
-            color={colors.brand}
-          />
-        </View>
-
-        <View style={styles.info}>
-          <Text style={styles.label}>
-            Llegada estimada
-          </Text>
-
-          <Text style={styles.value}>
-            {eta}
-          </Text>
-        </View>
+      <View style={styles.iconContainer}>
+        <Ionicons
+          name="time-outline"
+          size={24}
+          color={colors.brand}
+        />
       </View>
 
-      <View style={styles.divider} />
+      <View style={styles.info}>
+        <Text style={styles.label}>
+          {label}
+        </Text>
 
-      <View style={styles.card}>
-        <View style={styles.iconContainer}>
-          <Ionicons
-            name="refresh-outline"
-            size={24}
-            color={colors.brand}
-          />
-        </View>
-
-        <View style={styles.info}>
-          <Text style={styles.label}>
-            Última actualización
-          </Text>
-
-          <Text style={styles.value}>
-            {updatedAt}
-          </Text>
-        </View>
+        <Text style={styles.value}>
+          {eta}
+        </Text>
       </View>
     </View>
   );
@@ -67,22 +43,9 @@ export default function TrackingETA({
 const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
+    alignItems: "center",
     padding: spacing.lg,
-    alignItems: "center",
-  },
-
-  divider: {
-    width: 1,
-    alignSelf: "stretch",
-    marginHorizontal: spacing.md,
-    backgroundColor: colors.border,
-  },
-
-  card: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
+    gap: spacing.md,
   },
 
   iconContainer: {

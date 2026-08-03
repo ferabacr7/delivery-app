@@ -50,6 +50,11 @@ export default function LocationPicker({
   onLocationChange,
 }: LocationPickerProps) {
   const mapRef = useRef<MapView>(null);
+  const hasAutoDetectedRef = useRef(false);
+
+  const hasInitialCoordinates =
+    typeof initialLatitude === "number" &&
+    typeof initialLongitude === "number";
 
   const [coordinates, setCoordinates] = useState({
     latitude:
@@ -69,8 +74,7 @@ export default function LocationPicker({
     useState(false);
 
   const [hasLocation, setHasLocation] = useState(
-    typeof initialLatitude === "number" &&
-      typeof initialLongitude === "number",
+    hasInitialCoordinates,
   );
 
   const { t } = useTranslation();
@@ -103,6 +107,19 @@ export default function LocationPicker({
     initialLatitude,
     initialLongitude,
   ]);
+
+  useEffect(() => {
+    if (
+      hasInitialCoordinates ||
+      hasAutoDetectedRef.current
+    ) {
+      return;
+    }
+
+    hasAutoDetectedRef.current = true;
+
+    detectCurrentLocation();
+  }, [hasInitialCoordinates]);
 
   async function detectCurrentLocation() {
     if (isDetecting) {
@@ -422,7 +439,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     flexDirection: "row",
     alignItems: "flex-start",
-    backgroundColor: colors.softTeal,
+    backgroundColor: colors.brandSoft,
   },
 
   addressText: {

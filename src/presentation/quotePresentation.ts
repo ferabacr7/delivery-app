@@ -6,6 +6,8 @@ import {
   QuoteViewModel,
 } from "./QuoteViewModel";
 
+type SupportedCurrency = "CRC" | "USD";
+
 type OrderLike = {
   id?: string;
   description?: string | null;
@@ -20,6 +22,11 @@ type OrderLike = {
    * ni el total del servicio.
    */
   estimated_purchase_amount?: number | string | null;
+
+  /*
+   * Moneda original del monto estimado de compra.
+   */
+  estimated_purchase_currency?: SupportedCurrency | null;
 
   /*
    * Solo aplica para FOOD_PICKUP.
@@ -43,7 +50,7 @@ type QuoteLike = {
   subtotal?: number | string | null;
   delivery_fee?: number | string | null;
   total?: number | string | null;
-  currency?: "CRC" | "USD" | null;
+  currency?: SupportedCurrency | null;
   notes?: string | null;
   status?: string | null;
 };
@@ -52,9 +59,71 @@ type BuildQuoteViewModelInput = {
   order: OrderLike;
   quote: QuoteLike | null;
   language?: QuoteLanguage;
+
+  /*
+   * Cantidad de colones equivalentes a 1 dólar.
+   *
+   * Ejemplo:
+   * 1 USD = 505 CRC
+   * exchangeRate = 505
+   */
+  exchangeRate?: number | null;
 };
 
-function normalizeStatus(status?: string | null): QuoteStatusType {
+/*
+ * Normaliza exclusivamente el estado operativo del pedido.
+ *
+ * Este estado controla:
+ * - encabezado
+ * - timeline
+ * - tracking
+ * - badge
+ * - mensaje operativo
+ */
+function normalizeOrderStatus(status?: string | null): QuoteStatusType {
+  const value = status?.trim().toUpperCase();
+
+  switch (value) {
+    case "VALIDATION":
+      return "validation";
+
+    case "QUOTED":
+      return "quoted";
+
+    case "ACCEPTED":
+      return "accepted";
+
+    case "IN_PROGRESS":
+      return "in_progress";
+
+    case "ON_ROUTE":
+    case "EN_ROUTE":
+      return "on_route";
+
+    case "DELIVERED":
+      return "delivered";
+
+    case "REJECTED":
+      return "rejected";
+
+    case "CANCELLED":
+    case "CANCELED":
+      return "cancelled";
+
+    default:
+      return "unknown";
+  }
+}
+
+/*
+ * Normaliza exclusivamente el estado de la cotización.
+ *
+ * Este estado controla principalmente:
+ * - aceptar cotización
+ * - rechazar cotización
+ * - cotización vencida
+ */
+function normalizeQuoteStatus(status?: string | null): QuoteStatusType {
   const value = status?.trim().toUpperCase();
 
   switch (value) {
@@ -96,14 +165,6 @@ function normalizeServiceType(serviceType?: string | null) {
     PHARMACY: "PHARMACY",
     FARMACIA: "PHARMACY",
 
-    /*
-     * FOOD_PICKUP es el valor oficial guardado
-     * actualmente en orders.service_type.
-     *
-     * Todas las variantes anteriores también se
-     * normalizan al mismo tipo para mantener
-     * compatibilidad con datos viejos.
-     */
     FOOD_PICKUP: "FOOD_PICKUP",
     FOOD: "FOOD_PICKUP",
     COMIDA: "FOOD_PICKUP",
@@ -124,14 +185,20 @@ function normalizeServiceType(serviceType?: string | null) {
 function getStatusTone(status: QuoteStatusType): QuoteStatusTone {
   switch (status) {
     case "accepted":
+    case "delivered":
       return "success";
 
+    case "validation":
+    case "quoted":
     case "pending":
       return "warning";
 
     case "rejected":
+    case "cancelled":
       return "danger";
 
+    case "in_progress":
+    case "on_route":
     case "expired":
       return "info";
 
@@ -142,7 +209,7 @@ function getStatusTone(status: QuoteStatusType): QuoteStatusTone {
 
 function formatMoney(
   value: number | string | null | undefined,
-  currency: "CRC" | "USD",
+  currency: SupportedCurrency,
 ): string {
   const numericValue = Number(value ?? 0);
 
@@ -156,6 +223,83 @@ function formatMoney(
     minimumFractionDigits: currency === "USD" ? 2 : 0,
     maximumFractionDigits: currency === "USD" ? 2 : 0,
   }).format(safeValue);
+}
+
+/*
+ * Redondea hacia arriba al siguiente múltiplo de $0.50.
+ *
+ * Ejemplos:
+ * 6.12 → 6.50
+ * 6.50 → 6.50
+ * 6.86 → 7.00
+ */
+function roundUsdAmount(amount: number) {
+  return Math.ceil(amount * 2) / 2;
+}
+
+/*
+ * Convierte un monto únicamente para presentación.
+ *
+ * Nunca modifica los datos guardados en Supabase.
+ */
+function convertMoneyForDisplay({
+  value,
+  storedCurrency,
+  displayCurrency,
+  exchangeRate,
+}: {
+  value: number | string | null | undefined;
+  storedCurrency: SupportedCurrency;
+  displayCurrency: SupportedCurrency;
+  exchangeRate: number | null;
+}): number {
+  const numericValue = Number(value ?? 0);
+
+  if (!Number.isFinite(numericValue)) {
+    return 0;
+  }
+
+  /*
+   * Si la moneda guardada coincide con la moneda
+   * que debe mostrarse, no se realiza conversión.
+   */
+  if (storedCurrency === displayCurrency) {
+    return numericValue;
+  }
+
+  const validExchangeRate =
+    exchangeRate !== null && Number.isFinite(exchangeRate) && exchangeRate > 0;
+
+  if (!validExchangeRate) {
+    console.warn("QUOTE PRESENTATION: Invalid exchange rate.", {
+      storedCurrency,
+      displayCurrency,
+      exchangeRate,
+      value: numericValue,
+    });
+
+    /*
+     * No cambiamos solamente el símbolo porque eso
+     * produciría un valor monetario incorrecto.
+     */
+    return numericValue;
+  }
+
+  /*
+   * CRC → USD
+   */
+  if (storedCurrency === "CRC" && displayCurrency === "USD") {
+    return roundUsdAmount(numericValue / exchangeRate);
+  }
+
+  /*
+   * USD → CRC
+   */
+  if (storedCurrency === "USD" && displayCurrency === "CRC") {
+    return Math.round(numericValue * exchangeRate);
+  }
+
+  return numericValue;
 }
 
 function buildMapUrls(
@@ -195,18 +339,18 @@ export function buildQuoteViewModel({
   order,
   quote,
   language = "es",
+  exchangeRate = null,
 }: BuildQuoteViewModelInput): QuoteViewModel {
   const labels = quoteLabels[language];
 
-  console.warn("BUILD QUOTE VIEW MODEL:", {
-  language,
-  quoteCurrency: quote?.currency,
-  quote,
-});
+  const orderStatusType = normalizeOrderStatus(order.status);
 
-  const statusType = normalizeStatus(quote?.status);
+  const quoteStatusType = normalizeQuoteStatus(quote?.status);
 
-  const statusTone = getStatusTone(statusType);
+  const presentationStatusType =
+    orderStatusType !== "unknown" ? orderStatusType : quoteStatusType;
+
+  const statusTone = getStatusTone(presentationStatusType);
 
   const normalizedServiceType = normalizeServiceType(order.service_type);
 
@@ -220,14 +364,146 @@ export function buildQuoteViewModel({
       normalizedServiceType as keyof typeof labels.serviceTypes
     ] ?? labels.unknownServiceType;
 
-  const currency: "CRC" | "USD" = quote?.currency === "USD" ? "USD" : "CRC";
+  /*
+   * Moneda en la que la cotización fue guardada.
+   */
+  const storedQuoteCurrency: SupportedCurrency =
+    quote?.currency === "USD" ? "USD" : "CRC";
+
+  /*
+   * Moneda que debe mostrarse según el idioma actual.
+   *
+   * Español → CRC
+   * Inglés  → USD
+   */
+  const displayCurrency: SupportedCurrency = language === "en" ? "USD" : "CRC";
+
+  /*
+   * Conversión visual del precio del servicio.
+   */
+  const displaySubtotal = convertMoneyForDisplay({
+    value: quote?.subtotal,
+    storedCurrency: storedQuoteCurrency,
+    displayCurrency,
+    exchangeRate,
+  });
+
+  const displayDeliveryFee = convertMoneyForDisplay({
+    value: quote?.delivery_fee,
+    storedCurrency: storedQuoteCurrency,
+    displayCurrency,
+    exchangeRate,
+  });
+
+  const displayTotal = convertMoneyForDisplay({
+    value: quote?.total,
+    storedCurrency: storedQuoteCurrency,
+    displayCurrency,
+    exchangeRate,
+  });
+
+  const isFoodPickup = normalizedServiceType === "FOOD_PICKUP";
+
+  const requiresPurchaseAmount =
+    normalizedServiceType === "SUPERMARKET" ||
+    normalizedServiceType === "PHARMACY" ||
+    (isFoodPickup && order.food_order_paid === false);
+
+  const hasEstimatedPurchaseAmount =
+    order.estimated_purchase_amount !== null &&
+    order.estimated_purchase_amount !== undefined &&
+    Number.isFinite(Number(order.estimated_purchase_amount));
+
+  const shouldShowPurchaseValidation = requiresPurchaseAmount || isFoodPickup;
+
+  /*
+   * Moneda original del monto estimado.
+   *
+   * Si el campo no existe en pedidos antiguos,
+   * usamos CRC como respaldo.
+   */
+  const storedPurchaseCurrency: SupportedCurrency =
+    order.estimated_purchase_currency === "USD" ? "USD" : "CRC";
+
+  const displayPurchaseAmount = convertMoneyForDisplay({
+    value: order.estimated_purchase_amount,
+    storedCurrency: storedPurchaseCurrency,
+    displayCurrency,
+    exchangeRate,
+  });
+
+  const purchaseAmount =
+    requiresPurchaseAmount && hasEstimatedPurchaseAmount
+      ? formatMoney(displayPurchaseAmount, displayCurrency)
+      : null;
+
+  const paymentStatus = isFoodPickup
+    ? order.food_order_paid === true
+      ? labels.foodOrderPaid
+      : order.food_order_paid === false
+        ? labels.foodOrderNotPaid
+        : null
+    : null;
+
+  const estimatedArrival = (() => {
+    switch (presentationStatusType) {
+      case "accepted":
+        return language === "en" ? "20–30 min" : "20–30 minutos";
+
+      case "in_progress":
+        return language === "en" ? "15–25 min" : "15–25 minutos";
+
+      case "on_route":
+        return language === "en" ? "8–15 min" : "8–15 minutos";
+
+      case "delivered":
+        return language === "en" ? "Delivered" : "Entregado";
+
+      case "rejected":
+        return language === "en" ? "Quote rejected" : "Cotización rechazada";
+
+      case "expired":
+        return language === "en" ? "Quote expired" : "Cotización vencida";
+
+      case "quoted":
+        return language === "en"
+          ? "Awaiting confirmation"
+          : "Esperando confirmación";
+
+      case "pending":
+      case "unknown":
+      default:
+        return language === "en" ? "Pending" : "Pendiente";
+    }
+  })();
+
+  console.warn("QUOTE PRESENTATION CURRENCY:", {
+    language,
+    storedQuoteCurrency,
+    displayCurrency,
+    storedPurchaseCurrency,
+    exchangeRate,
+
+    originalSubtotal: quote?.subtotal,
+    displaySubtotal,
+
+    originalDeliveryFee: quote?.delivery_fee,
+    displayDeliveryFee,
+
+    originalTotal: quote?.total,
+    displayTotal,
+
+    originalPurchaseAmount: order.estimated_purchase_amount,
+    displayPurchaseAmount,
+  });
 
   return {
     orderNumber: order.id?.slice(-6).toUpperCase() ?? "------",
 
     header: {
       title: labels.headerTitle,
-      subtitle: labels.headerSubtitle[statusType],
+
+      subtitle: labels.headerSubtitle[presentationStatusType],
     },
 
     service: {
@@ -236,31 +512,49 @@ export function buildQuoteViewModel({
       type: serviceTypeLabel,
       description: order.description ?? "",
       statusPrefix: labels.statusPrefix,
-      statusLabel: labels.status[statusType],
-      statusType,
+
+      statusLabel: labels.status[presentationStatusType],
+
+      statusType: presentationStatusType,
       statusTone,
     },
 
     location: {
       title: labels.locationTitle,
+
       address: order.addresses?.address_line ?? "",
 
       reference: order.addresses?.reference ?? labels.noReference,
 
       latitude:
         order.addresses?.latitude !== null &&
-        order.addresses?.latitude !== undefined
+        order.addresses?.latitude !== undefined &&
+        Number.isFinite(Number(order.addresses.latitude))
           ? Number(order.addresses.latitude)
           : null,
 
       longitude:
         order.addresses?.longitude !== null &&
-        order.addresses?.longitude !== undefined
+        order.addresses?.longitude !== undefined &&
+        Number.isFinite(Number(order.addresses.longitude))
           ? Number(order.addresses.longitude)
           : null,
 
       googleMapsUrl: mapUrls.googleMapsUrl,
+
       wazeUrl: mapUrls.wazeUrl,
+    },
+
+    tracking: {
+      estimatedArrival,
+
+      estimatedArrivalLabel:
+        language === "en" ? "Estimated arrival" : "Llegada estimada",
+
+      lastUpdate: "",
+
+      lastUpdateLabel:
+        language === "en" ? "Last update" : "Última actualización",
     },
 
     /*
@@ -273,36 +567,54 @@ export function buildQuoteViewModel({
     pricing: {
       title: labels.pricingTitle,
 
-      subtotalLabel: labels.subtotal,
-      subtotal: formatMoney(quote?.subtotal, currency),
+      subtotalLabel: serviceTypeLabel,
+
+      subtotal: formatMoney(displaySubtotal, displayCurrency),
 
       deliveryFeeLabel: labels.deliveryFee,
-      deliveryFee: formatMoney(quote?.delivery_fee, currency),
+
+      deliveryFee: formatMoney(displayDeliveryFee, displayCurrency),
 
       totalLabel: labels.total,
-      total: formatMoney(quote?.total, currency),
+
+      total: formatMoney(displayTotal, displayCurrency),
     },
 
     purchaseValidation: {
-      shouldShow: false,
-      title: "",
-      amountLabel: "",
-      amount: "",
-      helperText: "",
-      paymentStatusLabel: "",
-      paymentStatus: "",
-      isFoodPickup: false,
+      shouldShow: shouldShowPurchaseValidation,
+
+      title: labels.purchaseValidationTitle,
+
+      amountLabel: labels.estimatedPurchaseAmount,
+
+      amount: purchaseAmount,
+
+      helperText: labels.purchaseValidationHelper,
+
+      paymentStatusLabel: labels.paymentStatusLabel,
+
+      paymentStatus,
+
+      isFoodPickup,
     },
 
     customerMessage: {
       title: labels.customerMessageTitle,
+
       message: quote?.notes || labels.noMessage,
     },
 
     actions: {
       acceptLabel: labels.accept,
       rejectLabel: labels.reject,
-      canRespond: statusType === "pending",
+
+      /*
+       * Una cotización solamente puede responderse cuando:
+       *
+       * 1. El pedido está oficialmente en QUOTED.
+       * 2. La cotización continúa en PENDING.
+       */
+      canRespond: orderStatusType === "quoted" && quoteStatusType === "pending",
     },
   };
 }
