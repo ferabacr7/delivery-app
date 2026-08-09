@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Linking,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -139,20 +140,11 @@ export default function DeliveryConsoleScreen() {
     let trackingStarted = false;
 
     try {
-      /*
-       * Primero intentamos preparar el GPS.
-       * Si esto falla, NO cambiamos el estado
-       * de la entrega.
-       */
       await startDriverLocationTracking(deliveryId);
 
       trackingStarted = true;
       setTrackingActive(true);
 
-      /*
-       * Solo después de que el GPS está listo
-       * cambiamos IN_PROGRESS → ON_ROUTE.
-       */
       const { data, error } = await startDeliveryRoute(deliveryId);
 
       if (error) {
@@ -167,21 +159,10 @@ export default function DeliveryConsoleScreen() {
 
       setDelivery(data);
 
-      /*
-       * Volvemos a cargar la delivery completa después
-       * de la transición para garantizar que customer,
-       * address y description permanezcan sincronizados.
-       */
       await loadDelivery();
 
       Alert.alert("Recorrido iniciado", "El pedido ahora está en camino.");
     } catch (error) {
-      /*
-       * Rollback del GPS:
-       * si logramos iniciarlo pero falló
-       * la actualización de la delivery,
-       * lo detenemos.
-       */
       if (trackingStarted) {
         stopDriverLocationTracking();
         setTrackingActive(false);
@@ -196,10 +177,6 @@ export default function DeliveryConsoleScreen() {
 
       Alert.alert("No se pudo iniciar el recorrido", message);
 
-      /*
-       * Recargamos para mostrar el estado real
-       * de Supabase después de cualquier fallo.
-       */
       await loadDelivery();
     } finally {
       setIsProcessing(false);
@@ -210,15 +187,11 @@ export default function DeliveryConsoleScreen() {
     stopDriverLocationTracking();
     setTrackingActive(false);
 
-    /*
-     * Sincronizamos nuevamente la pantalla con
-     * el estado real de Supabase después de
-     * detener la transmisión.
-     */
     await loadDelivery();
 
     Alert.alert("GPS detenido", "La transmisión de ubicación fue detenida.");
   }
+
   function handleCompleteDelivery() {
     if (!deliveryId || isProcessing) {
       return;
@@ -268,6 +241,14 @@ export default function DeliveryConsoleScreen() {
             Alert.alert(
               "Entrega completada",
               "El pedido fue marcado como entregado.",
+              [
+                {
+                  text: "Aceptar",
+                  onPress: () => {
+                    router.back();
+                  },
+                },
+              ],
             );
           } catch (error) {
             console.error("DELIVERY CONSOLE COMPLETE ERROR:", error);
@@ -284,6 +265,97 @@ export default function DeliveryConsoleScreen() {
         },
       },
     ]);
+  }
+
+  async function openGoogleMaps() {
+    const latitude = delivery?.order?.address?.latitude;
+
+    const longitude = delivery?.order?.address?.longitude;
+
+    if (latitude == null || longitude == null) {
+      Alert.alert(
+        "Ubicación no disponible",
+        "Esta dirección no tiene coordenadas guardadas.",
+      );
+
+      return;
+    }
+
+    const url = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+
+    try {
+      await Linking.openURL(url);
+    } catch (error) {
+      console.error("GOOGLE MAPS OPEN ERROR:", error);
+
+      Alert.alert("No se pudo abrir Google Maps", "Inténtalo nuevamente.");
+    }
+  }
+
+  async function openWaze() {
+    const latitude = delivery?.order?.address?.latitude;
+
+    const longitude = delivery?.order?.address?.longitude;
+
+    if (latitude == null || longitude == null) {
+      Alert.alert(
+        "Ubicación no disponible",
+        "Esta dirección no tiene coordenadas guardadas.",
+      );
+
+      return;
+    }
+
+    const url = `https://waze.com/ul?ll=${latitude},${longitude}&navigate=yes`;
+
+    try {
+      await Linking.openURL(url);
+    } catch (error) {
+      console.error("WAZE OPEN ERROR:", error);
+
+      Alert.alert(
+        "No se pudo abrir Waze",
+        "Verifica que Waze esté disponible en el dispositivo.",
+      );
+    }
+  }
+
+  function handleOpenNavigation() {
+    const latitude = delivery?.order?.address?.latitude;
+
+    const longitude = delivery?.order?.address?.longitude;
+
+    if (latitude == null || longitude == null) {
+      Alert.alert(
+        "Ubicación no disponible",
+        "Esta dirección no tiene coordenadas guardadas.",
+      );
+
+      return;
+    }
+
+    Alert.alert(
+      "Abrir navegación",
+      "Selecciona la aplicación que deseas usar.",
+      [
+        {
+          text: "Google Maps",
+          onPress: () => {
+            void openGoogleMaps();
+          },
+        },
+        {
+          text: "Waze",
+          onPress: () => {
+            void openWaze();
+          },
+        },
+        {
+          text: "Cancelar",
+          style: "cancel",
+        },
+      ],
+    );
   }
 
   if (isLoading) {
@@ -345,6 +417,70 @@ export default function DeliveryConsoleScreen() {
 
   const orderDescription =
     delivery.order?.description?.trim() || "No se agregó una descripción.";
+
+  const serviceType = delivery.order?.service_type?.trim().toUpperCase() || "";
+
+  const pickupLocation = delivery.order?.pickup_location?.trim() || "";
+
+  const courierWeight = delivery.order?.courier_weight?.trim() || "";
+
+  const paymentMethod = delivery.order?.payment_method?.trim() || "";
+
+  const addressReference = delivery.order?.address?.reference?.trim() || "";
+
+  const boomerangTotal = delivery.order?.quote?.total ?? null;
+
+  const boomerangCurrency = delivery.order?.quote?.currency ?? null;
+
+  const formattedBoomerangTotal =
+    boomerangTotal !== null
+      ? boomerangCurrency === "CRC"
+        ? `₡${boomerangTotal.toLocaleString("es-CR")}`
+        : boomerangCurrency === "USD"
+          ? `$${boomerangTotal.toLocaleString("en-US", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}`
+          : `${boomerangTotal.toLocaleString()} ${
+              boomerangCurrency ?? ""
+            }`.trim()
+      : null;
+
+  const foodOrderPaid = delivery.order?.food_order_paid ?? null;
+
+  const courierOrderPaid = delivery.order?.courier_order_paid ?? null;
+
+  const pickupLabel =
+    serviceType === "SUPERMARKET" || serviceType === "PHARMACY"
+      ? "Lugar de preferencia"
+      : "Lugar de recogida";
+
+  const serviceLabel =
+    serviceType === "SUPERMARKET"
+      ? "Supermercado"
+      : serviceType === "PHARMACY"
+        ? "Farmacia"
+        : serviceType === "FOOD_PICKUP"
+          ? "Restaurante"
+          : serviceType === "GENERAL_MESSAGING"
+            ? "Mensajería"
+            : serviceType || "No disponible";
+
+  const paymentStatus =
+    serviceType === "FOOD_PICKUP"
+      ? foodOrderPaid === true
+        ? "Pago realizado en el comercio"
+        : foodOrderPaid === false
+          ? "Pago pendiente en el comercio"
+          : null
+      : serviceType === "GENERAL_MESSAGING"
+        ? courierOrderPaid === true
+          ? "Pago realizado en el comercio"
+          : courierOrderPaid === false
+            ? "Pago pendiente en el comercio"
+            : null
+        : null;
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
@@ -398,15 +534,15 @@ export default function DeliveryConsoleScreen() {
           </View>
 
           {activeTrackingDeliveryId &&
-            activeTrackingDeliveryId !== deliveryId && (
-              <View style={styles.warningBox}>
-                <Ionicons name="warning-outline" size={20} color="#B45309" />
+          activeTrackingDeliveryId !== deliveryId ? (
+            <View style={styles.warningBox}>
+              <Ionicons name="warning-outline" size={20} color="#B45309" />
 
-                <Text style={styles.warningText}>
-                  Este teléfono está transmitiendo otra entrega.
-                </Text>
-              </View>
-            )}
+              <Text style={styles.warningText}>
+                Este teléfono está transmitiendo otra entrega.
+              </Text>
+            </View>
+          ) : null}
         </View>
 
         <View style={styles.customerCard}>
@@ -438,15 +574,94 @@ export default function DeliveryConsoleScreen() {
 
           <View style={styles.customerInfoRow}>
             <View style={styles.customerIcon}>
-              <Ionicons name="location-outline" size={20} color="#0F766E" />
+              <Ionicons name="cube-outline" size={20} color="#0F766E" />
             </View>
 
             <View style={styles.customerInfoContent}>
-              <Text style={styles.customerInfoLabel}>Ubicación</Text>
+              <Text style={styles.customerInfoLabel}>Servicio</Text>
 
-              <Text style={styles.customerInfoValue}>{deliveryAddress}</Text>
+              <Text style={styles.customerInfoValue}>{serviceLabel}</Text>
             </View>
           </View>
+
+          {pickupLocation ? (
+            <View style={styles.customerInfoRow}>
+              <View style={styles.customerIcon}>
+                <Ionicons name="storefront-outline" size={20} color="#0F766E" />
+              </View>
+
+              <View style={styles.customerInfoContent}>
+                <Text style={styles.customerInfoLabel}>{pickupLabel}</Text>
+
+                <Text style={styles.customerInfoValue}>{pickupLocation}</Text>
+              </View>
+            </View>
+          ) : null}
+
+          {paymentMethod ? (
+            <View style={styles.customerInfoRow}>
+              <View style={styles.customerIcon}>
+                <Ionicons name="wallet-outline" size={20} color="#0F766E" />
+              </View>
+
+              <View style={styles.customerInfoContent}>
+                <Text style={styles.customerInfoLabel}>Método de pago</Text>
+
+                <Text style={styles.customerInfoValue}>
+                  {paymentMethod === "CASH" ? "Efectivo" : paymentMethod}
+                </Text>
+              </View>
+            </View>
+          ) : null}
+
+          {formattedBoomerangTotal ? (
+            <View style={styles.customerInfoRow}>
+              <View style={styles.customerIcon}>
+                <Ionicons name="cash-outline" size={20} color="#0F766E" />
+              </View>
+
+              <View style={styles.customerInfoContent}>
+                <Text style={styles.customerInfoLabel}>
+                  Total a cobrar por Boomerang
+                </Text>
+
+                <Text style={styles.customerInfoValue}>
+                  {formattedBoomerangTotal}
+                </Text>
+              </View>
+            </View>
+          ) : null}
+
+          {paymentStatus ? (
+            <View style={styles.customerInfoRow}>
+              <View style={styles.customerIcon}>
+                <Ionicons name="card-outline" size={20} color="#0F766E" />
+              </View>
+
+              <View style={styles.customerInfoContent}>
+                <Text style={styles.customerInfoLabel}>Estado de pago</Text>
+
+                <Text style={styles.customerInfoValue}>{paymentStatus}</Text>
+              </View>
+            </View>
+          ) : null}
+
+          {serviceType === "GENERAL_MESSAGING" && courierWeight ? (
+            <View style={styles.customerInfoRow}>
+              <View style={styles.customerIcon}>
+                <Ionicons name="barbell-outline" size={20} color="#0F766E" />
+              </View>
+
+              <View style={styles.customerInfoContent}>
+                <Text style={styles.customerInfoLabel}>Peso</Text>
+
+                <Text style={styles.customerInfoValue}>
+                  {courierWeight.charAt(0).toUpperCase() +
+                    courierWeight.slice(1).toLowerCase()}
+                </Text>
+              </View>
+            </View>
+          ) : null}
 
           <View style={styles.descriptionBox}>
             <View style={styles.descriptionHeader}>
@@ -460,6 +675,37 @@ export default function DeliveryConsoleScreen() {
             </View>
 
             <Text style={styles.descriptionText}>{orderDescription}</Text>
+          </View>
+
+          <View style={styles.deliveryAddressBox}>
+            <View style={styles.descriptionHeader}>
+              <Ionicons name="location-outline" size={20} color="#0F766E" />
+
+              <Text style={styles.descriptionLabel}>Dirección de entrega</Text>
+            </View>
+
+            <Text style={styles.descriptionText}>{deliveryAddress}</Text>
+
+            {addressReference ? (
+              <>
+                <Text style={styles.addressReferenceLabel}>Referencia</Text>
+
+                <Text style={styles.addressReferenceText}>
+                  {addressReference}
+                </Text>
+              </>
+            ) : null}
+
+            <Pressable
+              style={styles.navigationButton}
+              onPress={handleOpenNavigation}
+              accessibilityRole="button"
+              accessibilityLabel="Abrir navegación"
+            >
+              <Ionicons name="navigate-outline" size={20} color="#FFFFFF" />
+
+              <Text style={styles.navigationButtonText}>Abrir navegación</Text>
+            </Pressable>
           </View>
         </View>
 
@@ -531,9 +777,9 @@ export default function DeliveryConsoleScreen() {
             <Text style={styles.actionButtonText}>Marcar como entregado</Text>
           </Pressable>
 
-          {isProcessing && (
+          {isProcessing ? (
             <ActivityIndicator style={styles.processingIndicator} />
-          )}
+          ) : null}
         </View>
 
         <Pressable
@@ -780,6 +1026,47 @@ const styles = StyleSheet.create({
     color: "#475569",
     fontSize: 14,
     lineHeight: 21,
+  },
+
+  deliveryAddressBox: {
+    marginTop: 18,
+    padding: 14,
+    borderRadius: 16,
+    backgroundColor: "#F8FAFC",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+
+  addressReferenceLabel: {
+    marginTop: 14,
+    color: "#64748B",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+
+  addressReferenceText: {
+    marginTop: 4,
+    color: "#0F172A",
+    fontSize: 14,
+    lineHeight: 20,
+  },
+
+  navigationButton: {
+    minHeight: 48,
+    marginTop: 16,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    backgroundColor: "#2563EB",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  navigationButtonText: {
+    marginLeft: 8,
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "800",
   },
 
   actionsCard: {

@@ -14,6 +14,10 @@ type OrderLike = {
   service_type?: string | null;
   status?: string | null;
 
+  pickup_location?: string | null;
+  courier_weight?: string | null;
+  payment_method?: "SINPE" | "CASH" | null;
+
   /*
    * Este monto es únicamente una referencia operativa
    * para validar que la compra esté dentro del límite permitido.
@@ -36,6 +40,7 @@ type OrderLike = {
    * null  = no aplica o no fue especificado.
    */
   food_order_paid?: boolean | null;
+  courier_order_paid?: boolean | null;
 
   addresses?: {
     address_line?: string | null;
@@ -47,9 +52,22 @@ type OrderLike = {
 
 type QuoteLike = {
   id?: string;
+
   subtotal?: number | string | null;
   delivery_fee?: number | string | null;
   total?: number | string | null;
+
+  /**
+   * Valores oficiales/base en CRC.
+   *
+   * Las cotizaciones nuevas los guardan para evitar
+   * reconstruir CRC desde montos USD redondeados.
+   */
+  service_fee_crc?: number | string | null;
+  delivery_fee_crc?: number | string | null;
+  subtotal_crc?: number | string | null;
+  total_crc?: number | string | null;
+
   currency?: SupportedCurrency | null;
   notes?: string | null;
   status?: string | null;
@@ -381,28 +399,96 @@ export function buildQuoteViewModel({
   /*
    * Conversión visual del precio del servicio.
    */
-  const displaySubtotal = convertMoneyForDisplay({
-    value: quote?.subtotal,
-    storedCurrency: storedQuoteCurrency,
-    displayCurrency,
-    exchangeRate,
-  });
+  /**
+   * Comprueba si existe un monto base CRC válido.
+   */
+  function getBaseCrcAmount(
+    value: number | string | null | undefined,
+  ): number | null {
+    if (
+      value === null ||
+      value === undefined
+    ) {
+      return null;
+    }
 
-  const displayDeliveryFee = convertMoneyForDisplay({
-    value: quote?.delivery_fee,
-    storedCurrency: storedQuoteCurrency,
-    displayCurrency,
-    exchangeRate,
-  });
+    const numericValue = Number(value);
 
-  const displayTotal = convertMoneyForDisplay({
-    value: quote?.total,
-    storedCurrency: storedQuoteCurrency,
-    displayCurrency,
-    exchangeRate,
-  });
+    return Number.isFinite(numericValue)
+      ? numericValue
+      : null;
+  }
+
+  const baseSubtotalCrc =
+    getBaseCrcAmount(
+      quote?.subtotal_crc,
+    );
+
+  const baseDeliveryFeeCrc =
+    getBaseCrcAmount(
+      quote?.delivery_fee_crc,
+    );
+
+  const baseTotalCrc =
+    getBaseCrcAmount(
+      quote?.total_crc,
+    );
+
+  /**
+   * Español:
+   *
+   * Si tenemos los valores oficiales CRC guardados,
+   * los utilizamos directamente.
+   *
+   * Esto evita:
+   *
+   * $8 × 505 = ₡4.040
+   *
+   * cuando el precio original era ₡4.000.
+   *
+   * Cotizaciones antiguas que todavía no tienen
+   * *_crc continúan utilizando la conversión anterior
+   * como fallback.
+   */
+  const displaySubtotal =
+    displayCurrency === "CRC" &&
+    baseSubtotalCrc !== null
+      ? baseSubtotalCrc
+      : convertMoneyForDisplay({
+          value: quote?.subtotal,
+          storedCurrency:
+            storedQuoteCurrency,
+          displayCurrency,
+          exchangeRate,
+        });
+
+  const displayDeliveryFee =
+    displayCurrency === "CRC" &&
+    baseDeliveryFeeCrc !== null
+      ? baseDeliveryFeeCrc
+      : convertMoneyForDisplay({
+          value: quote?.delivery_fee,
+          storedCurrency:
+            storedQuoteCurrency,
+          displayCurrency,
+          exchangeRate,
+        });
+
+  const displayTotal =
+    displayCurrency === "CRC" &&
+    baseTotalCrc !== null
+      ? baseTotalCrc
+      : convertMoneyForDisplay({
+          value: quote?.total,
+          storedCurrency:
+            storedQuoteCurrency,
+          displayCurrency,
+          exchangeRate,
+        });
 
   const isFoodPickup = normalizedServiceType === "FOOD_PICKUP";
+
+  const isCourier = normalizedServiceType === "GENERAL_MESSAGING";
 
   const requiresPurchaseAmount =
     normalizedServiceType === "SUPERMARKET" ||
@@ -445,6 +531,18 @@ export function buildQuoteViewModel({
         : null
     : null;
 
+ const courierPaymentStatus = isCourier
+  ? order.courier_order_paid === true
+    ? language === "en"
+      ? "Payment completed at the store"
+      : "Pago realizado en el comercio"
+    : order.courier_order_paid === false
+      ? language === "en"
+        ? "Payment pending at the store"
+        : "Pago pendiente en el comercio"
+      : null
+  : null;
+
   const estimatedArrival = (() => {
     switch (presentationStatusType) {
       case "accepted":
@@ -477,7 +575,7 @@ export function buildQuoteViewModel({
     }
   })();
 
-  console.warn("QUOTE PRESENTATION CURRENCY:", {
+   console.warn("QUOTE PRESENTATION CURRENCY:", {
     language,
     storedQuoteCurrency,
     displayCurrency,
@@ -485,15 +583,23 @@ export function buildQuoteViewModel({
     exchangeRate,
 
     originalSubtotal: quote?.subtotal,
+    baseSubtotalCrc:
+      quote?.subtotal_crc,
     displaySubtotal,
 
-    originalDeliveryFee: quote?.delivery_fee,
+    originalDeliveryFee:
+      quote?.delivery_fee,
+    baseDeliveryFeeCrc:
+      quote?.delivery_fee_crc,
     displayDeliveryFee,
 
     originalTotal: quote?.total,
+    baseTotalCrc:
+      quote?.total_crc,
     displayTotal,
 
-    originalPurchaseAmount: order.estimated_purchase_amount,
+    originalPurchaseAmount:
+      order.estimated_purchase_amount,
     displayPurchaseAmount,
   });
 
@@ -517,6 +623,13 @@ export function buildQuoteViewModel({
 
       statusType: presentationStatusType,
       statusTone,
+    },
+
+    orderDetails: {
+      pickupLocation: order.pickup_location?.trim() || null,
+      courierWeight: order.courier_weight?.trim() || null,
+      paymentMethod: order.payment_method ?? null,
+      courierPaymentStatus,
     },
 
     location: {

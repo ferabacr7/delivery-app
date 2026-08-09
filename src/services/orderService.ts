@@ -4,7 +4,11 @@ import {
   SupportedCurrency,
 } from "@/constants/businessConfig";
 
-import { CourierWeight, ServiceType } from "@/business/quoteEngine/models";
+import {
+  CourierWeight,
+  PickupZone,
+  ServiceType,
+} from "@/business/quoteEngine/models";
 
 import { supabase } from "../lib/supabase";
 import { getAddressById } from "./addressService";
@@ -13,7 +17,8 @@ import { generateAutomaticQuote } from "./quoteEngineService";
 const ORDER_STATUS_VALIDATION = "VALIDATION";
 
 async function getAuthenticatedUser() {
-  const { data: sessionData, error } = await supabase.auth.getSession();
+  const { data: sessionData, error } =
+    await supabase.auth.getSession();
 
   if (error) {
     return {
@@ -27,7 +32,9 @@ async function getAuthenticatedUser() {
   if (!user) {
     return {
       user: null,
-      error: new Error("No authenticated user found"),
+      error: new Error(
+        "No authenticated user found",
+      ),
     };
   }
 
@@ -41,12 +48,17 @@ type CreateOrderInput = {
   description: string;
   addressId: string;
   serviceType: ServiceType;
+
+  pickupZone: PickupZone;
   pickupLocation?: string;
+
+  paymentMethod?: "SINPE" | "CASH";
 
   currency?: SupportedCurrency;
   courierWeight?: CourierWeight;
   estimatedPurchaseAmount?: number;
   foodOrderPaid?: boolean;
+  courierOrderPaid?: boolean;
 };
 
 type DeliveryRelation = {
@@ -59,14 +71,20 @@ type OrderWithDeliveries = {
   description: string;
   status: string;
   created_at: string;
-  deliveries?: DeliveryRelation[] | DeliveryRelation | null;
+  deliveries?:
+    | DeliveryRelation[]
+    | DeliveryRelation
+    | null;
   [key: string]: unknown;
 };
 
-export async function createOrder(input: CreateOrderInput) {
+export async function createOrder(
+  input: CreateOrderInput,
+) {
   console.warn("CREATE ORDER INPUT:", input);
 
-  const { user, error: authError } = await getAuthenticatedUser();
+  const { user, error: authError } =
+    await getAuthenticatedUser();
 
   if (authError || !user) {
     return {
@@ -75,48 +93,100 @@ export async function createOrder(input: CreateOrderInput) {
     };
   }
 
-  const currency = input.currency ?? BASE_CURRENCY;
+  const currency =
+    input.currency ?? BASE_CURRENCY;
 
-  if (input.serviceType === "GENERAL_MESSAGING" && !input.courierWeight) {
+  if (!input.pickupZone) {
     return {
       data: null,
-      error: new Error("Debe seleccionar el peso aproximado de la mensajería."),
+      error: new Error(
+        "Debe seleccionar la zona de preferencia o retiro.",
+      ),
+    };
+  }
+
+  if (!input.pickupLocation?.trim()) {
+    return {
+      data: null,
+      error: new Error(
+        "Debe indicar el lugar de preferencia o retiro.",
+      ),
+    };
+  }
+
+  if (
+    input.serviceType ===
+      "GENERAL_MESSAGING" &&
+    !input.courierWeight
+  ) {
+    return {
+      data: null,
+      error: new Error(
+        "Debe seleccionar el peso aproximado de la mensajería.",
+      ),
+    };
+  }
+
+  if (
+    input.serviceType ===
+      "GENERAL_MESSAGING" &&
+    typeof input.courierOrderPaid !==
+      "boolean"
+  ) {
+    return {
+      data: null,
+      error: new Error(
+        "Debe indicar si el paquete o producto ya fue pagado.",
+      ),
     };
   }
 
   if (
     input.serviceType === "FOOD_PICKUP" &&
-    typeof input.foodOrderPaid !== "boolean"
+    typeof input.foodOrderPaid !==
+      "boolean"
   ) {
     return {
       data: null,
-      error: new Error("Debe indicar si el pedido de comida ya fue pagado."),
+      error: new Error(
+        "Debe indicar si el pedido de comida ya fue pagado.",
+      ),
     };
   }
 
   const requiresEstimatedPurchaseAmount =
     input.serviceType === "SUPERMARKET" ||
     input.serviceType === "PHARMACY" ||
-    (input.serviceType === "FOOD_PICKUP" && input.foodOrderPaid === false);
+    (input.serviceType === "FOOD_PICKUP" &&
+      input.foodOrderPaid === false);
 
   if (
     requiresEstimatedPurchaseAmount &&
-    typeof input.estimatedPurchaseAmount !== "number"
+    typeof input.estimatedPurchaseAmount !==
+      "number"
   ) {
     return {
       data: null,
-      error: new Error("Debe indicar el monto estimado de la compra."),
+      error: new Error(
+        "Debe indicar el monto estimado de la compra.",
+      ),
     };
   }
 
   if (
     requiresEstimatedPurchaseAmount &&
-    input.estimatedPurchaseAmount !== undefined &&
-    !isValidPurchaseAmount(input.estimatedPurchaseAmount, currency)
+    input.estimatedPurchaseAmount !==
+      undefined &&
+    !isValidPurchaseAmount(
+      input.estimatedPurchaseAmount,
+      currency,
+    )
   ) {
     return {
       data: null,
-      error: new Error("El monto estimado está fuera del rango permitido."),
+      error: new Error(
+        "El monto estimado está fuera del rango permitido.",
+      ),
     };
   }
 
@@ -125,25 +195,45 @@ export async function createOrder(input: CreateOrderInput) {
     .insert({
       profile_id: user.id,
       address_id: input.addressId,
+
       description: input.description,
       service_type: input.serviceType,
-      pickup_location: input.pickupLocation?.trim() || null,
+
+      pickup_zone: input.pickupZone,
+
+      pickup_location:
+        input.pickupLocation?.trim() || null,
+
+      payment_method:
+        input.paymentMethod ?? null,
 
       courier_weight:
-        input.serviceType === "GENERAL_MESSAGING"
+        input.serviceType ===
+        "GENERAL_MESSAGING"
           ? (input.courierWeight ?? null)
           : null,
 
-      estimated_purchase_amount: requiresEstimatedPurchaseAmount
-        ? (input.estimatedPurchaseAmount ?? null)
-        : null,
+      estimated_purchase_amount:
+        requiresEstimatedPurchaseAmount
+          ? (input.estimatedPurchaseAmount ??
+            null)
+          : null,
 
-      estimated_purchase_currency: requiresEstimatedPurchaseAmount
-        ? currency
-        : null,
+      estimated_purchase_currency:
+        requiresEstimatedPurchaseAmount
+          ? currency
+          : null,
 
       food_order_paid:
-        input.serviceType === "FOOD_PICKUP" ? input.foodOrderPaid : null,
+        input.serviceType === "FOOD_PICKUP"
+          ? input.foodOrderPaid
+          : null,
+
+      courier_order_paid:
+        input.serviceType ===
+        "GENERAL_MESSAGING"
+          ? input.courierOrderPaid
+          : null,
 
       status: ORDER_STATUS_VALIDATION,
     })
@@ -159,35 +249,66 @@ export async function createOrder(input: CreateOrderInput) {
 
   console.log("ORDER CREATED:", data);
 
-  const { data: address, error: addressError } = await getAddressById(
+  const {
+    data: address,
+    error: addressError,
+  } = await getAddressById(
     input.addressId,
   );
 
   console.log("ADDRESS FOUND:", address);
-  console.log("ADDRESS ERROR:", addressError);
+  console.log(
+    "ADDRESS ERROR:",
+    addressError,
+  );
 
   if (addressError || !address) {
     return {
       data,
       error:
-        addressError ?? new Error("No se encontró la dirección del pedido."),
+        addressError ??
+        new Error(
+          "No se encontró la dirección del pedido.",
+        ),
     };
   }
 
-  const serviceType = data.service_type as ServiceType;
+  const serviceType =
+    data.service_type as ServiceType;
 
-  const locationText = [address.address_line, address.reference, address.label]
+  const locationText = [
+    address.address_line,
+    address.reference,
+    address.label,
+  ]
     .filter(Boolean)
     .join(" ");
 
-  console.log("LOCATION RECEIVED:", locationText);
+  console.log(
+    "LOCATION RECEIVED:",
+    locationText,
+  );
 
-  console.log("COURIER WEIGHT RECEIVED:", input.courierWeight);
+  console.log(
+    "PICKUP ZONE RECEIVED:",
+    input.pickupZone,
+  );
 
-  const latitude = Number(address.latitude);
-  const longitude = Number(address.longitude);
+  console.log(
+    "COURIER WEIGHT RECEIVED:",
+    input.courierWeight,
+  );
 
-  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+  const latitude =
+    Number(address.latitude);
+
+  const longitude =
+    Number(address.longitude);
+
+  if (
+    !Number.isFinite(latitude) ||
+    !Number.isFinite(longitude)
+  ) {
     return {
       data,
       error: new Error(
@@ -201,33 +322,46 @@ export async function createOrder(input: CreateOrderInput) {
     longitude,
   });
 
-  const quoteResult = await generateAutomaticQuote({
-    orderId: data.id,
-    description: data.description,
-    serviceType,
-    currency,
+  const quoteResult =
+    await generateAutomaticQuote({
+      orderId: data.id,
+      description: data.description,
+      serviceType,
+      currency,
 
-    latitude,
-    longitude,
+      latitude,
+      longitude,
 
-    // Se conserva únicamente como referencia descriptiva.
-    locationText,
+      locationText,
 
-    courierWeight:
-      serviceType === "GENERAL_MESSAGING" ? input.courierWeight : undefined,
-  });
+      pickupZone: input.pickupZone,
 
-  console.log("AUTOMATIC QUOTE RESULT:", quoteResult);
+      courierWeight:
+        serviceType ===
+        "GENERAL_MESSAGING"
+          ? input.courierWeight
+          : undefined,
+    });
+
+  console.log(
+    "AUTOMATIC QUOTE RESULT:",
+    quoteResult,
+  );
 
   if (quoteResult.error) {
-    console.error("Quote generation failed:", quoteResult.error);
+    console.error(
+      "Quote generation failed:",
+      quoteResult.error,
+    );
 
     return {
       data,
       error:
         quoteResult.error instanceof Error
           ? quoteResult.error
-          : new Error("No se pudo generar la cotización automática."),
+          : new Error(
+              "No se pudo generar la cotización automática.",
+            ),
     };
   }
 
@@ -238,7 +372,8 @@ export async function createOrder(input: CreateOrderInput) {
 }
 
 export async function getMyOrders() {
-  const { user, error: authError } = await getAuthenticatedUser();
+  const { user, error: authError } =
+    await getAuthenticatedUser();
 
   if (authError || !user) {
     return {
@@ -251,11 +386,11 @@ export async function getMyOrders() {
     .from("orders")
     .select(
       `
-      *,
-      deliveries (
-        id,
-        status
-      )
+        *,
+        deliveries (
+          id,
+          status
+        )
       `,
     )
     .eq("profile_id", user.id)
@@ -270,64 +405,70 @@ export async function getMyOrders() {
     };
   }
 
-  const normalizedOrders = ((data ?? []) as OrderWithDeliveries[]).map(
-    (order) => {
-      const delivery = Array.isArray(order.deliveries)
+  const normalizedOrders = (
+    (data ?? []) as OrderWithDeliveries[]
+  ).map((order) => {
+    const delivery =
+      Array.isArray(order.deliveries)
         ? (order.deliveries[0] ?? null)
         : (order.deliveries ?? null);
 
-      const orderStatus = String(order.status).trim().toUpperCase();
+    const orderStatus = String(
+      order.status,
+    )
+      .trim()
+      .toUpperCase();
 
-      const deliveryStatus = delivery?.status
-        ? String(delivery.status).trim().toUpperCase()
+    const deliveryStatus =
+      delivery?.status
+        ? String(delivery.status)
+            .trim()
+            .toUpperCase()
         : null;
 
-      let displayStatus = orderStatus;
+    let displayStatus = orderStatus;
 
-      /*
-       * PENDING significa que ya existe una entrega,
-       * pero el repartidor todavía no ha iniciado
-       * la operación.
-       *
-       * Para el cliente la orden continúa visualmente
-       * como ACCEPTED.
-       */
-      if (deliveryStatus === "PENDING") {
-        displayStatus = orderStatus;
-      }
+    if (deliveryStatus === "PENDING") {
+      displayStatus = orderStatus;
+    }
 
-      /*
-       * Cuando comienza la operación,
-       * el estado de delivery tiene prioridad.
-       */
-      if (
-        deliveryStatus === "IN_PROGRESS" ||
-        deliveryStatus === "ON_ROUTE" ||
-        deliveryStatus === "DELIVERED" ||
-        deliveryStatus === "CANCELLED"
-      ) {
-        displayStatus = deliveryStatus;
-      }
+    if (
+      deliveryStatus === "IN_PROGRESS" ||
+      deliveryStatus === "ON_ROUTE" ||
+      deliveryStatus === "DELIVERED" ||
+      deliveryStatus === "CANCELLED"
+    ) {
+      displayStatus = deliveryStatus;
+    }
 
-      return {
-        ...order,
-        status: displayStatus,
-        delivery_id: delivery?.id ?? null,
-        delivery_status: deliveryStatus,
-      };
-    },
-  );
+    return {
+      ...order,
+      status: displayStatus,
+      delivery_id: delivery?.id ?? null,
+      delivery_status:
+        deliveryStatus,
+    };
+  });
 
   console.log(
     "MY ORDERS RESOLVED STATUSES:",
     normalizedOrders.map((order) => ({
       id: order.id,
+
       orderStatus:
-        ((data ?? []) as OrderWithDeliveries[]).find(
-          (item) => item.id === order.id,
+        (
+          (data ??
+            []) as OrderWithDeliveries[]
+        ).find(
+          (item) =>
+            item.id === order.id,
         )?.status ?? null,
-      deliveryStatus: order.delivery_status,
-      displayStatus: order.status,
+
+      deliveryStatus:
+        order.delivery_status,
+
+      displayStatus:
+        order.status,
     })),
   );
 
@@ -337,8 +478,11 @@ export async function getMyOrders() {
   };
 }
 
-export async function getOrderById(orderId: string) {
-  const { user, error: authError } = await getAuthenticatedUser();
+export async function getOrderById(
+  orderId: string,
+) {
+  const { user, error: authError } =
+    await getAuthenticatedUser();
 
   if (authError || !user) {
     return {
@@ -351,14 +495,14 @@ export async function getOrderById(orderId: string) {
     .from("orders")
     .select(
       `
-      *,
-      addresses (
-        address_line,
-        reference,
-        label,
-        latitude,
-        longitude
-      )
+        *,
+        addresses (
+          address_line,
+          reference,
+          label,
+          latitude,
+          longitude
+        )
       `,
     )
     .eq("id", orderId)
@@ -371,22 +515,36 @@ export async function getOrderById(orderId: string) {
   };
 }
 
-export async function cancelAcceptedOrder(orderId: string) {
-  const { user, error: authError } = await getAuthenticatedUser();
+export async function cancelAcceptedOrder(
+  orderId: string,
+) {
+  const { user, error: authError } =
+    await getAuthenticatedUser();
 
   if (authError || !user) {
     return {
       data: null,
-      error: authError ?? new Error("No hay una sesión activa."),
+      error:
+        authError ??
+        new Error(
+          "No hay una sesión activa.",
+        ),
     };
   }
 
-  const { data, error } = await supabase.rpc("cancel_accepted_order", {
-    target_order_id: orderId,
-  });
+  const { data, error } =
+    await supabase.rpc(
+      "cancel_accepted_order",
+      {
+        target_order_id: orderId,
+      },
+    );
 
   if (error) {
-    console.error("CANCEL ACCEPTED ORDER RPC ERROR:", error);
+    console.error(
+      "CANCEL ACCEPTED ORDER RPC ERROR:",
+      error,
+    );
 
     return {
       data: null,

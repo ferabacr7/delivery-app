@@ -86,3 +86,110 @@ export async function getMyProfile() {
     .eq("id", userData.user.id)
     .single();
 }
+
+export async function updateMyProfile(
+  fullName: string,
+  phone: string,
+) {
+  const { data: userData, error: userError } =
+    await supabase.auth.getUser();
+
+  if (userError || !userData.user) {
+    return {
+      data: null,
+      error:
+        userError ??
+        new Error("No authenticated user found"),
+    };
+  }
+
+  const normalizedFullName = fullName.trim();
+  const normalizedPhone = phone.trim();
+
+  if (!normalizedFullName) {
+    return {
+      data: null,
+      error: new Error("El nombre es obligatorio."),
+    };
+  }
+
+  return await supabase
+    .from("profiles")
+    .update({
+      full_name: normalizedFullName,
+      phone: normalizedPhone || null,
+    })
+    .eq("id", userData.user.id)
+    .select()
+    .single();
+}
+
+export async function updateMyEmail(email: string) {
+  const normalizedEmail = email.trim().toLowerCase();
+
+  if (!normalizedEmail) {
+    return {
+      data: null,
+      error: new Error("El correo es obligatorio."),
+    };
+  }
+
+  const result = await supabase.auth.updateUser(
+    {
+      email: normalizedEmail,
+    },
+    {
+      emailRedirectTo: "deliveryapp://profile",
+    },
+  );
+
+  console.log("UPDATE EMAIL DEBUG:", {
+    requestedEmail: normalizedEmail,
+    userEmail: result.data.user?.email,
+    newEmail: result.data.user?.new_email,
+    error: result.error
+      ? {
+          message: result.error.message,
+          status: result.error.status,
+          code: result.error.code,
+          name: result.error.name,
+        }
+      : null,
+  });
+
+  return result;
+}
+
+export async function updateMyPassword(password: string) {
+  if (password.length < 6) {
+    return {
+      data: null,
+      error: new Error(
+        "La contraseña debe tener al menos 6 caracteres.",
+      ),
+    };
+  }
+
+  return await supabase.auth.updateUser({
+    password,
+  });
+}
+
+export async function verifyCurrentPassword(password: string) {
+  const { data: userData, error: userError } =
+    await supabase.auth.getUser();
+
+  if (userError || !userData.user?.email) {
+    return {
+      data: null,
+      error:
+        userError ??
+        new Error("No authenticated user found"),
+    };
+  }
+
+  return await supabase.auth.signInWithPassword({
+    email: userData.user.email,
+    password,
+  });
+}

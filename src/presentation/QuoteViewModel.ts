@@ -37,6 +37,13 @@ export type QuoteViewModel = {
     statusTone: QuoteStatusTone;
   };
 
+  orderDetails: {
+    pickupLocation: string | null;
+    courierWeight: string | null;
+    paymentMethod: "SINPE" | "CASH" | null;
+    courierPaymentStatus: string | null;
+  };
+
   location: {
     title: string;
     address: string;

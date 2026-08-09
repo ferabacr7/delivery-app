@@ -24,6 +24,7 @@ type DeliveryZonePolygon = {
  * Polígonos iniciales de cobertura.
  *
  * IMPORTANTE:
+ *
  * - El orden de los puntos debe seguir el perímetro.
  * - No es necesario repetir el primer punto al final.
  * - Estos polígonos pueden refinarse conforme hagamos
@@ -31,35 +32,36 @@ type DeliveryZonePolygon = {
  */
 const DELIVERY_ZONE_POLYGONS: DeliveryZonePolygon[] = [
   {
-  name: "Las Catalinas",
-  zone: "EXTENDED",
-  distanceKm: 12,
-  coordinates: [
-    {
-      latitude: 10.495,
-      longitude: -85.8,
-    },
-    {
-      latitude: 10.495,
-      longitude: -85.772,
-    },
-    {
-      latitude: 10.468,
-      longitude: -85.772,
-    },
-    {
-      latitude: 10.465,
-      longitude: -85.785,
-    },
-    {
-      latitude: 10.475,
-      longitude: -85.8,
-    },
-  ],
-},
+    name: "Las Catalinas",
+    zone: "LAS_CATALINAS",
+    distanceKm: 12,
+    coordinates: [
+      {
+        latitude: 10.495,
+        longitude: -85.8,
+      },
+      {
+        latitude: 10.495,
+        longitude: -85.772,
+      },
+      {
+        latitude: 10.468,
+        longitude: -85.772,
+      },
+      {
+        latitude: 10.465,
+        longitude: -85.785,
+      },
+      {
+        latitude: 10.475,
+        longitude: -85.8,
+      },
+    ],
+  },
+
   {
     name: "Potrero",
-    zone: "LOCAL",
+    zone: "POTRERO",
     distanceKm: 3,
     coordinates: [
       {
@@ -85,45 +87,45 @@ const DELIVERY_ZONE_POLYGONS: DeliveryZonePolygon[] = [
     ],
   },
 
- {
-  name: "Flamingo",
-  zone: "NEARBY",
-  distanceKm: 8,
-  coordinates: [
-    {
-      latitude: 10.452,
-      longitude: -85.806,
-    },
-    {
-      latitude: 10.452,
-      longitude: -85.783,
-    },
-    {
-      latitude: 10.442,
-      longitude: -85.783,
-    },
-    {
-      latitude: 10.425,
-      longitude: -85.775,
-    },
-    {
-      latitude: 10.414,
-      longitude: -85.775,
-    },
-    {
-      latitude: 10.414,
-      longitude: -85.806,
-    },
-    {
-      latitude: 10.425,
-      longitude: -85.806,
-    },
-  ],
-},
+  {
+    name: "Flamingo",
+    zone: "FLAMINGO",
+    distanceKm: 8,
+    coordinates: [
+      {
+        latitude: 10.452,
+        longitude: -85.806,
+      },
+      {
+        latitude: 10.452,
+        longitude: -85.783,
+      },
+      {
+        latitude: 10.442,
+        longitude: -85.783,
+      },
+      {
+        latitude: 10.425,
+        longitude: -85.775,
+      },
+      {
+        latitude: 10.414,
+        longitude: -85.775,
+      },
+      {
+        latitude: 10.414,
+        longitude: -85.806,
+      },
+      {
+        latitude: 10.425,
+        longitude: -85.806,
+      },
+    ],
+  },
 
   {
     name: "Brasilito",
-    zone: "EXTENDED",
+    zone: "BRASILITO",
     distanceKm: 12,
     coordinates: [
       {
@@ -177,35 +179,44 @@ export class LocationResolver {
     };
 
     const matchedZone =
-      DELIVERY_ZONE_POLYGONS.find((deliveryZone) =>
-        this.isPointInsidePolygon(
-          point,
-          deliveryZone.coordinates,
-        ),
+      DELIVERY_ZONE_POLYGONS.find(
+        (deliveryZone) =>
+          this.isPointInsidePolygon(
+            point,
+            deliveryZone.coordinates,
+          ),
       );
 
     if (!matchedZone) {
-      console.warn("LOCATION OUTSIDE COVERAGE:", {
-        latitude,
-        longitude,
-      });
+      console.warn(
+        "LOCATION OUTSIDE COVERAGE:",
+        {
+          latitude,
+          longitude,
+        },
+      );
 
       throw new Error(
         "La ubicación seleccionada está fuera de la zona de cobertura.",
       );
     }
 
-    console.log("DELIVERY ZONE RESOLVED:", {
-      name: matchedZone.name,
-      zone: matchedZone.zone,
-      distanceKm: matchedZone.distanceKm,
-      latitude,
-      longitude,
-    });
+    console.log(
+      "DELIVERY ZONE RESOLVED:",
+      {
+        name: matchedZone.name,
+        zone: matchedZone.zone,
+        distanceKm:
+          matchedZone.distanceKm,
+        latitude,
+        longitude,
+      },
+    );
 
     return {
       zone: matchedZone.zone,
-      distanceKm: matchedZone.distanceKm,
+      distanceKm:
+        matchedZone.distanceKm,
     };
   }
 
@@ -229,21 +240,32 @@ export class LocationResolver {
 
     for (
       let currentIndex = 0,
-        previousIndex = polygon.length - 1;
+        previousIndex =
+          polygon.length - 1;
       currentIndex < polygon.length;
       previousIndex = currentIndex++
     ) {
-      const currentPoint = polygon[currentIndex];
-      const previousPoint = polygon[previousIndex];
+      const currentPoint =
+        polygon[currentIndex];
 
-      const currentX = currentPoint.longitude;
-      const currentY = currentPoint.latitude;
+      const previousPoint =
+        polygon[previousIndex];
 
-      const previousX = previousPoint.longitude;
-      const previousY = previousPoint.latitude;
+      const currentX =
+        currentPoint.longitude;
+
+      const currentY =
+        currentPoint.latitude;
+
+      const previousX =
+        previousPoint.longitude;
+
+      const previousY =
+        previousPoint.latitude;
 
       const crossesLatitude =
-        currentY > y !== previousY > y;
+        currentY > y !==
+        previousY > y;
 
       const intersectionLongitude =
         ((previousX - currentX) *

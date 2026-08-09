@@ -94,90 +94,89 @@ export default function OrdersScreen() {
   );
 
   useEffect(() => {
-  const channelName = `my-orders-status-${Date.now()}-${Math.random()
-    .toString(36)
-    .slice(2)}`;
+    const channelName = `my-orders-status-${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2)}`;
 
-  const channel = supabase
-    .channel(channelName)
+    const channel = supabase
+      .channel(channelName)
 
-    /*
-     * Cambios comerciales de la orden:
-     * VALIDATION, QUOTED, ACCEPTED, etc.
-     */
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "orders",
-      },
-      (payload) => {
-        const newOrder = payload.new as {
-          id?: string;
-          status?: string;
-        };
+      /*
+       * Cambios comerciales de la orden:
+       * VALIDATION, QUOTED, ACCEPTED, etc.
+       */
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "orders",
+        },
+        (payload) => {
+          const newOrder = payload.new as {
+            id?: string;
+            status?: string;
+          };
 
-        const oldOrder = payload.old as {
-          id?: string;
-          status?: string;
-        };
+          const oldOrder = payload.old as {
+            id?: string;
+            status?: string;
+          };
 
-        console.log("MY ORDERS REALTIME ORDER:", {
-          eventType: payload.eventType,
-          orderId: newOrder.id ?? oldOrder.id,
-          oldStatus: oldOrder.status,
-          newStatus: newOrder.status,
-        });
+          console.log("MY ORDERS REALTIME ORDER:", {
+            eventType: payload.eventType,
+            orderId: newOrder.id ?? oldOrder.id,
+            oldStatus: oldOrder.status,
+            newStatus: newOrder.status,
+          });
 
-        void loadOrders(false);
-      },
-    )
+          void loadOrders(false);
+        },
+      )
 
-    /*
-     * Cambios operativos de la entrega:
-     * PENDING, IN_PROGRESS, ON_ROUTE, DELIVERED.
-     */
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "deliveries",
-      },
-      (payload) => {
-        const newDelivery = payload.new as {
-          id?: string;
-          order_id?: string;
-          status?: string;
-        };
+      /*
+       * Cambios operativos de la entrega:
+       * PENDING, IN_PROGRESS, ON_ROUTE, DELIVERED.
+       */
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "deliveries",
+        },
+        (payload) => {
+          const newDelivery = payload.new as {
+            id?: string;
+            order_id?: string;
+            status?: string;
+          };
 
-        const oldDelivery = payload.old as {
-          id?: string;
-          order_id?: string;
-          status?: string;
-        };
+          const oldDelivery = payload.old as {
+            id?: string;
+            order_id?: string;
+            status?: string;
+          };
 
-        console.log("MY ORDERS REALTIME DELIVERY:", {
-          eventType: payload.eventType,
-          deliveryId: newDelivery.id ?? oldDelivery.id,
-          orderId:
-            newDelivery.order_id ?? oldDelivery.order_id,
-          oldStatus: oldDelivery.status,
-          newStatus: newDelivery.status,
-        });
+          console.log("MY ORDERS REALTIME DELIVERY:", {
+            eventType: payload.eventType,
+            deliveryId: newDelivery.id ?? oldDelivery.id,
+            orderId: newDelivery.order_id ?? oldDelivery.order_id,
+            oldStatus: oldDelivery.status,
+            newStatus: newDelivery.status,
+          });
 
-        void loadOrders(false);
-      },
-    )
-    .subscribe((status) => {
-      console.log("MY ORDERS REALTIME STATUS:", status);
-    });
+          void loadOrders(false);
+        },
+      )
+      .subscribe((status) => {
+        console.log("MY ORDERS REALTIME STATUS:", status);
+      });
 
-  return () => {
-    void supabase.removeChannel(channel);
-  };
-}, [loadOrders]);
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [loadOrders]);
 
   function normalizeStatus(status?: string): OrderStatus {
     const normalizedStatus = status?.trim().toUpperCase();
@@ -533,11 +532,11 @@ const styles = StyleSheet.create({
   },
 
   statusAccepted: {
-    backgroundColor: colors.brandSoft,
+    backgroundColor: "#DCFCE7",
   },
 
   statusAcceptedText: {
-    color: colors.brandDark,
+    color: "#166534",
   },
 
   statusInProgress: {
@@ -557,11 +556,11 @@ const styles = StyleSheet.create({
   },
 
   statusDelivered: {
-    backgroundColor: "#DCFCE7",
+    backgroundColor: colors.brandSoft,
   },
 
   statusDeliveredText: {
-    color: "#166534",
+    color: colors.brandDark,
   },
 
   statusRejected: {

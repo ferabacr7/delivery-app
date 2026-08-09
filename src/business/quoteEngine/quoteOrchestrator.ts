@@ -13,6 +13,7 @@ import {
   CourierWeight,
   GeneratedQuote,
   LocationZone,
+  PickupZone,
   QuoteInput,
   ServiceType,
 } from "./models";
@@ -23,60 +24,113 @@ import { Validator } from "./validator";
 export class QuoteOrchestrator {
   constructor(
     private readonly validator = new Validator(),
-    private readonly locationResolver = new LocationResolver(),
-    private readonly quoteCalculator = new QuoteCalculator(),
-    private readonly quoteGenerator = new QuoteGenerator(),
+    private readonly locationResolver =
+      new LocationResolver(),
+    private readonly quoteCalculator =
+      new QuoteCalculator(),
+    private readonly quoteGenerator =
+      new QuoteGenerator(),
   ) {}
 
-  async generateQuote(input: QuoteInput): Promise<GeneratedQuote> {
-    const validation = this.validator.validate(input);
+  async generateQuote(
+    input: QuoteInput,
+  ): Promise<GeneratedQuote> {
+    const validation =
+      this.validator.validate(input);
 
     if (!validation.isValid) {
-      throw new Error(validation.errors.join(" "));
+      throw new Error(
+        validation.errors.join(" "),
+      );
     }
 
-    const location = this.locationResolver.resolve({
-      latitude: input.latitude,
-      longitude: input.longitude,
-    });
+    /**
+     * Determina la zona real de entrega
+     * utilizando las coordenadas de la
+     * dirección seleccionada.
+     */
+    const location =
+      this.locationResolver.resolve({
+        latitude: input.latitude,
+        longitude: input.longitude,
+      });
 
-    const pricingServiceType = this.resolvePricingServiceType(
-      input.serviceType,
-    );
+    const pricingServiceType =
+      this.resolvePricingServiceType(
+        input.serviceType,
+      );
 
-    const deliveryZone = this.resolveDeliveryZone(location.zone);
+    /**
+     * Zona seleccionada manualmente:
+     *
+     * Supermercado/Farmacia:
+     * Zona de preferencia
+     *
+     * Restaurante/Mensajería:
+     * Zona de retiro
+     */
+    const pickupZone =
+      this.resolvePickupZone(
+        input.pickupZone,
+      );
+
+    /**
+     * Zona real de la dirección
+     * de entrega.
+     */
+    const deliveryZone =
+      this.resolveDeliveryZone(
+        location.zone,
+      );
 
     const courierSize =
-      input.serviceType === "GENERAL_MESSAGING"
-        ? this.resolveCourierSize(input.courierWeight)
+      input.serviceType ===
+      "GENERAL_MESSAGING"
+        ? this.resolveCourierSize(
+            input.courierWeight,
+          )
         : null;
 
-    console.log("QUOTE ENGINE COURIER WEIGHT:", input.courierWeight);
-
-    console.log("QUOTE ENGINE COURIER SIZE:", courierSize);
-
-    const { data, error } = await calculateAutomaticQuote({
-      serviceType: pricingServiceType,
-      deliveryZone,
-      courierSize,
-      currency: input.currency,
-    });
+    const { data, error } =
+      await calculateAutomaticQuote({
+        serviceType:
+          pricingServiceType,
+        pickupZone,
+        deliveryZone,
+        courierSize,
+        currency: input.currency,
+      });
 
     if (error) {
       throw error;
     }
 
     if (!data) {
-      throw new Error("No se pudo calcular la cotización automática.");
+      throw new Error(
+        "No se pudo calcular la cotización automática.",
+      );
     }
 
-    const calculation = this.quoteCalculator.calculate({
-      serviceFee: data.breakdown.serviceFee,
-      deliveryFee: data.breakdown.deliveryFee,
-      commission: data.breakdown.commission,
-      surcharges: data.breakdown.surcharges,
-    });
-    return this.quoteGenerator.generate(input, calculation, location);
+    const calculation =
+      this.quoteCalculator.calculate({
+        serviceFee:
+          data.breakdown.serviceFee,
+
+        deliveryFee:
+          data.breakdown.deliveryFee,
+
+        commission:
+          data.breakdown.commission,
+
+        surcharges:
+          data.breakdown.surcharges,
+      });
+
+    return this.quoteGenerator.generate(
+      input,
+      calculation,
+      location,
+    );
   }
 
   private resolvePricingServiceType(
@@ -96,15 +150,75 @@ export class QuoteOrchestrator {
         return SERVICE_TYPE.COURIER;
 
       default: {
-        const exhaustiveCheck: never = serviceType;
+        const exhaustiveCheck: never =
+          serviceType;
 
-        throw new Error(`Servicio no soportado: ${exhaustiveCheck}`);
+        throw new Error(
+          `Servicio no soportado: ${exhaustiveCheck}`,
+        );
+      }
+    }
+  }
+
+  private resolvePickupZone(
+    pickupZone: PickupZone,
+  ): DeliveryZone {
+    switch (pickupZone) {
+      case "POTRERO":
+        return DELIVERY_ZONE.POTRERO;
+
+      case "FLAMINGO":
+        return DELIVERY_ZONE.FLAMINGO;
+
+      case "BRASILITO":
+        return DELIVERY_ZONE.BRASILITO;
+
+      case "LAS_CATALINAS":
+        return DELIVERY_ZONE.LAS_CATALINAS;
+
+      default: {
+        const exhaustiveCheck: never =
+          pickupZone;
+
+        throw new Error(
+          `Zona de retiro no soportada: ${exhaustiveCheck}`,
+        );
+      }
+    }
+  }
+
+  private resolveDeliveryZone(
+    zone: LocationZone,
+  ): DeliveryZone {
+    switch (zone) {
+      case "POTRERO":
+        return DELIVERY_ZONE.POTRERO;
+
+      case "FLAMINGO":
+        return DELIVERY_ZONE.FLAMINGO;
+
+      case "BRASILITO":
+        return DELIVERY_ZONE.BRASILITO;
+
+      case "LAS_CATALINAS":
+        return DELIVERY_ZONE.LAS_CATALINAS;
+
+      default: {
+        const exhaustiveCheck: never =
+          zone;
+
+        throw new Error(
+          `Zona de entrega no soportada: ${exhaustiveCheck}`,
+        );
       }
     }
   }
 
   private resolveCourierSize(
-    courierWeight: CourierWeight | null | undefined,
+    courierWeight:
+      | CourierWeight
+      | null
+      | undefined,
   ): CourierSize {
     switch (courierWeight) {
       case "LIGHT":
@@ -120,25 +234,6 @@ export class QuoteOrchestrator {
         throw new Error(
           "Debe seleccionar el peso aproximado de la mensajería.",
         );
-    }
-  }
-
-  private resolveDeliveryZone(zone: LocationZone): DeliveryZone {
-    switch (zone) {
-      case "LOCAL":
-        return DELIVERY_ZONE.POTRERO;
-
-      case "NEARBY":
-        return DELIVERY_ZONE.FLAMINGO;
-
-      case "EXTENDED":
-        return DELIVERY_ZONE.BRASILITO;
-
-      default: {
-        const exhaustiveCheck: never = zone;
-
-        throw new Error(`Zona no soportada: ${exhaustiveCheck}`);
-      }
     }
   }
 }

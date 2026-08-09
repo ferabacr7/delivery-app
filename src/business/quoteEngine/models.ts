@@ -6,9 +6,26 @@ export type ServiceType =
   | "FOOD_PICKUP"
   | "GENERAL_MESSAGING";
 
-export type CourierWeight = "LIGHT" | "MEDIUM" | "HEAVY";
+export type CourierWeight =
+  | "LIGHT"
+  | "MEDIUM"
+  | "HEAVY";
 
-export type LocationZone = "LOCAL" | "NEARBY" | "EXTENDED";
+/**
+ * Zonas reales de operación de Boomerang.
+ *
+ * Se utilizan tanto para:
+ * - zona de preferencia / retiro
+ * - zona de entrega
+ * - cálculo de la matriz de tarifas
+ */
+export type LocationZone =
+  | "POTRERO"
+  | "FLAMINGO"
+  | "BRASILITO"
+  | "LAS_CATALINAS";
+
+export type PickupZone = LocationZone;
 
 export type QuoteValidationResult = {
   isValid: boolean;
@@ -25,9 +42,16 @@ export type QuoteInput = {
   latitude?: number | null;
   longitude?: number | null;
 
-  // Se conserva para mostrar o registrar la dirección,
-  // pero ya no se utilizará para calcular la zona.
+  /**
+   * Dirección de entrega mostrada al usuario.
+   */
   locationText?: string | null;
+
+  /**
+   * Zona de preferencia / zona de retiro
+   * seleccionada manualmente por el cliente.
+   */
+  pickupZone: PickupZone;
 
   courierWeight?: CourierWeight | null;
 };
@@ -50,7 +74,19 @@ export type GeneratedQuote = {
   orderId: string;
 
   serviceType: ServiceType;
+
+  /**
+   * Zona donde se retira el producto,
+   * comida, medicamento o paquete.
+   */
+  pickupZone: PickupZone;
+
+  /**
+   * Zona correspondiente a la dirección
+   * de entrega del cliente.
+   */
   zone: LocationZone;
+
   estimatedDistanceKm: number;
 
   serviceFee: number;

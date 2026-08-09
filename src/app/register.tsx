@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
@@ -48,7 +49,7 @@ export default function RegisterScreen() {
     try {
       setIsRegistering(true);
 
-      const { data, error } = await signUp(
+      const { error } = await signUp(
         email.trim(),
         password.trim(),
         fullName.trim(),
@@ -85,7 +86,7 @@ export default function RegisterScreen() {
   return (
     <View style={styles.container}>
       <Image
-        source={require("../../assets/images/register2.png")}
+        source={require("../../assets/images/manregister.png")}
         style={styles.backgroundImage}
         resizeMode="cover"
       />
@@ -100,86 +101,130 @@ export default function RegisterScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.overlay}>
-            <Text style={styles.title}>
-              {t("register.title")}
-            </Text>
-
-            <Text style={styles.subtitle}>
-              {t("register.subtitle")}
-            </Text>
-
-            <TextInput
-              style={styles.input}
-              placeholder={t("register.fullName")}
-              placeholderTextColor="#8A8A8A"
-              autoCapitalize="words"
-              autoCorrect={false}
-              value={fullName}
-              onChangeText={setFullName}
-              editable={!isRegistering}
+            <Image
+              source={require("../../assets/images/transparentlogo3.png")}
+              style={styles.logo}
+              resizeMode="contain"
             />
 
-            <TextInput
-              style={styles.input}
-              placeholder={t("register.phone")}
-              placeholderTextColor="#8A8A8A"
-              keyboardType="phone-pad"
-              value={phone}
-              onChangeText={setPhone}
-              editable={!isRegistering}
-            />
-
-            <TextInput
-              style={styles.input}
-              placeholder={t("register.email")}
-              placeholderTextColor="#8A8A8A"
-              autoCapitalize="none"
-              autoCorrect={false}
-              keyboardType="email-address"
-              value={email}
-              onChangeText={setEmail}
-              editable={!isRegistering}
-            />
-
-            <TextInput
-              style={styles.input}
-              placeholder={t("register.password")}
-              placeholderTextColor="#8A8A8A"
-              secureTextEntry
-              autoCapitalize="none"
-              value={password}
-              onChangeText={setPassword}
-              editable={!isRegistering}
-            />
-
-            <Pressable
-              style={[
-                styles.button,
-                isRegistering && styles.buttonDisabled,
-              ]}
-              onPress={handleRegister}
-              disabled={isRegistering}
-            >
-              <Text style={styles.buttonText}>
-                {isRegistering
-                  ? t("register.registering")
-                  : t("register.registerButton")}
+            <View style={styles.formSection}>
+              <Text style={styles.title}>
+                {t("register.title")}
               </Text>
-            </Pressable>
 
-            <Pressable
-              onPress={() => router.push("/")}
-              disabled={isRegistering}
-            >
-              <Text
+              <Text style={styles.subtitle}>
+                {t("register.subtitle")}
+              </Text>
+
+              <View style={styles.inputContainer}>
+                <Ionicons
+                  name="person-outline"
+                  size={20}
+                  color="#666666"
+                  style={styles.inputIcon}
+                />
+
+                <TextInput
+                  style={styles.input}
+                  placeholder={t("register.fullName")}
+                  placeholderTextColor="#777777"
+                  autoCapitalize="words"
+                  autoCorrect={false}
+                  value={fullName}
+                  onChangeText={setFullName}
+                  editable={!isRegistering}
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Ionicons
+                  name="call-outline"
+                  size={20}
+                  color="#666666"
+                  style={styles.inputIcon}
+                />
+
+                <TextInput
+                  style={styles.input}
+                  placeholder={t("register.phone")}
+                  placeholderTextColor="#777777"
+                  keyboardType="phone-pad"
+                  value={phone}
+                  onChangeText={setPhone}
+                  editable={!isRegistering}
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Ionicons
+                  name="mail-outline"
+                  size={20}
+                  color="#666666"
+                  style={styles.inputIcon}
+                />
+
+                <TextInput
+                  style={styles.input}
+                  placeholder={t("register.email")}
+                  placeholderTextColor="#777777"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  keyboardType="email-address"
+                  value={email}
+                  onChangeText={setEmail}
+                  editable={!isRegistering}
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Ionicons
+                  name="lock-closed-outline"
+                  size={20}
+                  color="#666666"
+                  style={styles.inputIcon}
+                />
+
+                <TextInput
+                  style={styles.input}
+                  placeholder={t("register.password")}
+                  placeholderTextColor="#777777"
+                  secureTextEntry
+                  autoCapitalize="none"
+                  value={password}
+                  onChangeText={setPassword}
+                  editable={!isRegistering}
+                />
+              </View>
+
+              <Pressable
                 style={[
-                  styles.link,
-                  isRegistering && styles.linkDisabled,
+                  styles.button,
+                  isRegistering && styles.buttonDisabled,
                 ]}
+                onPress={handleRegister}
+                disabled={isRegistering}
               >
-                {t("register.backHome")}
-              </Text>
-            </Pressable>
+                <Text style={styles.buttonText}>
+                  {isRegistering
+                    ? t("register.registering")
+                    : t("register.registerButton")}
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => router.push("/")}
+                disabled={isRegistering}
+              >
+                <Text
+                  style={[
+                    styles.link,
+                    isRegistering && styles.linkDisabled,
+                  ]}
+                >
+                  {t("register.backHome")}
+                </Text>
+              </Pressable>
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -190,15 +235,12 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.white,
   },
 
   backgroundImage: {
-    position: "absolute",
-    width: "125%",
-    height: "125%",
-    alignSelf: "center",
-    top: -140,
+    ...StyleSheet.absoluteFillObject,
+    width: "100%",
+    height: "100%",
   },
 
   keyboardContainer: {
@@ -213,45 +255,80 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: "center",
     paddingHorizontal: 28,
-    paddingTop: 50,
+    paddingTop: 20,
     paddingBottom: 40,
-    backgroundColor: "rgba(255,255,255,0.88)",
+    backgroundColor: "rgba(255,255,255,0.32)",
   },
 
+  /*
+   * Logo ligeramente más grande
+   * y mantenido en la zona superior.
+   */
+logo: {
+  width: 240,
+  height: 130,
+  alignSelf: "center",
+  transform: [{ translateY: -60 }],
+  marginBottom: -45,
+},
+
+  /*
+   * Todo desde Create Account hacia abajo
+   * se mueve ligeramente hacia abajo.
+   */
+formSection: {
+  width: "100%",
+  marginTop: 64,
+},
+
   title: {
-    marginBottom: 12,
+    marginBottom: 8,
     color: colors.dark,
-    fontSize: 34,
+    fontSize: 28,
     fontWeight: "900",
     textAlign: "center",
   },
 
   subtitle: {
-    marginBottom: 28,
+    marginBottom: 18,
     color: colors.muted,
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: 14,
+    lineHeight: 20,
     textAlign: "center",
   },
 
-  input: {
-    height: 58,
-    marginBottom: 14,
-    paddingHorizontal: 18,
+  inputContainer: {
+    width: "84%",
+    height: 54,
+    alignSelf: "center",
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+    paddingHorizontal: 16,
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: "rgba(255,255,255,0.60)",
+    backgroundColor: "rgba(255,255,255,0.68)",
+  },
+
+  inputIcon: {
+    marginRight: 10,
+  },
+
+  input: {
+    flex: 1,
+    height: "100%",
+    paddingVertical: 0,
     color: colors.dark,
     fontSize: 16,
   },
 
   button: {
-    height: 60,
+    width: "52%",
+    height: 46,
+    alignSelf: "center",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 8,
-    borderRadius: 18,
+    marginTop: 4,
+    borderRadius: 15,
     backgroundColor: colors.primary,
   },
 
@@ -261,14 +338,14 @@ const styles = StyleSheet.create({
 
   buttonText: {
     color: colors.white,
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: "900",
   },
 
   link: {
-    marginTop: 24,
+    marginTop: 14,
     color: colors.primary,
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "800",
     textAlign: "center",
   },

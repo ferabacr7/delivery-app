@@ -24,6 +24,28 @@ type Address = {
   is_default: boolean;
 };
 
+function getAddressIcon(label?: string | null): keyof typeof Ionicons.glyphMap {
+  const normalizedLabel = label?.trim().toLowerCase();
+
+  if (normalizedLabel === "casa" || normalizedLabel === "home") {
+    return "home-outline";
+  }
+
+  if (normalizedLabel === "trabajo" || normalizedLabel === "work") {
+    return "briefcase-outline";
+  }
+
+  if (normalizedLabel === "apartamento" || normalizedLabel === "apartment") {
+    return "business-outline";
+  }
+
+  if (normalizedLabel === "hotel") {
+    return "bed-outline";
+  }
+
+  return "location-outline";
+}
+
 export default function MyAddressesScreen() {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -69,9 +91,9 @@ export default function MyAddressesScreen() {
     } as never);
   }
 
-  function handleBack() {
-    router.push("/profile" as never);
-  }
+function handleBack() {
+  router.back();
+}
 
   return (
     <View style={styles.container}>
@@ -90,14 +112,9 @@ export default function MyAddressesScreen() {
         <View style={styles.body}>
           {isLoading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator
-                size="large"
-                color={colors.primary}
-              />
+              <ActivityIndicator size="large" color={colors.primary} />
 
-              <Text style={styles.loadingText}>
-                {t("addresses.loading")}
-              </Text>
+              <Text style={styles.loadingText}>{t("addresses.loading")}</Text>
             </View>
           ) : hasError ? (
             <View style={styles.stateCard}>
@@ -109,18 +126,13 @@ export default function MyAddressesScreen() {
                 />
               </View>
 
-              <Text style={styles.stateTitle}>
-                {t("addresses.errorTitle")}
-              </Text>
+              <Text style={styles.stateTitle}>{t("addresses.errorTitle")}</Text>
 
               <Text style={styles.stateDescription}>
                 {t("addresses.loadError")}
               </Text>
 
-              <Pressable
-                style={styles.secondaryButton}
-                onPress={loadAddresses}
-              >
+              <Pressable style={styles.secondaryButton} onPress={loadAddresses}>
                 <Text style={styles.secondaryButtonText}>
                   {t("addresses.retry")}
                 </Text>
@@ -136,9 +148,7 @@ export default function MyAddressesScreen() {
                 />
               </View>
 
-              <Text style={styles.stateTitle}>
-                {t("addresses.emptyTitle")}
-              </Text>
+              <Text style={styles.stateTitle}>{t("addresses.emptyTitle")}</Text>
 
               <Text style={styles.stateDescription}>
                 {t("addresses.emptyDescription")}
@@ -148,11 +158,7 @@ export default function MyAddressesScreen() {
                 style={styles.primaryButton}
                 onPress={handleAddAddress}
               >
-                <Ionicons
-                  name="add"
-                  size={21}
-                  color={colors.white}
-                />
+                <Ionicons name="add" size={21} color={colors.white} />
 
                 <Text style={styles.primaryButtonText}>
                   {t("addresses.add")}
@@ -162,34 +168,19 @@ export default function MyAddressesScreen() {
           ) : (
             <View style={styles.addressList}>
               {addresses.map((address) => {
-                const normalizedLabel = address.label.toLowerCase();
-
-                const isWorkAddress =
-                  normalizedLabel.includes("trabajo") ||
-                  normalizedLabel.includes("work");
-
                 return (
-                  <View
-                    key={address.id}
-                    style={styles.addressCard}
-                  >
+                  <View key={address.id} style={styles.addressCard}>
                     <View style={styles.addressTopRow}>
                       <View style={styles.addressIconBox}>
                         <Ionicons
-                          name={
-                            isWorkAddress
-                              ? "business-outline"
-                              : "home-outline"
-                          }
+                          name={getAddressIcon(address.label)}
                           size={22}
                           color={colors.primary}
                         />
                       </View>
 
                       <View style={styles.addressContent}>
-                        <Text style={styles.addressLabel}>
-                          {address.label}
-                        </Text>
+                        <Text style={styles.addressLabel}>{address.label}</Text>
 
                         <Text style={styles.addressLine}>
                           {address.address_line}
@@ -204,14 +195,10 @@ export default function MyAddressesScreen() {
 
                       <Pressable
                         style={styles.editIconButton}
-                        onPress={() =>
-                          handleEditAddress(address.id)
-                        }
+                        onPress={() => handleEditAddress(address.id)}
                         hitSlop={8}
                         accessibilityRole="button"
-                        accessibilityLabel={t(
-                          "addresses.editAccessibility",
-                        )}
+                        accessibilityLabel={t("addresses.editAccessibility")}
                       >
                         <Ionicons
                           name="create-outline"

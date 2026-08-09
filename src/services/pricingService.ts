@@ -10,6 +10,7 @@ export const DELIVERY_ZONE = {
   POTRERO: "potrero",
   FLAMINGO: "flamingo",
   BRASILITO: "brasilito",
+  LAS_CATALINAS: "las_catalinas",
 } as const;
 
 export const SERVICE_TYPE = {
@@ -30,11 +31,14 @@ export type SupportedCurrency = "CRC" | "USD";
 export type PricingCategory =
   (typeof PRICING_CATEGORY)[keyof typeof PRICING_CATEGORY];
 
-export type DeliveryZone = (typeof DELIVERY_ZONE)[keyof typeof DELIVERY_ZONE];
+export type DeliveryZone =
+  (typeof DELIVERY_ZONE)[keyof typeof DELIVERY_ZONE];
 
-export type ServiceType = (typeof SERVICE_TYPE)[keyof typeof SERVICE_TYPE];
+export type ServiceType =
+  (typeof SERVICE_TYPE)[keyof typeof SERVICE_TYPE];
 
-export type CourierSize = (typeof COURIER_SIZE)[keyof typeof COURIER_SIZE];
+export type CourierSize =
+  (typeof COURIER_SIZE)[keyof typeof COURIER_SIZE];
 
 export type PricingRule = {
   id: string;
@@ -60,8 +64,21 @@ export type ExchangeRate = {
 
 export type CalculateQuoteInput = {
   serviceType: ServiceType;
+
+  /**
+   * Zona donde Boomerang debe retirar el producto,
+   * comida, medicamento o paquete.
+   */
+  pickupZone: DeliveryZone;
+
+  /**
+   * Zona donde se encuentra la dirección
+   * de entrega seleccionada por el cliente.
+   */
   deliveryZone: DeliveryZone;
+
   courierSize?: CourierSize | null;
+
   currency: SupportedCurrency;
 };
 
@@ -103,10 +120,18 @@ export type QuoteBreakdown = {
 
 export type QuoteCalculation = {
   serviceType: ServiceType;
+
+  pickupZone: DeliveryZone;
   deliveryZone: DeliveryZone;
+
   courierSize: CourierSize | null;
 
   serviceName: string;
+
+  /**
+   * Nombre de la ruta configurada en pricing_rules.
+   * Ejemplo: "Potrero ↔ Flamingo".
+   */
   deliveryZoneName: string;
 
   currency: SupportedCurrency;
@@ -126,6 +151,46 @@ function validateRequiredValue(
 }
 
 /**
+ * Mantiene un orden único de zonas para poder utilizar
+ * una sola regla para ambos sentidos.
+ *
+ * Ejemplo:
+ *
+ * Potrero → Flamingo
+ * Flamingo → Potrero
+ *
+ * Ambos utilizan:
+ *
+ * potrero_flamingo
+ */
+const DELIVERY_ZONE_ORDER: DeliveryZone[] = [
+  DELIVERY_ZONE.POTRERO,
+  DELIVERY_ZONE.FLAMINGO,
+  DELIVERY_ZONE.BRASILITO,
+  DELIVERY_ZONE.LAS_CATALINAS,
+];
+
+export function getDeliveryRouteRuleKey(
+  pickupZone: DeliveryZone,
+  deliveryZone: DeliveryZone,
+) {
+  const pickupIndex = DELIVERY_ZONE_ORDER.indexOf(pickupZone);
+  const deliveryIndex = DELIVERY_ZONE_ORDER.indexOf(deliveryZone);
+
+  if (pickupIndex === -1 || deliveryIndex === -1) {
+    throw new Error(
+      "No se pudo determinar la ruta entre las zonas seleccionadas.",
+    );
+  }
+
+  if (pickupIndex <= deliveryIndex) {
+    return `${pickupZone}_${deliveryZone}`;
+  }
+
+  return `${deliveryZone}_${pickupZone}`;
+}
+
+/**
  * Redondea hacia arriba al siguiente múltiplo de $0.50.
  *
  * Ejemplos:
@@ -137,29 +202,42 @@ function roundUsdAmount(amount: number) {
   return Math.ceil(amount * 2) / 2;
 }
 
-function convertCrcToUsd(amountInCrc: number, crcPerUsd: number) {
+function convertCrcToUsd(
+  amountInCrc: number,
+  crcPerUsd: number,
+) {
   if (!Number.isFinite(crcPerUsd) || crcPerUsd <= 0) {
-    throw new Error("El tipo de cambio configurado no es válido.");
+    throw new Error(
+      "El tipo de cambio configurado no es válido.",
+    );
   }
 
   return roundUsdAmount(amountInCrc / crcPerUsd);
 }
 
-function sumPricingAdjustments(adjustments: PricingAdjustment[]) {
+function sumPricingAdjustments(
+  adjustments: PricingAdjustment[],
+) {
   return adjustments.reduce(
     (total, adjustment) => total + adjustment.amount,
     0,
   );
 }
 
-function validatePricingAdjustments(adjustments: PricingAdjustment[]) {
+function validatePricingAdjustments(
+  adjustments: PricingAdjustment[],
+) {
   for (const adjustment of adjustments) {
     if (!adjustment.id.trim()) {
-      throw new Error("Todos los ajustes deben tener un identificador.");
+      throw new Error(
+        "Todos los ajustes deben tener un identificador.",
+      );
     }
 
     if (!adjustment.label.trim()) {
-      throw new Error("Todos los ajustes deben tener una descripción.");
+      throw new Error(
+        "Todos los ajustes deben tener una descripción.",
+      );
     }
 
     if (!Number.isFinite(adjustment.amount)) {
@@ -239,6 +317,7 @@ export async function getLatestExchangeRate() {
 
 export async function calculateAutomaticQuote({
   serviceType,
+  pickupZone,
   deliveryZone,
   courierSize = null,
   currency,
@@ -248,18 +327,28 @@ export async function calculateAutomaticQuote({
 }> {
   try {
     validateRequiredValue(serviceType, "serviceType");
+    validateRequiredValue(pickupZone, "pickupZone");
     validateRequiredValue(deliveryZone, "deliveryZone");
     validateRequiredValue(currency, "currency");
 
     const serviceRuleKey =
-      serviceType === SERVICE_TYPE.COURIER ? courierSize : serviceType;
+      serviceType === SERVICE_TYPE.COURIER
+        ? courierSize
+        : serviceType;
 
-    if (serviceType === SERVICE_TYPE.COURIER && !courierSize) {
-      throw new Error("Debe seleccionar el tamaño o peso de la mensajería.");
+    if (
+      serviceType === SERVICE_TYPE.COURIER &&
+      !courierSize
+    ) {
+      throw new Error(
+        "Debe seleccionar el tamaño o peso de la mensajería.",
+      );
     }
 
     if (!serviceRuleKey) {
-      throw new Error("No se pudo determinar la tarifa del servicio.");
+      throw new Error(
+        "No se pudo determinar la tarifa del servicio.",
+      );
     }
 
     const serviceCategory =
@@ -267,26 +356,51 @@ export async function calculateAutomaticQuote({
         ? PRICING_CATEGORY.COURIER
         : PRICING_CATEGORY.SERVICE;
 
-    const [serviceResult, deliveryZoneResult, exchangeRateResult] =
-      await Promise.all([
-        getPricingRule(serviceCategory, serviceRuleKey),
+    /**
+     * Convierte pickupZone + deliveryZone en la llave
+     * única almacenada en pricing_rules.
+     *
+     * Ejemplo:
+     *
+     * las_catalinas + brasilito
+     * ↓
+     * brasilito_las_catalinas
+     */
+    const deliveryRouteRuleKey =
+      getDeliveryRouteRuleKey(
+        pickupZone,
+        deliveryZone,
+      );
 
-        getPricingRule(PRICING_CATEGORY.DELIVERY_ZONE, deliveryZone),
+    const [
+      serviceResult,
+      deliveryRouteResult,
+      exchangeRateResult,
+    ] = await Promise.all([
+      getPricingRule(
+        serviceCategory,
+        serviceRuleKey,
+      ),
 
-        currency === "USD"
-          ? getLatestExchangeRate()
-          : Promise.resolve({
-              data: null,
-              error: null,
-            }),
-      ]);
+      getPricingRule(
+        PRICING_CATEGORY.DELIVERY_ZONE,
+        deliveryRouteRuleKey,
+      ),
+
+      currency === "USD"
+        ? getLatestExchangeRate()
+        : Promise.resolve({
+            data: null,
+            error: null,
+          }),
+    ]);
 
     if (serviceResult.error) {
       throw serviceResult.error;
     }
 
-    if (deliveryZoneResult.error) {
-      throw deliveryZoneResult.error;
+    if (deliveryRouteResult.error) {
+      throw deliveryRouteResult.error;
     }
 
     if (exchangeRateResult.error) {
@@ -299,31 +413,42 @@ export async function calculateAutomaticQuote({
       );
     }
 
-    if (!deliveryZoneResult.data) {
+    if (!deliveryRouteResult.data) {
       throw new Error(
-        "No se encontró una tarifa activa para la zona seleccionada.",
+        "No se encontró una tarifa activa para la ruta seleccionada.",
       );
     }
 
-    if (currency === "USD" && !exchangeRateResult.data) {
+    if (
+      currency === "USD" &&
+      !exchangeRateResult.data
+    ) {
       throw new Error(
         "No existe un tipo de cambio configurado para generar cotizaciones en dólares.",
       );
     }
 
-    const baseServiceFeeCrc = Number(serviceResult.data.amount);
+    const baseServiceFeeCrc =
+      Number(serviceResult.data.amount);
 
-    const baseDeliveryFeeCrc = Number(deliveryZoneResult.data.amount);
+    const baseDeliveryFeeCrc =
+      Number(deliveryRouteResult.data.amount);
 
     if (
       !Number.isFinite(baseServiceFeeCrc) ||
       !Number.isFinite(baseDeliveryFeeCrc)
     ) {
-      throw new Error("Uno de los precios configurados no es válido.");
+      throw new Error(
+        "Uno de los precios configurados no es válido.",
+      );
     }
 
     const exchangeRate =
-      currency === "USD" ? Number(exchangeRateResult.data?.crc_per_usd) : null;
+      currency === "USD"
+        ? Number(
+            exchangeRateResult.data?.crc_per_usd,
+          )
+        : null;
 
     if (
       currency === "USD" &&
@@ -331,17 +456,25 @@ export async function calculateAutomaticQuote({
         exchangeRate === null ||
         exchangeRate <= 0)
     ) {
-      throw new Error("El tipo de cambio configurado no es válido.");
+      throw new Error(
+        "El tipo de cambio configurado no es válido.",
+      );
     }
 
     const serviceFee =
       currency === "USD"
-        ? convertCrcToUsd(baseServiceFeeCrc, exchangeRate!)
+        ? convertCrcToUsd(
+            baseServiceFeeCrc,
+            exchangeRate!,
+          )
         : baseServiceFeeCrc;
 
     const deliveryFee =
       currency === "USD"
-        ? convertCrcToUsd(baseDeliveryFeeCrc, exchangeRate!)
+        ? convertCrcToUsd(
+            baseDeliveryFeeCrc,
+            exchangeRate!,
+          )
         : baseDeliveryFeeCrc;
 
     const commission = 0;
@@ -361,13 +494,21 @@ export async function calculateAutomaticQuote({
 
     validatePricingAdjustments(adjustments);
 
-    const adjustmentsTotal = sumPricingAdjustments(adjustments);
+    const adjustmentsTotal =
+      sumPricingAdjustments(adjustments);
 
     const total =
-      serviceFee + deliveryFee + commission + surcharges + adjustmentsTotal;
+      serviceFee +
+      deliveryFee +
+      commission +
+      surcharges +
+      adjustmentsTotal;
 
     console.warn("PRICING CALCULATION:", {
       currency,
+      pickupZone,
+      deliveryZone,
+      deliveryRouteRuleKey,
       baseServiceFeeCrc,
       baseDeliveryFeeCrc,
       exchangeRate,
@@ -383,13 +524,19 @@ export async function calculateAutomaticQuote({
     return {
       data: {
         serviceType,
+
+        pickupZone,
         deliveryZone,
 
-        courierSize: serviceType === SERVICE_TYPE.COURIER ? courierSize : null,
+        courierSize:
+          serviceType === SERVICE_TYPE.COURIER
+            ? courierSize
+            : null,
 
         serviceName: serviceResult.data.name,
 
-        deliveryZoneName: deliveryZoneResult.data.name,
+        deliveryZoneName:
+          deliveryRouteResult.data.name,
 
         currency,
 
@@ -412,9 +559,14 @@ export async function calculateAutomaticQuote({
     const normalizedError =
       error instanceof Error
         ? error
-        : new Error("No se pudo calcular la cotización.");
+        : new Error(
+            "No se pudo calcular la cotización.",
+          );
 
-    console.error("CALCULATE AUTOMATIC QUOTE ERROR:", normalizedError);
+    console.error(
+      "CALCULATE AUTOMATIC QUOTE ERROR:",
+      normalizedError,
+    );
 
     return {
       data: null,

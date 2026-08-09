@@ -1,6 +1,12 @@
-import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  Image,
+  ImageSourcePropType,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
 import BottomNavigation from "../components/ui/BottomNavigation";
 import { useTranslation } from "../i18n/useTranslation";
@@ -11,65 +17,70 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.content}
-      >
+      <View style={styles.main}>
+        {/* HERO */}
         <View style={styles.hero}>
-          <View style={styles.brandBadge}>
-            <Ionicons name="bicycle-outline" size={18} color={colors.primary} />
-            <Text style={styles.brandBadgeText}>Boomerang</Text>
+          <View style={styles.logoWrapper}>
+            <Image
+              source={require("../../assets/images/logosolo.png")}
+              style={styles.brandLogo}
+              resizeMode="contain"
+            />
           </View>
 
-          <Text style={styles.slogan}>{t("home.slogan")}</Text>
+          <Text style={styles.slogan}>
+            {t("home.slogan")}
+          </Text>
 
-          <Text style={styles.description}>{t("home.description")}</Text>
+          <Text style={styles.description}>
+            {t("home.description")}
+          </Text>
         </View>
 
+        {/* SERVICIOS */}
         <View style={styles.panel}>
-          <Text style={styles.eyebrow}>{t("home.question")}</Text>
+          <Text style={styles.eyebrow}>
+            {t("home.question")}
+          </Text>
 
           <View style={styles.grid}>
-  <Category
-    icon="cart-outline"
-    title={t("home.supermarket")}
-  />
+            <Category
+              image={require("../../assets/images/supermercadohome.png")}
+              title={t("home.supermarket")}
+            />
 
-  <Category
-    icon="restaurant-outline"
-    title={t("home.restaurant")}
-  />
+            <Category
+              image={require("../../assets/images/restaurantehome.png")}
+              title={t("home.restaurant")}
+            />
 
-  <Category
-    icon="medkit-outline"
-    title={t("home.pharmacy")}
-  />
+            <Category
+              image={require("../../assets/images/farmaciahome.png")}
+              title={t("home.pharmacy")}
+            />
 
-  <Category
-    icon="chatbox-ellipses-outline"
-    title={t("home.messaging")}
-  />
-</View>
+            <Category
+              image={require("../../assets/images/mensajeriahome.png")}
+              title={t("home.messaging")}
+            />
+          </View>
 
-          <Pressable
-            style={({ pressed }) => [
-              styles.button,
-              pressed && styles.buttonPressed,
-            ]}
-            onPress={() => router.push("/create-order")}
-          >
-            <Text style={styles.buttonText}>{t("home.makeOrder")}</Text>
-
-            <View style={styles.buttonIcon}>
-              <Ionicons
-                name="arrow-forward"
-                size={21}
-                color={colors.white}
-              />
-            </View>
-          </Pressable>
+          {/* HACER PEDIDO */}
+          <View style={styles.buttonArea}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.button,
+                pressed && styles.buttonPressed,
+              ]}
+              onPress={() => router.push("/create-order")}
+            >
+              <Text style={styles.buttonText}>
+                {t("home.makeOrder")}
+              </Text>
+            </Pressable>
+          </View>
         </View>
-      </ScrollView>
+      </View>
 
       <BottomNavigation active="home" />
     </View>
@@ -77,25 +88,28 @@ export default function HomeScreen() {
 }
 
 function Category({
-  icon,
+  image,
   title,
 }: {
-  icon: keyof typeof Ionicons.glyphMap;
+  image: ImageSourcePropType;
   title: string;
 }) {
   return (
     <View style={styles.card}>
-      <View style={styles.iconCircle}>
-        <Ionicons name={icon} size={30} color={colors.primaryDark} />
-      </View>
-
-      <Text style={styles.cardTitle}>{title}</Text>
-
-      <Ionicons
-        name="arrow-forward-outline"
-        size={18}
-        color={colors.textSoft}
+      <Image
+        source={image}
+        style={styles.cardImage}
+        resizeMode="cover"
       />
+
+      <View style={styles.cardLabel}>
+        <Text
+          style={styles.cardTitle}
+          numberOfLines={1}
+        >
+          {title}
+        </Text>
+      </View>
     </View>
   );
 }
@@ -104,114 +118,183 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    position: "relative",
   },
 
-  content: {
-    paddingBottom: 130,
+  main: {
+    flex: 1,
+    paddingBottom: 108,
   },
+
+  /* =========================
+     HERO
+  ========================= */
 
   hero: {
-    paddingTop: 74,
-    paddingHorizontal: 24,
-    paddingBottom: 36,
-    backgroundColor: colors.brandSoft,
+    backgroundColor: "#FFE1D2",
+
+    paddingTop: 54,
+    paddingHorizontal: 22,
+
+    // Más grande para aprovechar mejor
+    // la parte superior de la pantalla.
+    paddingBottom: 34,
+
     borderBottomLeftRadius: 34,
     borderBottomRightRadius: 34,
   },
 
-  brandBadge: {
-    alignSelf: "flex-start",
-    flexDirection: "row",
+  logoWrapper: {
+    width: 78,
+    height: 68,
+
     alignItems: "center",
-    gap: 8,
-    backgroundColor: colors.white,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: 999,
-    marginBottom: 22,
+    justifyContent: "center",
+
+    marginBottom: 12,
+
+    overflow: "hidden",
   },
 
-  brandBadgeText: {
-    fontSize: 16,
-    fontWeight: "900",
-    color: colors.primaryDark,
+  brandLogo: {
+    width: 145,
+    height: 145,
+
+    transform: [{ scale: 1.25 }],
   },
 
   slogan: {
-    fontSize: 36,
-    lineHeight: 42,
+    // Más protagonista
+    fontSize: 33,
+    lineHeight: 39,
+
     fontWeight: "900",
     color: colors.dark,
-    maxWidth: 330,
+
+    maxWidth: 365,
   },
 
   description: {
-    marginTop: 14,
-    fontSize: 16,
-    lineHeight: 24,
+    marginTop: 10,
+
+    // Más grande también
+    fontSize: 17,
+    lineHeight: 23,
+
+    fontWeight: "600",
+
     color: colors.muted,
-    maxWidth: 340,
+
+    maxWidth: 360,
   },
 
+  /* =========================
+     SERVICIOS
+  ========================= */
+
   panel: {
-    paddingHorizontal: 24,
-    paddingTop: 28,
+    flex: 1,
+
+    paddingHorizontal: 22,
+
+    // Baja un poco las cards
+    paddingTop: 24,
   },
 
   eyebrow: {
-    fontSize: 13,
+    marginBottom: 14,
+
+    fontSize: 14,
     fontWeight: "900",
+
     letterSpacing: 1.1,
     textTransform: "uppercase",
+
     color: colors.primaryDark,
-    marginBottom: 16,
   },
+
+  /* =========================
+     GRID
+  ========================= */
 
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 14,
+
+    justifyContent: "space-between",
+
+    rowGap: 14,
   },
+
+  /* =========================
+     CARDS
+  ========================= */
 
   card: {
-    width: "47%",
-    minHeight: 144,
-    borderRadius: 22,
+    width: "48%",
+    height: 176,
+
+    borderRadius: 20,
+
     backgroundColor: colors.white,
+
     borderWidth: 1,
     borderColor: colors.border,
-    padding: 18,
-    justifyContent: "space-between",
+
+    overflow: "hidden",
   },
 
-  iconCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.brandSoft,
+  cardImage: {
+    width: "100%",
+    height: 136,
+  },
+
+  cardLabel: {
+    flex: 1,
+
     alignItems: "center",
     justifyContent: "center",
+
+    paddingHorizontal: 8,
+
+    backgroundColor: colors.white,
   },
 
   cardTitle: {
-    marginTop: 18,
-    fontSize: 17,
-    lineHeight: 22,
+    fontSize: 14,
     fontWeight: "800",
+
     color: colors.dark,
+
+    textAlign: "center",
+  },
+
+  /* =========================
+     BOTÓN
+  ========================= */
+
+  buttonArea: {
+    flex: 1,
+
+    // Empuja Hacer pedido hacia abajo
+    justifyContent: "flex-end",
+    alignItems: "center",
+
+    paddingTop: 12,
+
+    // Lo acercamos al navigation
+    paddingBottom: 0,
   },
 
   button: {
-    marginTop: 30,
-    minHeight: 62,
-    borderRadius: 18,
+    width: "56%",
+    height: 44,
+
+    borderRadius: 15,
+
     backgroundColor: colors.primary,
-    flexDirection: "row",
+
     alignItems: "center",
     justifyContent: "center",
-    gap: 12,
-    paddingHorizontal: 18,
   },
 
   buttonPressed: {
@@ -220,16 +303,8 @@ const styles = StyleSheet.create({
 
   buttonText: {
     color: colors.white,
-    fontSize: 18,
-    fontWeight: "900",
-  },
 
-  buttonIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "rgba(255,255,255,0.18)",
-    alignItems: "center",
-    justifyContent: "center",
+    fontSize: 15,
+    fontWeight: "900",
   },
 });

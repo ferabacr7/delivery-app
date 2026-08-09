@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
-import { useEffect, useState } from "react";
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
 import {
   Image,
   Pressable,
@@ -16,7 +16,7 @@ import { useTranslation } from "../i18n/useTranslation";
 import { getCurrentUser, getMyProfile, signOut } from "../services/authService";
 import { colors } from "../styles/theme";
 
-const profileDeliveryBg = require("../images/profile-delivery-bg.png");
+const profileDeliveryBg = require("../images/profile-delivery-bg.png.png");
 
 export default function ProfileScreen() {
   const [email, setEmail] = useState("");
@@ -25,9 +25,11 @@ export default function ProfileScreen() {
   const { t } = useTranslation();
   const { language, setLanguage } = useLanguage();
 
-  useEffect(() => {
-    loadUser();
-  }, [language]);
+  useFocusEffect(
+    useCallback(() => {
+      loadUser();
+    }, [language]),
+  );
 
   async function loadUser() {
     const { data, error } = await getCurrentUser();
@@ -86,14 +88,14 @@ export default function ProfileScreen() {
             <Ionicons
               name="car-outline"
               size={132}
-              color="rgba(20, 184, 166, 0.12)"
+              color="rgba(255, 122, 47, 0.12)"
               style={styles.bgVehicle}
             />
 
             <Ionicons
               name="navigate-outline"
               size={42}
-              color="rgba(20, 184, 166, 0.12)"
+              color="rgba(255, 122, 47, 0.12)"
               style={styles.bgNavigate}
             />
           </View>
@@ -144,6 +146,32 @@ export default function ProfileScreen() {
         <View style={styles.flexSpacer} />
 
         <View style={styles.bottomContent}>
+          <ProfileOption
+            icon="person-circle-outline"
+            title={
+              language === "es"
+                ? "Información personal"
+                : "Personal information"
+            }
+            subtitle={
+              language === "es"
+                ? "Edita tu nombre, teléfono y correo"
+                : "Edit your name, phone number, and email"
+            }
+            onPress={() => router.push("/edit-profile" as never)}
+          />
+
+          <ProfileOption
+            icon="lock-closed-outline"
+            title={language === "es" ? "Seguridad" : "Security"}
+            subtitle={
+              language === "es"
+                ? "Cambia tu contraseña"
+                : "Change your password"
+            }
+            onPress={() => router.push("/change-password" as never)}
+          />
+
           <ProfileOption
             icon="location-outline"
             title={t("profile.myAddress")}
@@ -222,45 +250,45 @@ const styles = StyleSheet.create({
     position: "relative",
   },
 
-  backgroundDecoration: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 206,
-    backgroundColor: "#F2FBFA",
-    overflow: "hidden",
-  },
+ backgroundDecoration: {
+  position: "absolute",
+  top: 0,
+  left: 0,
+  right: 0,
+  height: 206,
+  backgroundColor: "#FFF6F0",
+  overflow: "hidden",
+},
 
-  bgCircleOne: {
-    position: "absolute",
-    width: 190,
-    height: 190,
-    borderRadius: 95,
-    backgroundColor: "rgba(20, 184, 166, 0.08)",
-    top: -64,
-    right: -42,
-  },
+bgCircleOne: {
+  position: "absolute",
+  width: 190,
+  height: 190,
+  borderRadius: 95,
+  backgroundColor: "rgba(255, 122, 47, 0.08)",
+  top: -64,
+  right: -42,
+},
 
-  bgCircleTwo: {
-    position: "absolute",
-    width: 155,
-    height: 155,
-    borderRadius: 78,
-    backgroundColor: "rgba(20, 184, 166, 0.07)",
-    bottom: -58,
-    left: -42,
-  },
+bgCircleTwo: {
+  position: "absolute",
+  width: 155,
+  height: 155,
+  borderRadius: 78,
+  backgroundColor: "rgba(255, 122, 47, 0.07)",
+  bottom: -58,
+  left: -42,
+},
 
-  bgCircleThree: {
-    position: "absolute",
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: "rgba(20, 184, 166, 0.05)",
-    top: 78,
-    left: 132,
-  },
+bgCircleThree: {
+  position: "absolute",
+  width: 120,
+  height: 120,
+  borderRadius: 60,
+  backgroundColor: "rgba(255, 122, 47, 0.05)",
+  top: 78,
+  left: 132,
+},
 
   bgVehicle: {
     position: "absolute",

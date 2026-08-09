@@ -39,11 +39,22 @@ export default function DriverScreen() {
     void loadDriverProfile();
   }, []);
 
+  function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+    return Promise.race([
+      promise,
+      new Promise<T>((_, reject) => {
+        setTimeout(() => {
+          reject(new Error("La carga del perfil tardó demasiado."));
+        }, timeoutMs);
+      }),
+    ]);
+  }
+
   async function loadDriverProfile() {
     try {
       setLoadingProfile(true);
 
-      const { data, error } = await getMyProfile();
+      const { data, error } = await withTimeout(getMyProfile(), 10000);
 
       console.log("DRIVER PROFILE DATA:", data);
       console.log("DRIVER PROFILE ERROR:", error);
@@ -51,8 +62,7 @@ export default function DriverScreen() {
       if (error || !data) {
         Alert.alert(
           "Error",
-          error?.message ??
-            "No se pudo cargar el perfil del repartidor.",
+          error?.message ?? "No se pudo cargar el perfil del repartidor.",
         );
         return;
       }
@@ -66,10 +76,7 @@ export default function DriverScreen() {
     } catch (error) {
       console.error("DRIVER PROFILE ERROR:", error);
 
-      Alert.alert(
-        "Error",
-        "Ocurrió un error al cargar el perfil.",
-      );
+      Alert.alert("Error", "Ocurrió un error al cargar el perfil.");
     } finally {
       setLoadingProfile(false);
     }
@@ -87,49 +94,28 @@ export default function DriverScreen() {
         .from("deliveries")
         .select("id, status, driver_id")
         .eq("driver_id", profile.id)
-        .in("status", [
-          "PENDING",
-          "IN_PROGRESS",
-          "ON_ROUTE",
-        ])
+        .in("status", ["PENDING", "IN_PROGRESS", "ON_ROUTE"])
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle<AssignedDelivery>();
 
       if (error) {
-        console.error(
-          "DRIVER DELIVERY ERROR:",
-          error,
-        );
+        console.error("DRIVER DELIVERY ERROR:", error);
 
-        Alert.alert(
-          "Error",
-          "No se pudo cargar la entrega asignada.",
-        );
+        Alert.alert("Error", "No se pudo cargar la entrega asignada.");
         return;
       }
 
       if (!delivery) {
-        Alert.alert(
-          "Sin entregas",
-          "No tienes ningún pedido asignado.",
-        );
+        Alert.alert("Sin entregas", "No tienes ningún pedido asignado.");
         return;
       }
 
-      router.push(
-        `/internal/delivery-console/${delivery.id}` as never,
-      );
+      router.push(`/internal/delivery-console/${delivery.id}` as never);
     } catch (error) {
-      console.error(
-        "DRIVER DELIVERY ERROR:",
-        error,
-      );
+      console.error("DRIVER DELIVERY ERROR:", error);
 
-      Alert.alert(
-        "Error",
-        "Ocurrió un error al buscar la entrega.",
-      );
+      Alert.alert("Error", "Ocurrió un error al buscar la entrega.");
     } finally {
       setLoadingDelivery(false);
     }
@@ -139,10 +125,7 @@ export default function DriverScreen() {
     const { error } = await signOut();
 
     if (error) {
-      Alert.alert(
-        "Error",
-        "No se pudo cerrar la sesión.",
-      );
+      Alert.alert("Error", "No se pudo cerrar la sesión.");
       return;
     }
 
@@ -152,45 +135,52 @@ export default function DriverScreen() {
   if (loadingProfile) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator
-          size="large"
-          color={colors.primary}
-        />
+        <ActivityIndicator size="large" color={colors.primary} />
 
-        <Text style={styles.loadingText}>
-          Cargando perfil...
-        </Text>
+        <Text style={styles.loadingText}>Cargando perfil...</Text>
       </View>
     );
   }
 
   if (!profile) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText}>
-          No se pudo cargar el perfil.
-        </Text>
-      </View>
-    );
-  }
+  return (
+    <View style={styles.loadingContainer}>
+      <Text style={styles.loadingText}>
+        No se pudo cargar el perfil.
+      </Text>
 
-  const shortDriverId =
-    profile.id.slice(-6).toUpperCase();
+      <Pressable
+        style={styles.retryButton}
+        onPress={() => {
+          void loadDriverProfile();
+        }}
+        accessibilityRole="button"
+        accessibilityLabel="Reintentar cargar perfil"
+      >
+        <Ionicons
+          name="refresh-outline"
+          size={20}
+          color={colors.white}
+        />
+
+        <Text style={styles.retryButtonText}>
+          Reintentar
+        </Text>
+      </Pressable>
+    </View>
+  );
+}
+
+  const shortDriverId = profile.id.slice(-6).toUpperCase();
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.iconCircle}>
-          <Ionicons
-            name="bicycle-outline"
-            size={38}
-            color={colors.white}
-          />
+          <Ionicons name="bicycle-outline" size={38} color={colors.white} />
         </View>
 
-        <Text style={styles.headerTitle}>
-          Modo repartidor
-        </Text>
+        <Text style={styles.headerTitle}>Modo repartidor</Text>
 
         <Text style={styles.headerSubtitle}>
           Gestiona tus entregas asignadas
@@ -200,37 +190,25 @@ export default function DriverScreen() {
       <View style={styles.content}>
         <View style={styles.profileCard}>
           <View style={styles.avatar}>
-            <Ionicons
-              name="person-outline"
-              size={34}
-              color={colors.primary}
-            />
+            <Ionicons name="person-outline" size={34} color={colors.primary} />
           </View>
 
           <Text style={styles.name}>
-            Repartidor 1
-          </Text>
+  {profile.full_name?.trim() || "Repartidor"}
+</Text>
 
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>
-              ID de repartidor
-            </Text>
+            <Text style={styles.infoLabel}>ID de repartidor</Text>
 
-            <Text style={styles.infoValue}>
-              #{shortDriverId}
-            </Text>
+            <Text style={styles.infoValue}>#{shortDriverId}</Text>
           </View>
 
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>
-              Estado
-            </Text>
+            <Text style={styles.infoLabel}>Estado</Text>
 
             <View style={styles.statusBadge}>
               <Text style={styles.statusText}>
-                {profile.is_active
-                  ? "Activo"
-                  : "Inactivo"}
+                {profile.is_active ? "Activo" : "Inactivo"}
               </Text>
             </View>
           </View>
@@ -239,48 +217,28 @@ export default function DriverScreen() {
         <Pressable
           style={[
             styles.primaryButton,
-            loadingDelivery &&
-              styles.buttonDisabled,
+            loadingDelivery && styles.buttonDisabled,
           ]}
           onPress={handleViewAssignedDeliveries}
           disabled={loadingDelivery}
         >
           {loadingDelivery ? (
-            <ActivityIndicator
-              color={colors.white}
-            />
+            <ActivityIndicator color={colors.white} />
           ) : (
             <>
-              <Ionicons
-                name="cube-outline"
-                size={23}
-                color={colors.white}
-              />
+              <Ionicons name="cube-outline" size={23} color={colors.white} />
 
-              <Text
-                style={styles.primaryButtonText}
-              >
+              <Text style={styles.primaryButtonText}>
                 Ver entregas asignadas
               </Text>
             </>
           )}
         </Pressable>
 
-        <Pressable
-          style={styles.secondaryButton}
-          onPress={handleSignOut}
-        >
-          <Ionicons
-            name="log-out-outline"
-            size={22}
-            color={colors.primary}
-          />
+        <Pressable style={styles.secondaryButton} onPress={handleSignOut}>
+          <Ionicons name="log-out-outline" size={22} color={colors.primary} />
 
-          <Text
-            style={styles.secondaryButtonText}
-          >
-            Cerrar sesión
-          </Text>
+          <Text style={styles.secondaryButtonText}>Cerrar sesión</Text>
         </Pressable>
       </View>
     </View>
@@ -442,4 +400,22 @@ const styles = StyleSheet.create({
   buttonDisabled: {
     opacity: 0.65,
   },
+
+  retryButton: {
+  marginTop: 22,
+  minHeight: 52,
+  paddingHorizontal: 24,
+  borderRadius: 16,
+  backgroundColor: colors.primary,
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 8,
+},
+
+retryButtonText: {
+  color: colors.white,
+  fontSize: 16,
+  fontWeight: "800",
+},
 });

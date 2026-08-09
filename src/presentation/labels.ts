@@ -43,9 +43,9 @@ export const quoteLabels = {
     purchaseValidationHelper:
       "Este monto corresponde a una estimación de los productos y no forma parte del costo del servicio de entrega.",
 
-    paymentStatusLabel: "Estado del pago",
-    foodOrderPaid: "Pagado",
-    foodOrderNotPaid: "Pendiente de pago",
+    paymentStatusLabel: "Estado de pago de la compra",
+    foodOrderPaid: "Cancelado en el restaurante",
+    foodOrderNotPaid: "Pendiente de pago en Restaurante",
 
     accept: "Aceptar cotización",
     reject: "Rechazar",
@@ -125,9 +125,9 @@ export const quoteLabels = {
     purchaseValidationHelper:
       "This amount is an estimate of the purchased products and is not included in the delivery service cost.",
 
-    paymentStatusLabel: "Payment status",
-    foodOrderPaid: "Paid",
-    foodOrderNotPaid: "Payment pending",
+    paymentStatusLabel: "Purchase payment status",
+    foodOrderPaid: "Paid at the restaurant",
+    foodOrderNotPaid: "Not paid at the restaurant",
 
     accept: "Accept quote",
     reject: "Reject",

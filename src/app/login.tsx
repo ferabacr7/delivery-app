@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
@@ -17,7 +18,6 @@ import { colors } from "../styles/theme";
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
   const [loading, setLoading] = useState(false);
 
   const { t } = useTranslation();
@@ -28,29 +28,45 @@ export default function LoginScreen() {
     }
 
     if (!email.trim() || !password.trim()) {
-      Alert.alert(t("login.requiredTitle"), t("login.requiredMessage"));
+      Alert.alert(
+        t("login.requiredTitle"),
+        t("login.requiredMessage"),
+      );
+
       return;
     }
 
     try {
       setLoading(true);
 
-      const { data, error } = await signIn(email.trim(), password.trim());
+      const { data, error } = await signIn(
+        email.trim(),
+        password.trim(),
+      );
 
       if (error) {
-        Alert.alert(t("login.errorTitle"), error.message);
+        Alert.alert(
+          t("login.errorTitle"),
+          error.message,
+        );
+
         return;
       }
 
       console.log("LOGIN SUCCESS:", data.user?.id);
 
-      const { data: profile, error: profileError } = await getMyProfile();
+      const {
+        data: profile,
+        error: profileError,
+      } = await getMyProfile();
 
       if (profileError || !profile) {
         Alert.alert(
           t("login.errorTitle"),
-          profileError?.message ?? "No se pudo cargar el perfil del usuario.",
+          profileError?.message ??
+            "No se pudo cargar el perfil del usuario.",
         );
+
         return;
       }
 
@@ -65,7 +81,10 @@ export default function LoginScreen() {
     } catch (error) {
       console.error("LOGIN ERROR:", error);
 
-      Alert.alert(t("login.errorTitle"), "Ocurrió un error al iniciar sesión.");
+      Alert.alert(
+        t("login.errorTitle"),
+        "Ocurrió un error al iniciar sesión.",
+      );
     } finally {
       setLoading(false);
     }
@@ -74,47 +93,96 @@ export default function LoginScreen() {
   return (
     <View style={styles.container}>
       <Image
-        source={require("../../assets/images/login2.png")}
+        source={require("../../assets/images/womanlogin.png")}
         style={styles.backgroundImage}
-        resizeMode="contain"
+        resizeMode="cover"
       />
 
       <View style={styles.overlay}>
+        {/* LOGO */}
+        <Image
+          source={require("../../assets/images/transparentlogo3.png")}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+
+        {/* LOGIN */}
         <View style={styles.formContainer}>
-          <Text style={styles.title}>{t("login.title")}</Text>
+          <Text style={styles.title}>
+            {t("login.title")}
+          </Text>
 
-          <TextInput
-            style={styles.input}
-            placeholder={t("login.email")}
-            placeholderTextColor={colors.muted}
-            autoCapitalize="none"
-            autoCorrect={false}
-            keyboardType="email-address"
-            value={email}
-            onChangeText={setEmail}
-          />
+          {/* EMAIL */}
+          <View style={styles.inputContainer}>
+            <Ionicons
+              name="mail-outline"
+              size={20}
+              color="#666666"
+              style={styles.inputIcon}
+            />
 
-          <TextInput
-            style={styles.input}
-            placeholder={t("login.password")}
-            placeholderTextColor={colors.muted}
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-          />
+            <TextInput
+              style={styles.input}
+              placeholder={t("login.email")}
+              placeholderTextColor="#777777"
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="email-address"
+              value={email}
+              onChangeText={setEmail}
+              editable={!loading}
+            />
+          </View>
 
+          {/* PASSWORD */}
+          <View style={styles.inputContainer}>
+            <Ionicons
+              name="lock-closed-outline"
+              size={20}
+              color="#666666"
+              style={styles.inputIcon}
+            />
+
+            <TextInput
+              style={styles.input}
+              placeholder={t("login.password")}
+              placeholderTextColor="#777777"
+              secureTextEntry
+              autoCapitalize="none"
+              value={password}
+              onChangeText={setPassword}
+              editable={!loading}
+            />
+          </View>
+
+          {/* SIGN IN */}
           <Pressable
-            style={[styles.button, loading && styles.buttonDisabled]}
+            style={[
+              styles.button,
+              loading && styles.buttonDisabled,
+            ]}
             onPress={handleLogin}
             disabled={loading}
           >
             <Text style={styles.buttonText}>
-              {loading ? "Ingresando..." : t("login.button")}
+              {loading
+                ? "Ingresando..."
+                : t("login.button")}
             </Text>
           </Pressable>
 
-          <Pressable onPress={() => router.push("/register" as never)}>
-            <Text style={styles.link}>{t("login.createAccount")}</Text>
+          {/* CREATE ACCOUNT */}
+          <Pressable
+onPress={() => router.push("/register" as never)}            disabled={loading}
+          >
+            <Text
+              style={[
+                styles.link,
+                loading && styles.linkDisabled,
+              ]}
+            >
+              {t("login.createAccount")}
+            </Text>
           </Pressable>
         </View>
       </View>
@@ -128,50 +196,108 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
   },
 
+  /*
+   * Fondo de la motorizada.
+   * Cubre toda la pantalla de forma más natural.
+   */
   backgroundImage: {
-    position: "absolute",
-    width: "125%",
-    height: "125%",
-    alignSelf: "center",
-    top: -185,
+    ...StyleSheet.absoluteFillObject,
+    width: "100%",
+    height: "100%",
   },
 
+  /*
+   * Mucho menos blanco que antes para que
+   * la fotografía realmente se pueda apreciar.
+   */
   overlay: {
     flex: 1,
     justifyContent: "center",
     paddingHorizontal: 28,
-    backgroundColor: "rgba(255,255,255,0.82)",
+    paddingTop: 20,
+    paddingBottom: 40,
+backgroundColor: "rgba(255,255,255,0.42)",  },
+
+  /*
+   * Logo arriba.
+   * Mantiene una proporción similar
+   * a la pantalla Register.
+   */
+  logo: {
+    width: 235,
+    height: 125,
+    alignSelf: "center",
+    transform: [{ translateY: -72 }],
+    marginBottom: -48,
   },
 
+  /*
+   * Sign In + inputs + botón bajan
+   * independientemente del logo.
+   */
   formContainer: {
     width: "100%",
+    marginTop: 52,
   },
 
   title: {
+    marginBottom: 24,
+    color: colors.dark,
     fontSize: 30,
     fontWeight: "900",
-    color: colors.dark,
-    marginBottom: 24,
     textAlign: "center",
   },
 
-  input: {
-    height: 58,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
+  /*
+   * Mismo ancho que Register.
+   */
+  inputContainer: {
+    width: "84%",
+    height: 54,
+
+    alignSelf: "center",
+    flexDirection: "row",
+    alignItems: "center",
+
+    marginBottom: 12,
     paddingHorizontal: 16,
-    marginBottom: 16,
-    color: colors.dark,
+
+    borderRadius: 16,
+
+    /*
+     * Transparencia igual al estilo
+     * nuevo de Register.
+     */
+    backgroundColor: "rgba(255,255,255,0.68)",
   },
 
+  inputIcon: {
+    marginRight: 10,
+  },
+
+  input: {
+    flex: 1,
+    height: "100%",
+    paddingVertical: 0,
+    color: colors.dark,
+    fontSize: 16,
+  },
+
+  /*
+   * Botón compacto como Register.
+   */
   button: {
-    height: 58,
-    borderRadius: 16,
-    backgroundColor: colors.primary,
-    justifyContent: "center",
+    width: "52%",
+    height: 46,
+
+    alignSelf: "center",
     alignItems: "center",
-    marginTop: 8,
+    justifyContent: "center",
+
+    marginTop: 4,
+
+    borderRadius: 15,
+    backgroundColor: colors.primary,
   },
 
   buttonDisabled: {
@@ -180,14 +306,27 @@ const styles = StyleSheet.create({
 
   buttonText: {
     color: colors.white,
+    fontSize: 15,
     fontWeight: "900",
-    fontSize: 18,
   },
 
-  link: {
-    marginTop: 24,
-    textAlign: "center",
-    color: colors.primary,
-    fontWeight: "700",
+link: {
+  alignSelf: "center",
+  marginTop: 18,
+
+  paddingHorizontal: 12,
+  paddingVertical: 5,
+
+  borderRadius: 10,
+  backgroundColor: "rgba(255,255,255,0.38)",
+
+  color: colors.primary,
+  fontSize: 14,
+  fontWeight: "800",
+  textAlign: "center",
+},
+
+  linkDisabled: {
+    opacity: 0.5,
   },
 });

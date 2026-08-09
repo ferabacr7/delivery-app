@@ -51,3 +51,4 @@ supabase/.cache/
 
 # Logs
 *.log
+supabase/.temp/

@@ -2,8 +2,8 @@ export const translations = {
   es: {
     home: {
       title: "Boomerang",
-      slogan: "Lo que necesites, lo pedís.",
-      description: "Pedí lo que necesités y nosotros nos encargamos.",
+      slogan: "Lo que necesités, lo pedís.",
+      description: "Nosotros nos encargamos.",
       question: "¿Qué necesitás hoy?",
 
       supermarket: "Supermercado",
@@ -197,13 +197,16 @@ export const translations = {
 
     orderDetail: {
       title: "Detalle del Pedido",
+
       accepted: "🟢 Pedido Aceptado",
       rejected: "🔴 Pedido Rechazado",
       pending: "🟡 Cotización Pendiente",
       quoteReceived: "Cotización Recibida",
       quoteStatus: "Estado",
-      description: "Descripción del pedido",
+
+      description: "Descripción",
       createdAt: "Fecha de creación",
+
       accept: "Aceptar",
       reject: "Rechazar",
 
@@ -246,13 +249,40 @@ export const translations = {
       estimatedMinutes: "12–18 min",
       pendingEstimate: "Pendiente",
 
-      showPriceDetail: "Ver detalle",
-      hidePriceDetail: "Ocultar detalle",
-
       deliveryStatus: "Estado de entrega",
       delivered: "Entregado",
       onTheWay: "En camino",
       preparing: "Preparando pedido",
+
+      // Información del pedido
+      orderDetails: "Detalles del pedido",
+      pickupLocation: "Lugar de retiro",
+      courierWeight: "Peso aproximado",
+
+      // Información de pago y servicio
+      paymentMethod: "Método de pago de la entrega",
+      paymentStatusLabel: "Estado de pago de la compra",
+      estimatedPurchaseAmount: "Monto estimado de la compra",
+      cash: "Efectivo",
+
+      // Detalle del monto de compra
+      purchaseDetail:
+        "Este monto corresponde únicamente al valor estimado de la compra en el comercio. No está incluido en el costo del servicio de Boomerang.",
+
+      // Detalle del servicio de entrega
+      deliveryService: "Servicio de entrega",
+      serviceTypeFee: "Tarifa del servicio",
+      deliveryFee: "Tarifa de entrega",
+
+      // Detalles desplegables
+      viewDetail: "Ver detalle",
+      hideDetail: "Ocultar detalle",
+
+      // Detalle de precios existente
+      showPriceDetail: "Ver detalles",
+      hidePriceDetail: "Ocultar detalles",
+
+      courierPaymentStatusLabel: "Estado de pago del paquete",
     },
 
     addressForm: {
@@ -357,13 +387,60 @@ export const translations = {
       rejected: "Rechazado",
       cancelled: "Cancelado",
     },
+
+    profileEdit: {
+      title: "Información personal",
+      subtitle: "Actualiza tu nombre, teléfono y correo electrónico.",
+      fullName: "Nombre completo",
+      fullNamePlaceholder: "Ej: Fer Abarca",
+      phone: "Teléfono",
+      phonePlaceholder: "Ej: 8888-8888",
+      email: "Correo electrónico",
+      emailPlaceholder: "correo@ejemplo.com",
+      emailNotice:
+        "Si cambias tu correo, es posible que debas confirmarlo desde el nuevo email.",
+      save: "Guardar cambios",
+      loading: "Cargando perfil...",
+      loadError: "No pudimos cargar tu información.",
+      nameRequired: "El nombre es obligatorio.",
+      emailRequired: "El correo es obligatorio.",
+      savedTitle: "Perfil actualizado",
+      savedMessage: "Tus datos fueron actualizados correctamente.",
+      emailConfirmationMessage:
+        "Tus datos fueron actualizados. Revisa tu correo para confirmar el cambio de email si Supabase lo solicita.",
+      saveError: "No se pudieron guardar los cambios.",
+    },
+
+    passwordChange: {
+      title: "Cambiar contraseña",
+      subtitle: "Crea una nueva contraseña para tu cuenta.",
+      newPassword: "Nueva contraseña",
+      newPasswordPlaceholder: "Mínimo 6 caracteres",
+      confirmPassword: "Confirmar contraseña",
+      confirmPasswordPlaceholder: "Escribe la contraseña nuevamente",
+      securityNotice:
+        "Tu contraseña se actualiza directamente mediante Supabase Auth y no se guarda dentro de Boomerang.",
+      button: "Actualizar contraseña",
+      passwordRequired: "Escribe una nueva contraseña.",
+      passwordLength: "La contraseña debe tener al menos 6 caracteres.",
+      passwordMismatch: "Las contraseñas no coinciden.",
+      successTitle: "Contraseña actualizada",
+      successMessage: "Tu contraseña fue actualizada correctamente.",
+      saveError: "No se pudo actualizar la contraseña.",
+      currentPassword: "Contraseña actual",
+      currentPasswordPlaceholder: "Escribe tu contraseña actual",
+      currentPasswordRequired: "Escribe tu contraseña actual.",
+      currentPasswordInvalid: "La contraseña actual no es correcta.",
+      samePassword:
+        "La nueva contraseña debe ser diferente a la contraseña actual.",
+    },
   },
 
   en: {
     home: {
       title: "Boomerang",
       slogan: "Whatever you need, just ask.",
-      description: "Tell us what you need and we'll take care of it.",
+      description: "We will take care of it.",
       question: "What do you need today?",
 
       supermarket: "Supermarket",
@@ -563,13 +640,16 @@ export const translations = {
 
     orderDetail: {
       title: "Order Details",
+
       accepted: "🟢 Order Accepted",
       rejected: "🔴 Order Rejected",
       pending: "🟡 Quote Pending",
       quoteReceived: "Quote Received",
       quoteStatus: "Status",
-      description: "Order Description",
+
+      description: "Description",
       createdAt: "Created At",
+
       accept: "Accept",
       reject: "Reject",
 
@@ -617,8 +697,35 @@ export const translations = {
       onTheWay: "On the way",
       preparing: "Preparing order",
 
+      // Order information
+      orderDetails: "Order details",
+      pickupLocation: "Pickup location",
+      courierWeight: "Approximate weight",
+
+      // Payment and service information
+      paymentMethod: "Delivery payment method",
+      paymentStatusLabel: "Purchase payment status",
+      estimatedPurchaseAmount: "Estimated purchase amount",
+      cash: "Cash",
+
+      // Purchase detail
+      purchaseDetail:
+        "This amount is only an estimate of the purchase at the store. It is not included in the Boomerang service fee.",
+
+      // Delivery service detail
+      deliveryService: "Delivery service",
+      serviceTypeFee: "Service fee",
+      deliveryFee: "Delivery fee",
+
+      // Expandable details
+      viewDetail: "View detail",
+      hideDetail: "Hide detail",
+
+      // Existing price detail labels
       showPriceDetail: "Show details",
       hidePriceDetail: "Hide details",
+
+      courierPaymentStatusLabel: "Package payment status",
     },
 
     addressForm: {
@@ -722,6 +829,53 @@ export const translations = {
       delivered: "Delivered",
       rejected: "Rejected",
       cancelled: "Cancelled",
+    },
+
+    profileEdit: {
+      title: "Personal information",
+      subtitle: "Update your name, phone number, and email address.",
+      fullName: "Full name",
+      fullNamePlaceholder: "Example: Fer Abarca",
+      phone: "Phone number",
+      phonePlaceholder: "Example: 8888-8888",
+      email: "Email address",
+      emailPlaceholder: "email@example.com",
+      emailNotice:
+        "If you change your email, you may need to confirm it from the new email address.",
+      save: "Save changes",
+      loading: "Loading profile...",
+      loadError: "We could not load your information.",
+      nameRequired: "Your name is required.",
+      emailRequired: "Your email is required.",
+      savedTitle: "Profile updated",
+      savedMessage: "Your information was updated successfully.",
+      emailConfirmationMessage:
+        "Your information was updated. Check your email to confirm the email change if Supabase requires it.",
+      saveError: "The changes could not be saved.",
+    },
+
+    passwordChange: {
+      title: "Change password",
+      subtitle: "Create a new password for your account.",
+      newPassword: "New password",
+      newPasswordPlaceholder: "Minimum 6 characters",
+      confirmPassword: "Confirm password",
+      confirmPasswordPlaceholder: "Enter the password again",
+      securityNotice:
+        "Your password is updated directly through Supabase Auth and is never stored inside Boomerang.",
+      button: "Update password",
+      passwordRequired: "Enter a new password.",
+      passwordLength: "The password must be at least 6 characters.",
+      passwordMismatch: "The passwords do not match.",
+      successTitle: "Password updated",
+      successMessage: "Your password was updated successfully.",
+      saveError: "The password could not be updated.",
+      currentPassword: "Current password",
+      currentPasswordPlaceholder: "Enter your current password",
+      currentPasswordRequired: "Enter your current password.",
+      currentPasswordInvalid: "Your current password is incorrect.",
+      samePassword:
+        "Your new password must be different from your current password.",
     },
   },
 };

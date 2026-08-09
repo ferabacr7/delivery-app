@@ -10,10 +10,6 @@ import TrackingStatus from "./TrackingStatus";
 
 import { useDeliveryTracking } from "../../../hooks/useDeliveryTracking";
 
-import { useEffect, useRef } from "react";
-
-import { getRoute } from "../../../services/routeService";
-
 type Props = {
   deliveryId?: string | null;
 
@@ -47,51 +43,6 @@ export default function TrackingCard({
     location,
     history,
   } = useDeliveryTracking(deliveryId);
-
-  const hasTestedRoute = useRef(false);
-
-useEffect(() => {
-  if (
-    hasTestedRoute.current ||
-    !location ||
-    latitude == null ||
-    longitude == null
-  ) {
-    return;
-  }
-
-  hasTestedRoute.current = true;
-
-  void getRoute({
-    origin: {
-      latitude: location.latitude,
-      longitude: location.longitude,
-    },
-    destination: {
-      latitude,
-      longitude,
-    },
-  }).catch((error) => {
-    console.error(
-      "ROUTE TEST ERROR:",
-      error,
-    );
-  });
-}, [
-  location,
-  latitude,
-  longitude,
-]);
-
-  console.log(
-    "TRACKING CARD LOCATION:",
-    location,
-  );
-
-  console.log(
-    "TRACKING CARD HISTORY POINTS:",
-    history.length,
-  );
 
   return (
     <Card style={styles.card}>

@@ -16,6 +16,14 @@ export type DeliveryOrderDetails = {
   description: string | null;
   service_type: string | null;
 
+  pickup_location: string | null;
+  courier_weight: string | null;
+  payment_method: string | null;
+  food_order_paid: boolean | null;
+  courier_order_paid: boolean | null;
+  estimated_purchase_amount: number | null;
+  estimated_purchase_currency: string | null;
+
   customer: {
     full_name: string | null;
     phone: string | null;
@@ -23,6 +31,14 @@ export type DeliveryOrderDetails = {
 
   address: {
     address_line: string | null;
+    reference: string | null;
+    latitude: number | null;
+    longitude: number | null;
+  } | null;
+
+  quote: {
+    total: number | null;
+    currency: string | null;
   } | null;
 };
 
@@ -121,7 +137,9 @@ export async function getDeliveryById(deliveryId: string) {
   const { data: addressData, error: addressError } =
     await supabase
       .from("addresses")
-      .select("id, address_line")
+      .select(
+        "id, address_line, reference, latitude, longitude",
+      )
       .eq("id", orderData.address_id)
       .maybeSingle();
 
@@ -139,30 +157,126 @@ export async function getDeliveryById(deliveryId: string) {
     };
   }
 
+  const { data: quoteData, error: quoteError } =
+    await supabase.rpc(
+      "get_driver_delivery_quote_total",
+      {
+        p_delivery_id: deliveryId,
+      },
+    );
+
+  console.log(
+    "QUOTE RPC RESULT:",
+    JSON.stringify(quoteData, null, 2),
+  );
+
+  console.log("QUOTE RPC ERROR:", quoteError);
+
+  if (quoteError) {
+    return {
+      data: null,
+      error: quoteError,
+    };
+  }
+
+  const acceptedQuote =
+    Array.isArray(quoteData) &&
+    quoteData.length > 0
+      ? quoteData[0]
+      : null;
+
   const normalizedDelivery: DeliveryRow = {
     id: deliveryData.id,
     order_id: deliveryData.order_id,
-    status: deliveryData.status as DeliveryStatus,
-    started_at: deliveryData.started_at,
-    delivered_at: deliveryData.delivered_at,
-    created_at: deliveryData.created_at,
-    updated_at: deliveryData.updated_at,
+    status:
+      deliveryData.status as DeliveryStatus,
+    started_at:
+      deliveryData.started_at,
+    delivered_at:
+      deliveryData.delivered_at,
+    created_at:
+      deliveryData.created_at,
+    updated_at:
+      deliveryData.updated_at,
 
     order: {
       id: orderData.id,
-      description: orderData.description ?? null,
-      service_type: orderData.service_type ?? null,
+
+      description:
+        orderData.description ?? null,
+
+      service_type:
+        orderData.service_type ?? null,
+
+      pickup_location:
+        orderData.pickup_location ?? null,
+
+      courier_weight:
+        orderData.courier_weight ?? null,
+
+      payment_method:
+        orderData.payment_method ?? null,
+
+      food_order_paid:
+        orderData.food_order_paid ?? null,
+
+      courier_order_paid:
+        orderData.courier_order_paid ?? null,
+
+      estimated_purchase_amount:
+        orderData.estimated_purchase_amount ??
+        null,
+
+      estimated_purchase_currency:
+        orderData.estimated_purchase_currency ??
+        null,
 
       customer: customerData
         ? {
-            full_name: customerData.full_name ?? null,
-            phone: customerData.phone ?? null,
+            full_name:
+              customerData.full_name ?? null,
+
+            phone:
+              customerData.phone ?? null,
           }
         : null,
 
       address: addressData
         ? {
-            address_line: addressData.address_line ?? null,
+            address_line:
+              addressData.address_line ?? null,
+
+            reference:
+              addressData.reference ?? null,
+
+            latitude:
+              addressData.latitude !== null
+                ? Number(
+                    addressData.latitude,
+                  )
+                : null,
+
+            longitude:
+              addressData.longitude !== null
+                ? Number(
+                    addressData.longitude,
+                  )
+                : null,
+          }
+        : null,
+
+      quote: acceptedQuote
+        ? {
+            total:
+              acceptedQuote.total !== null
+                ? Number(
+                    acceptedQuote.total,
+                  )
+                : null,
+
+            currency:
+              acceptedQuote.currency ??
+              null,
           }
         : null,
     },
@@ -174,7 +288,9 @@ export async function getDeliveryById(deliveryId: string) {
   };
 }
 
-export async function getDeliveryByOrderId(orderId: string) {
+export async function getDeliveryByOrderId(
+  orderId: string,
+) {
   validateId(orderId, "orderId");
 
   const { data, error } = await supabase
@@ -184,18 +300,23 @@ export async function getDeliveryByOrderId(orderId: string) {
     .maybeSingle();
 
   return {
-    data: data as DeliveryRow | null,
+    data:
+      data as DeliveryRow | null,
     error,
   };
 }
 
-export async function createDeliveryForOrder(orderId: string) {
+export async function createDeliveryForOrder(
+  orderId: string,
+) {
   validateId(orderId, "orderId");
 
   const {
     data: existingDelivery,
     error: existingDeliveryError,
-  } = await getDeliveryByOrderId(orderId);
+  } = await getDeliveryByOrderId(
+    orderId,
+  );
 
   if (existingDeliveryError) {
     return {
@@ -211,34 +332,47 @@ export async function createDeliveryForOrder(orderId: string) {
     };
   }
 
-  const now = new Date().toISOString();
+  const now =
+    new Date().toISOString();
 
-  const { data, error } = await supabase
-    .from("deliveries")
-    .insert({
-      order_id: orderId,
-      status: DELIVERY_STATUS.PENDING,
-      updated_at: now,
-    })
-    .select()
-    .maybeSingle();
+  const { data, error } =
+    await supabase
+      .from("deliveries")
+      .insert({
+        order_id: orderId,
+        status:
+          DELIVERY_STATUS.PENDING,
+        updated_at: now,
+      })
+      .select()
+      .maybeSingle();
 
   return {
-    data: data as DeliveryRow | null,
+    data:
+      data as DeliveryRow | null,
     error,
   };
 }
 
-export async function startDelivery(deliveryId: string) {
-  validateId(deliveryId, "deliveryId");
-
-  const { data, error } = await supabase.rpc(
-    "transition_driver_delivery",
-    {
-      p_delivery_id: deliveryId,
-      p_target_status: DELIVERY_STATUS.IN_PROGRESS,
-    },
+export async function startDelivery(
+  deliveryId: string,
+) {
+  validateId(
+    deliveryId,
+    "deliveryId",
   );
+
+  const { data, error } =
+    await supabase.rpc(
+      "transition_driver_delivery",
+      {
+        p_delivery_id:
+          deliveryId,
+
+        p_target_status:
+          DELIVERY_STATUS.IN_PROGRESS,
+      },
+    );
 
   if (error) {
     return {
@@ -247,21 +381,35 @@ export async function startDelivery(deliveryId: string) {
     };
   }
 
-  console.log("START DELIVERY RPC RESULT:", data);
+  console.log(
+    "START DELIVERY RPC RESULT:",
+    data,
+  );
 
-  return await getDeliveryById(deliveryId);
+  return await getDeliveryById(
+    deliveryId,
+  );
 }
 
-export async function startDeliveryRoute(deliveryId: string) {
-  validateId(deliveryId, "deliveryId");
-
-  const { data, error } = await supabase.rpc(
-    "transition_driver_delivery",
-    {
-      p_delivery_id: deliveryId,
-      p_target_status: DELIVERY_STATUS.ON_ROUTE,
-    },
+export async function startDeliveryRoute(
+  deliveryId: string,
+) {
+  validateId(
+    deliveryId,
+    "deliveryId",
   );
+
+  const { data, error } =
+    await supabase.rpc(
+      "transition_driver_delivery",
+      {
+        p_delivery_id:
+          deliveryId,
+
+        p_target_status:
+          DELIVERY_STATUS.ON_ROUTE,
+      },
+    );
 
   if (error) {
     return {
@@ -275,19 +423,30 @@ export async function startDeliveryRoute(deliveryId: string) {
     data,
   );
 
-  return await getDeliveryById(deliveryId);
+  return await getDeliveryById(
+    deliveryId,
+  );
 }
 
-export async function completeDelivery(deliveryId: string) {
-  validateId(deliveryId, "deliveryId");
-
-  const { data, error } = await supabase.rpc(
-    "transition_driver_delivery",
-    {
-      p_delivery_id: deliveryId,
-      p_target_status: DELIVERY_STATUS.DELIVERED,
-    },
+export async function completeDelivery(
+  deliveryId: string,
+) {
+  validateId(
+    deliveryId,
+    "deliveryId",
   );
+
+  const { data, error } =
+    await supabase.rpc(
+      "transition_driver_delivery",
+      {
+        p_delivery_id:
+          deliveryId,
+
+        p_target_status:
+          DELIVERY_STATUS.DELIVERED,
+      },
+    );
 
   if (error) {
     return {
@@ -301,19 +460,30 @@ export async function completeDelivery(deliveryId: string) {
     data,
   );
 
-  return await getDeliveryById(deliveryId);
+  return await getDeliveryById(
+    deliveryId,
+  );
 }
 
-export async function cancelDelivery(deliveryId: string) {
-  validateId(deliveryId, "deliveryId");
-
-  const { data, error } = await supabase.rpc(
-    "transition_driver_delivery",
-    {
-      p_delivery_id: deliveryId,
-      p_target_status: DELIVERY_STATUS.CANCELLED,
-    },
+export async function cancelDelivery(
+  deliveryId: string,
+) {
+  validateId(
+    deliveryId,
+    "deliveryId",
   );
+
+  const { data, error } =
+    await supabase.rpc(
+      "transition_driver_delivery",
+      {
+        p_delivery_id:
+          deliveryId,
+
+        p_target_status:
+          DELIVERY_STATUS.CANCELLED,
+      },
+    );
 
   if (error) {
     return {
@@ -327,6 +497,7 @@ export async function cancelDelivery(deliveryId: string) {
     data,
   );
 
-  return await getDeliveryById(deliveryId);
+  return await getDeliveryById(
+    deliveryId,
+  );
 }
-
