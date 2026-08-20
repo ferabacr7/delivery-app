@@ -93,20 +93,12 @@ export default function LoginScreen() {
   return (
     <View style={styles.container}>
       <Image
-        source={require("../../assets/images/womanlogin.png")}
+        source={require("../../assets/images/imagenlogin.png")}
         style={styles.backgroundImage}
         resizeMode="cover"
       />
 
       <View style={styles.overlay}>
-        {/* LOGO */}
-        <Image
-          source={require("../../assets/images/transparentlogo3.png")}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-
-        {/* LOGIN */}
         <View style={styles.formContainer}>
           <Text style={styles.title}>
             {t("login.title")}
@@ -173,7 +165,10 @@ export default function LoginScreen() {
 
           {/* CREATE ACCOUNT */}
           <Pressable
-onPress={() => router.push("/register" as never)}            disabled={loading}
+            onPress={() =>
+              router.push("/register" as never)
+            }
+            disabled={loading}
           >
             <Text
               style={[
@@ -196,45 +191,21 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
   },
 
-  /*
-   * Fondo de la motorizada.
-   * Cubre toda la pantalla de forma más natural.
-   */
   backgroundImage: {
     ...StyleSheet.absoluteFillObject,
     width: "100%",
     height: "100%",
   },
 
-  /*
-   * Mucho menos blanco que antes para que
-   * la fotografía realmente se pueda apreciar.
-   */
   overlay: {
     flex: 1,
     justifyContent: "center",
     paddingHorizontal: 28,
     paddingTop: 20,
     paddingBottom: 40,
-backgroundColor: "rgba(255,255,255,0.42)",  },
-
-  /*
-   * Logo arriba.
-   * Mantiene una proporción similar
-   * a la pantalla Register.
-   */
-  logo: {
-    width: 235,
-    height: 125,
-    alignSelf: "center",
-    transform: [{ translateY: -72 }],
-    marginBottom: -48,
+    backgroundColor: "rgba(255,255,255,0.42)",
   },
 
-  /*
-   * Sign In + inputs + botón bajan
-   * independientemente del logo.
-   */
   formContainer: {
     width: "100%",
     marginTop: 52,
@@ -248,9 +219,6 @@ backgroundColor: "rgba(255,255,255,0.42)",  },
     textAlign: "center",
   },
 
-  /*
-   * Mismo ancho que Register.
-   */
   inputContainer: {
     width: "84%",
     height: 54,
@@ -263,11 +231,6 @@ backgroundColor: "rgba(255,255,255,0.42)",  },
     paddingHorizontal: 16,
 
     borderRadius: 16,
-
-    /*
-     * Transparencia igual al estilo
-     * nuevo de Register.
-     */
     backgroundColor: "rgba(255,255,255,0.68)",
   },
 
@@ -283,9 +246,6 @@ backgroundColor: "rgba(255,255,255,0.42)",  },
     fontSize: 16,
   },
 
-  /*
-   * Botón compacto como Register.
-   */
   button: {
     width: "52%",
     height: 46,
@@ -310,21 +270,21 @@ backgroundColor: "rgba(255,255,255,0.42)",  },
     fontWeight: "900",
   },
 
-link: {
-  alignSelf: "center",
-  marginTop: 18,
+  link: {
+    alignSelf: "center",
+    marginTop: 18,
 
-  paddingHorizontal: 12,
-  paddingVertical: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
 
-  borderRadius: 10,
-  backgroundColor: "rgba(255,255,255,0.38)",
+    borderRadius: 10,
+    backgroundColor: "rgba(255,255,255,0.38)",
 
-  color: colors.primary,
-  fontSize: 14,
-  fontWeight: "800",
-  textAlign: "center",
-},
+    color: colors.primary,
+    fontSize: 14,
+    fontWeight: "800",
+    textAlign: "center",
+  },
 
   linkDisabled: {
     opacity: 0.5,

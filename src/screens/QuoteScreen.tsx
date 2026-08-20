@@ -194,7 +194,7 @@ export default function QuoteScreen({
                 onPress={onCancelOrder}
                 disabled={isSubmitting}
                 accessibilityRole="button"
-                accessibilityLabel="Cancelar pedido"
+                accessibilityLabel={t("orderDetail.cancelOrder")}
               >
                 <Ionicons
                   name="close-circle-outline"
@@ -203,7 +203,7 @@ export default function QuoteScreen({
                 />
 
                 <Text style={styles.cancelOrderButtonText}>
-                  Cancelar pedido
+                  {t("orderDetail.cancelOrder")}
                 </Text>
               </Pressable>
             </>
@@ -213,31 +213,31 @@ export default function QuoteScreen({
         <Spacer size="lg" />
 
         <PriceSummaryCard
-  title={quote.pricing.title}
-  subtotalLabel={quote.pricing.subtotalLabel}
-  subtotal={quote.pricing.subtotal}
-  deliveryFeeLabel={quote.pricing.deliveryFeeLabel}
-  deliveryFee={quote.pricing.deliveryFee}
-  totalLabel={quote.pricing.totalLabel}
-  total={quote.pricing.total}
-  paymentMethod={
-    quote.orderDetails.paymentMethod === "CASH"
-      ? t("orderDetail.cash")
-      : quote.orderDetails.paymentMethod
-  }
-  estimatedPurchaseLabel={t("orderDetail.estimatedPurchaseAmount")}
-  estimatedPurchaseAmount={quote.purchaseValidation.amount}
-  purchaseDetail={t("orderDetail.purchaseDetail")}
-  deliveryServiceLabel={t("orderDetail.deliveryService")}
-  serviceTypeFeeLabel={t("orderDetail.serviceTypeFee")}
-  viewDetailLabel={t("orderDetail.viewDetail")}
-  hideDetailLabel={t("orderDetail.hideDetail")}
-  foodPaymentStatusLabel={t("orderDetail.paymentStatusLabel")}
-  foodPaymentStatus={quote.purchaseValidation.paymentStatus}
-  courierPaymentStatusLabel={t("orderDetail.courierPaymentStatusLabel")}
-  courierPaymentStatus={quote.orderDetails.courierPaymentStatus}
-  supportPhoneNumber="50688888888"
-/>
+          title={quote.pricing.title}
+          subtotalLabel={quote.pricing.subtotalLabel}
+          subtotal={quote.pricing.subtotal}
+          deliveryFeeLabel={quote.pricing.deliveryFeeLabel}
+          deliveryFee={quote.pricing.deliveryFee}
+          totalLabel={quote.pricing.totalLabel}
+          total={quote.pricing.total}
+          paymentMethod={
+            quote.orderDetails.paymentMethod === "CASH"
+              ? t("orderDetail.cash")
+              : quote.orderDetails.paymentMethod
+          }
+          estimatedPurchaseLabel={t("orderDetail.estimatedPurchaseAmount")}
+          estimatedPurchaseAmount={quote.purchaseValidation.amount}
+          purchaseDetail={t("orderDetail.purchaseDetail")}
+          deliveryServiceLabel={t("orderDetail.deliveryService")}
+          serviceTypeFeeLabel={t("orderDetail.serviceTypeFee")}
+          viewDetailLabel={t("orderDetail.viewDetail")}
+          hideDetailLabel={t("orderDetail.hideDetail")}
+          foodPaymentStatusLabel={t("orderDetail.paymentStatusLabel")}
+          foodPaymentStatus={quote.purchaseValidation.paymentStatus}
+          courierPaymentStatusLabel={t("orderDetail.courierPaymentStatusLabel")}
+          courierPaymentStatus={quote.orderDetails.courierPaymentStatus}
+          supportPhoneNumber="50688888888"
+        />
 
         <Spacer size="xl" />
       </ScrollView>

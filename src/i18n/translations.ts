@@ -1,7 +1,7 @@
 export const translations = {
   es: {
     home: {
-      title: "Boomerang",
+      title: "ORBIT",
       slogan: "Lo que necesités, lo pedís.",
       description: "Nosotros nos encargamos.",
       question: "¿Qué necesitás hoy?",
@@ -239,11 +239,20 @@ export const translations = {
       updatedRecently: "Actualizado recientemente",
       notAvailable: "Aún no disponible",
 
-      yourDriver: "Tu repartidor",
+      yourDriver: "Tu pedido",
       driverOnTheWay: "En camino a tu dirección",
       driverNotStarted: "La entrega aún no ha comenzado",
 
       yourAddress: "Tu dirección",
+
+      cancelOrder: "Cancelar pedido",
+      cancelOrderConfirm: "¿Seguro que deseas cancelar este pedido?",
+      cancelOrderYes: "Sí, cancelar",
+      cancelOrderErrorTitle: "No se pudo cancelar",
+      cancelOrderSuccessTitle: "Pedido cancelado",
+      cancelOrderSuccessMessage: "Tu pedido fue cancelado correctamente.",
+      cancelOrderErrorMessage: "No se pudo cancelar el pedido.",
+      contactSupport: "Contactar a Servicio al Cliente",
 
       estimatedArrival: "Llegada estimada",
       estimatedMinutes: "12–18 min",
@@ -267,7 +276,7 @@ export const translations = {
 
       // Detalle del monto de compra
       purchaseDetail:
-        "Este monto corresponde únicamente al valor estimado de la compra en el comercio. No está incluido en el costo del servicio de Boomerang.",
+        "Este monto corresponde únicamente al valor estimado de la compra en el comercio. No está incluido en el costo del servicio de ORBIT.",
 
       // Detalle del servicio de entrega
       deliveryService: "Servicio de entrega",
@@ -419,7 +428,7 @@ export const translations = {
       confirmPassword: "Confirmar contraseña",
       confirmPasswordPlaceholder: "Escribe la contraseña nuevamente",
       securityNotice:
-        "Tu contraseña se actualiza directamente mediante Supabase Auth y no se guarda dentro de Boomerang.",
+        "Tu contraseña se actualiza directamente mediante Supabase Auth y no se guarda dentro de ORBIT.",
       button: "Actualizar contraseña",
       passwordRequired: "Escribe una nueva contraseña.",
       passwordLength: "La contraseña debe tener al menos 6 caracteres.",
@@ -438,7 +447,7 @@ export const translations = {
 
   en: {
     home: {
-      title: "Boomerang",
+      title: "ORBIT",
       slogan: "Whatever you need, just ask.",
       description: "We will take care of it.",
       question: "What do you need today?",
@@ -682,11 +691,20 @@ export const translations = {
       updatedRecently: "Updated recently",
       notAvailable: "Not available yet",
 
-      yourDriver: "Your driver",
+      yourDriver: "Your order",
       driverOnTheWay: "On the way to your address",
       driverNotStarted: "The delivery has not started yet",
 
       yourAddress: "Your address",
+
+      cancelOrder: "Cancel order",
+      cancelOrderConfirm: "Are you sure you want to cancel this order?",
+      cancelOrderYes: "Yes, cancel",
+      cancelOrderErrorTitle: "Unable to cancel",
+      cancelOrderSuccessTitle: "Order cancelled",
+      cancelOrderSuccessMessage: "Your order was cancelled successfully.",
+      cancelOrderErrorMessage: "The order could not be cancelled.",
+      contactSupport: "Contact Customer Support",
 
       estimatedArrival: "Estimated arrival",
       estimatedMinutes: "12–18 min",
@@ -710,7 +728,7 @@ export const translations = {
 
       // Purchase detail
       purchaseDetail:
-        "This amount is only an estimate of the purchase at the store. It is not included in the Boomerang service fee.",
+        "This amount is only an estimate of the purchase at the store. It is not included in the ORBIT service fee.",
 
       // Delivery service detail
       deliveryService: "Delivery service",
@@ -862,7 +880,7 @@ export const translations = {
       confirmPassword: "Confirm password",
       confirmPasswordPlaceholder: "Enter the password again",
       securityNotice:
-        "Your password is updated directly through Supabase Auth and is never stored inside Boomerang.",
+        "Your password is updated directly through Supabase Auth and is never stored inside ORBIT.",
       button: "Update password",
       passwordRequired: "Enter a new password.",
       passwordLength: "The password must be at least 6 characters.",

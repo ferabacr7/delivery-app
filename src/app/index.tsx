@@ -22,12 +22,13 @@ export default function AppEntryScreen() {
 
       if (sessionError) {
         console.error("INITIAL SESSION ERROR:", sessionError);
-        router.replace("/login" as never);
+
+        router.replace("/welcome" as never);
         return;
       }
 
       if (!sessionData.session) {
-        router.replace("/login" as never);
+        router.replace("/welcome" as never);
         return;
       }
 
@@ -40,7 +41,7 @@ export default function AppEntryScreen() {
           profileError,
         );
 
-        router.replace("/login" as never);
+        router.replace("/welcome" as never);
         return;
       }
 
@@ -52,7 +53,8 @@ export default function AppEntryScreen() {
       router.replace("/home" as never);
     } catch (error) {
       console.error("INITIAL ROUTE ERROR:", error);
-      router.replace("/login" as never);
+
+      router.replace("/welcome" as never);
     }
   }
 

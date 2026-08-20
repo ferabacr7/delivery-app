@@ -1,57 +1,35 @@
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import {
-  Linking,
-  Pressable,
-  StyleSheet,
-  Text,
-} from "react-native";
+import { Linking, Pressable, StyleSheet, Text } from "react-native";
 
-import {
-  colors,
-  spacing,
-  typography,
-} from "../../../constants/theme";
+import { colors, spacing, typography } from "../../../constants/theme";
+
+import { useTranslation } from "../../../i18n/useTranslation";
 
 type Props = {
   phoneNumber: string;
 };
 
-export default function SupportCard({
-  phoneNumber,
-}: Props) {
+export default function SupportCard({ phoneNumber }: Props) {
+  const { t } = useTranslation();
   const handleContactSupport = async () => {
     try {
-      await Linking.openURL(
-        `https://wa.me/${phoneNumber}`,
-      );
+      await Linking.openURL(`https://wa.me/${phoneNumber}`);
     } catch (error) {
-      console.warn(
-        "No fue posible abrir WhatsApp.",
-        error,
-      );
+      console.warn("No fue posible abrir WhatsApp.", error);
     }
   };
 
   return (
     <Pressable
-      style={({ pressed }) => [
-        styles.button,
-        pressed && styles.buttonPressed,
-      ]}
+      style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
       onPress={handleContactSupport}
       accessibilityRole="button"
-      accessibilityLabel="Contactar a Servicio al Cliente"
+      accessibilityLabel={t("orderDetail.contactSupport")}
     >
-      <Ionicons
-        name="logo-whatsapp"
-        size={20}
-        color={colors.brand}
-      />
+      <Ionicons name="logo-whatsapp" size={20} color={colors.brand} />
 
-      <Text style={styles.buttonText}>
-        Contactar a Servicio al Cliente
-      </Text>
+      <Text style={styles.buttonText}>{t("orderDetail.contactSupport")}</Text>
     </Pressable>
   );
 }

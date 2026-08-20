@@ -22,7 +22,7 @@ export default function HomeScreen() {
         <View style={styles.hero}>
           <View style={styles.logoWrapper}>
             <Image
-              source={require("../../assets/images/logosolo.png")}
+              source={require("../../assets/images/transparente.png")}
               style={styles.brandLogo}
               resizeMode="contain"
             />
@@ -134,9 +134,6 @@ const styles = StyleSheet.create({
 
     paddingTop: 54,
     paddingHorizontal: 22,
-
-    // Más grande para aprovechar mejor
-    // la parte superior de la pantalla.
     paddingBottom: 34,
 
     borderBottomLeftRadius: 34,
@@ -144,26 +141,23 @@ const styles = StyleSheet.create({
   },
 
   logoWrapper: {
-    width: 78,
-    height: 68,
+    width: 100,
+    height: 82,
 
     alignItems: "center",
     justifyContent: "center",
 
     marginBottom: 12,
 
-    overflow: "hidden",
+    overflow: "visible",
   },
 
   brandLogo: {
-    width: 145,
-    height: 145,
-
-    transform: [{ scale: 1.25 }],
+    width: 90,
+    height: 90,
   },
 
   slogan: {
-    // Más protagonista
     fontSize: 33,
     lineHeight: 39,
 
@@ -176,7 +170,6 @@ const styles = StyleSheet.create({
   description: {
     marginTop: 10,
 
-    // Más grande también
     fontSize: 17,
     lineHeight: 23,
 
@@ -195,8 +188,6 @@ const styles = StyleSheet.create({
     flex: 1,
 
     paddingHorizontal: 22,
-
-    // Baja un poco las cards
     paddingTop: 24,
   },
 
@@ -275,13 +266,10 @@ const styles = StyleSheet.create({
   buttonArea: {
     flex: 1,
 
-    // Empuja Hacer pedido hacia abajo
     justifyContent: "flex-end",
     alignItems: "center",
 
     paddingTop: 12,
-
-    // Lo acercamos al navigation
     paddingBottom: 0,
   },
 

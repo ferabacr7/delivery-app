@@ -53,6 +53,8 @@ type CreateOrderInput = {
   pickupLocation?: string;
 
   paymentMethod?: "SINPE" | "CASH";
+  cashPaymentAmount?: number;
+  cashPaymentCurrency?: "CRC" | "USD";
 
   currency?: SupportedCurrency;
   courierWeight?: CourierWeight;
@@ -96,6 +98,45 @@ export async function createOrder(
   const currency =
     input.currency ?? BASE_CURRENCY;
 
+  if (!input.paymentMethod) {
+    return {
+      data: null,
+      error: new Error(
+        "Debe seleccionar un método de pago.",
+      ),
+    };
+  }
+
+  if (
+    input.paymentMethod === "CASH" &&
+    (typeof input.cashPaymentAmount !==
+      "number" ||
+      !Number.isFinite(
+        input.cashPaymentAmount,
+      ) ||
+      input.cashPaymentAmount <= 0)
+  ) {
+    return {
+      data: null,
+      error: new Error(
+        "Debe indicar con cuánto va a pagar.",
+      ),
+    };
+  }
+
+  if (
+    input.paymentMethod === "CASH" &&
+    input.cashPaymentCurrency !== "CRC" &&
+    input.cashPaymentCurrency !== "USD"
+  ) {
+    return {
+      data: null,
+      error: new Error(
+        "Debe seleccionar la moneda del pago en efectivo.",
+      ),
+    };
+  }
+
   if (!input.pickupZone) {
     return {
       data: null,
@@ -122,7 +163,7 @@ export async function createOrder(
     return {
       data: null,
       error: new Error(
-        "Debe seleccionar el peso aproximado de la mensajería.",
+        "Debe seleccionar el peso aproximado de la mensajerÃa.",
       ),
     };
   }
@@ -185,7 +226,7 @@ export async function createOrder(
     return {
       data: null,
       error: new Error(
-        "El monto estimado está fuera del rango permitido.",
+        "El monto estimado estÃ¡ fuera del rango permitido.",
       ),
     };
   }
@@ -205,7 +246,17 @@ export async function createOrder(
         input.pickupLocation?.trim() || null,
 
       payment_method:
-        input.paymentMethod ?? null,
+        input.paymentMethod,
+
+      cash_payment_amount:
+        input.paymentMethod === "CASH"
+          ? (input.cashPaymentAmount ?? null)
+          : null,
+
+      cash_payment_currency:
+        input.paymentMethod === "CASH"
+          ? (input.cashPaymentCurrency ?? null)
+          : null,
 
       courier_weight:
         input.serviceType ===
@@ -268,7 +319,7 @@ export async function createOrder(
       error:
         addressError ??
         new Error(
-          "No se encontró la dirección del pedido.",
+          "No se encontrÃ³ la direcciÃ³n del pedido.",
         ),
     };
   }
@@ -312,7 +363,7 @@ export async function createOrder(
     return {
       data,
       error: new Error(
-        "La dirección seleccionada no tiene coordenadas válidas.",
+        "La direcciÃ³n seleccionada no tiene coordenadas vÃ¡lidas.",
       ),
     };
   }
@@ -360,7 +411,7 @@ export async function createOrder(
         quoteResult.error instanceof Error
           ? quoteResult.error
           : new Error(
-              "No se pudo generar la cotización automática.",
+              "No se pudo generar la cotizaciÃ³n automÃ¡tica.",
             ),
     };
   }
@@ -527,7 +578,7 @@ export async function cancelAcceptedOrder(
       error:
         authError ??
         new Error(
-          "No hay una sesión activa.",
+          "No hay una sesiÃ³n activa.",
         ),
     };
   }
@@ -556,4 +607,4 @@ export async function cancelAcceptedOrder(
     data,
     error: null,
   };
-}
+   }

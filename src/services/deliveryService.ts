@@ -19,6 +19,10 @@ export type DeliveryOrderDetails = {
   pickup_location: string | null;
   courier_weight: string | null;
   payment_method: string | null;
+
+  cash_payment_amount: number | null;
+  cash_payment_currency: string | null;
+
   food_order_paid: boolean | null;
   courier_order_paid: boolean | null;
   estimated_purchase_amount: number | null;
@@ -217,6 +221,15 @@ export async function getDeliveryById(deliveryId: string) {
       payment_method:
         orderData.payment_method ?? null,
 
+      cash_payment_amount:
+        orderData.cash_payment_amount !== null &&
+        orderData.cash_payment_amount !== undefined
+          ? Number(orderData.cash_payment_amount)
+          : null,
+
+      cash_payment_currency:
+        orderData.cash_payment_currency ?? null,
+
       food_order_paid:
         orderData.food_order_paid ?? null,
 
@@ -224,12 +237,13 @@ export async function getDeliveryById(deliveryId: string) {
         orderData.courier_order_paid ?? null,
 
       estimated_purchase_amount:
-        orderData.estimated_purchase_amount ??
-        null,
+        orderData.estimated_purchase_amount !== null &&
+        orderData.estimated_purchase_amount !== undefined
+          ? Number(orderData.estimated_purchase_amount)
+          : null,
 
       estimated_purchase_currency:
-        orderData.estimated_purchase_currency ??
-        null,
+        orderData.estimated_purchase_currency ?? null,
 
       customer: customerData
         ? {
@@ -275,8 +289,7 @@ export async function getDeliveryById(deliveryId: string) {
                 : null,
 
             currency:
-              acceptedQuote.currency ??
-              null,
+              acceptedQuote.currency ?? null,
           }
         : null,
     },

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { StyleSheet } from "react-native";
 
 import { QuoteStatusType } from "../../../presentation/QuoteViewModel";
@@ -44,6 +45,16 @@ export default function TrackingCard({
     history,
   } = useDeliveryTracking(deliveryId);
 
+  const [
+    realEtaMinutes,
+    setRealEtaMinutes,
+  ] = useState<number | null>(null);
+
+  const displayedEta =
+    realEtaMinutes !== null
+      ? `${realEtaMinutes} min`
+      : eta;
+
   return (
     <Card style={styles.card}>
       <TrackingStatus
@@ -60,10 +71,11 @@ export default function TrackingCard({
         longitude={longitude}
         location={location}
         history={history}
+        onEtaChange={setRealEtaMinutes}
       />
 
       <TrackingETA
-        eta={eta}
+        eta={displayedEta}
         label={etaLabel}
       />
     </Card>

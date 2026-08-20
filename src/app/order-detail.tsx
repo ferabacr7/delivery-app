@@ -513,73 +513,67 @@ export default function OrderDetailScreen() {
   }
 
   function handleCancelOrder() {
-    if (
-      !order ||
-      !delivery ||
-      actionLoading
-    ) {
-      return;
-    }
-
-    Alert.alert(
-      "Cancelar pedido",
-      "¿Seguro que deseas cancelar este pedido?",
-      [
-        {
-          text: "No",
-          style: "cancel",
-        },
-        {
-          text: "Sí, cancelar",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              setActionLoading(
-                true,
-              );
-
-              const { error } =
-                await cancelAcceptedOrder(
-                  order.id,
-                );
-
-              if (error) {
-                Alert.alert(
-                  "No se pudo cancelar",
-                  error.message,
-                );
-
-                return;
-              }
-
-              Alert.alert(
-                "Pedido cancelado",
-                "Tu pedido fue cancelado correctamente.",
-              );
-
-              await loadOrderDetail(
-                false,
-              );
-            } catch (error) {
-              console.error(
-                "ORDER DETAIL CANCEL ERROR:",
-                error,
-              );
-
-              Alert.alert(
-                "Error",
-                "No se pudo cancelar el pedido.",
-              );
-            } finally {
-              setActionLoading(
-                false,
-              );
-            }
-          },
-        },
-      ],
-    );
+  if (
+    !order ||
+    !delivery ||
+    actionLoading
+  ) {
+    return;
   }
+
+  Alert.alert(
+    t("orderDetail.cancelOrder"),
+    t("orderDetail.cancelOrderConfirm"),
+    [
+      {
+        text: t("common.reject"),
+        style: "cancel",
+      },
+      {
+        text: t("orderDetail.cancelOrderYes"),
+        style: "destructive",
+        onPress: async () => {
+          try {
+            setActionLoading(true);
+
+            const { error } =
+              await cancelAcceptedOrder(
+                order.id,
+              );
+
+            if (error) {
+              Alert.alert(
+                t("orderDetail.cancelOrderErrorTitle"),
+                error.message,
+              );
+
+              return;
+            }
+
+            Alert.alert(
+              t("orderDetail.cancelOrderSuccessTitle"),
+              t("orderDetail.cancelOrderSuccessMessage"),
+            );
+
+            await loadOrderDetail(false);
+          } catch (error) {
+            console.error(
+              "ORDER DETAIL CANCEL ERROR:",
+              error,
+            );
+
+            Alert.alert(
+              t("common.error"),
+              t("orderDetail.cancelOrderErrorMessage"),
+            );
+          } finally {
+            setActionLoading(false);
+          }
+        },
+      },
+    ],
+  );
+}
 
   function handleBackToOrders() {
     router.replace(

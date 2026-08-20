@@ -16,28 +16,33 @@ import {
 
 import { useTranslation } from "../i18n/useTranslation";
 import {
+  isValidPassword,
   updateMyPassword,
   verifyCurrentPassword,
 } from "../services/authService";
 import { colors } from "../styles/theme";
 
 export default function ChangePasswordScreen() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
 
   const [currentPassword, setCurrentPassword] = useState("");
+
   const [password, setPassword] = useState("");
+
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  const [showCurrentPassword, setShowCurrentPassword] =
-    useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
 
-  const [showPassword, setShowPassword] =
-    useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-  const [showConfirmPassword, setShowConfirmPassword] =
-    useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [saving, setSaving] = useState(false);
+
+  const passwordRule =
+    language === "es"
+      ? "La nueva contraseña debe tener mínimo 8 caracteres e incluir una letra, un número y un símbolo."
+      : "Your new password must contain at least 8 characters, including a letter, a number, and a symbol.";
 
   async function handleChangePassword() {
     if (!currentPassword) {
@@ -45,62 +50,53 @@ export default function ChangePasswordScreen() {
         t("common.error"),
         t("passwordChange.currentPasswordRequired"),
       );
+
       return;
     }
 
     if (!password) {
-      Alert.alert(
-        t("common.error"),
-        t("passwordChange.passwordRequired"),
-      );
+      Alert.alert(t("common.error"), t("passwordChange.passwordRequired"));
+
       return;
     }
 
-    if (password.length < 6) {
-      Alert.alert(
-        t("common.error"),
-        t("passwordChange.passwordLength"),
-      );
+    if (!isValidPassword(password)) {
+      Alert.alert(t("common.error"), passwordRule);
+
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert(
-        t("common.error"),
-        t("passwordChange.passwordMismatch"),
-      );
+      Alert.alert(t("common.error"), t("passwordChange.passwordMismatch"));
+
       return;
     }
 
     if (currentPassword === password) {
-      Alert.alert(
-        t("common.error"),
-        t("passwordChange.samePassword"),
-      );
+      Alert.alert(t("common.error"), t("passwordChange.samePassword"));
+
       return;
     }
 
     try {
       setSaving(true);
 
-      const verificationResult =
-        await verifyCurrentPassword(currentPassword);
+      const verificationResult = await verifyCurrentPassword(currentPassword);
 
       if (verificationResult.error) {
         Alert.alert(
           t("common.error"),
           t("passwordChange.currentPasswordInvalid"),
         );
+
         return;
       }
 
       const result = await updateMyPassword(password);
 
       if (result.error) {
-        Alert.alert(
-          t("common.error"),
-          result.error.message,
-        );
+        Alert.alert(t("common.error"), result.error.message);
+
         return;
       }
 
@@ -114,20 +110,15 @@ export default function ChangePasswordScreen() {
         [
           {
             text: t("common.accept"),
+
             onPress: () => router.back(),
           },
         ],
       );
     } catch (error) {
-      console.error(
-        "Unexpected error changing password:",
-        error,
-      );
+      console.error("Unexpected error changing password:", error);
 
-      Alert.alert(
-        t("common.error"),
-        t("passwordChange.saveError"),
-      );
+      Alert.alert(t("common.error"), t("passwordChange.saveError"));
     } finally {
       setSaving(false);
     }
@@ -144,19 +135,10 @@ export default function ChangePasswordScreen() {
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.content}
       >
-        <Pressable
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons
-            name="arrow-back"
-            size={22}
-            color={colors.primary}
-          />
+        <Pressable style={styles.backButton} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={22} color={colors.primary} />
 
-          <Text style={styles.backText}>
-            {t("common.back")}
-          </Text>
+          <Text style={styles.backText}>{t("common.back")}</Text>
         </Pressable>
 
         <View style={styles.header}>
@@ -168,13 +150,9 @@ export default function ChangePasswordScreen() {
             />
           </View>
 
-          <Text style={styles.title}>
-            {t("passwordChange.title")}
-          </Text>
+          <Text style={styles.title}>{t("passwordChange.title")}</Text>
 
-          <Text style={styles.subtitle}>
-            {t("passwordChange.subtitle")}
-          </Text>
+          <Text style={styles.subtitle}>{t("passwordChange.subtitle")}</Text>
         </View>
 
         <View style={styles.form}>
@@ -183,19 +161,13 @@ export default function ChangePasswordScreen() {
           </Text>
 
           <View style={styles.inputContainer}>
-            <Ionicons
-              name="key-outline"
-              size={20}
-              color={colors.muted}
-            />
+            <Ionicons name="key-outline" size={20} color={colors.muted} />
 
             <TextInput
               style={styles.input}
               value={currentPassword}
               onChangeText={setCurrentPassword}
-              placeholder={t(
-                "passwordChange.currentPasswordPlaceholder",
-              )}
+              placeholder={t("passwordChange.currentPasswordPlaceholder")}
               placeholderTextColor={colors.textSoft}
               secureTextEntry={!showCurrentPassword}
               autoCapitalize="none"
@@ -203,28 +175,18 @@ export default function ChangePasswordScreen() {
             />
 
             <Pressable
-              onPress={() =>
-                setShowCurrentPassword(
-                  (current) => !current,
-                )
-              }
+              onPress={() => setShowCurrentPassword((current) => !current)}
               hitSlop={10}
             >
               <Ionicons
-                name={
-                  showCurrentPassword
-                    ? "eye-off-outline"
-                    : "eye-outline"
-                }
+                name={showCurrentPassword ? "eye-off-outline" : "eye-outline"}
                 size={22}
                 color={colors.muted}
               />
             </Pressable>
           </View>
 
-          <Text style={styles.label}>
-            {t("passwordChange.newPassword")}
-          </Text>
+          <Text style={styles.label}>{t("passwordChange.newPassword")}</Text>
 
           <View style={styles.inputContainer}>
             <Ionicons
@@ -237,9 +199,7 @@ export default function ChangePasswordScreen() {
               style={styles.input}
               value={password}
               onChangeText={setPassword}
-              placeholder={t(
-                "passwordChange.newPasswordPlaceholder",
-              )}
+              placeholder={t("passwordChange.newPasswordPlaceholder")}
               placeholderTextColor={colors.textSoft}
               secureTextEntry={!showPassword}
               autoCapitalize="none"
@@ -247,17 +207,11 @@ export default function ChangePasswordScreen() {
             />
 
             <Pressable
-              onPress={() =>
-                setShowPassword((current) => !current)
-              }
+              onPress={() => setShowPassword((current) => !current)}
               hitSlop={10}
             >
               <Ionicons
-                name={
-                  showPassword
-                    ? "eye-off-outline"
-                    : "eye-outline"
-                }
+                name={showPassword ? "eye-off-outline" : "eye-outline"}
                 size={22}
                 color={colors.muted}
               />
@@ -279,9 +233,7 @@ export default function ChangePasswordScreen() {
               style={styles.input}
               value={confirmPassword}
               onChangeText={setConfirmPassword}
-              placeholder={t(
-                "passwordChange.confirmPasswordPlaceholder",
-              )}
+              placeholder={t("passwordChange.confirmPasswordPlaceholder")}
               placeholderTextColor={colors.textSoft}
               secureTextEntry={!showConfirmPassword}
               autoCapitalize="none"
@@ -289,19 +241,11 @@ export default function ChangePasswordScreen() {
             />
 
             <Pressable
-              onPress={() =>
-                setShowConfirmPassword(
-                  (current) => !current,
-                )
-              }
+              onPress={() => setShowConfirmPassword((current) => !current)}
               hitSlop={10}
             >
               <Ionicons
-                name={
-                  showConfirmPassword
-                    ? "eye-off-outline"
-                    : "eye-outline"
-                }
+                name={showConfirmPassword ? "eye-off-outline" : "eye-outline"}
                 size={22}
                 color={colors.muted}
               />
@@ -315,24 +259,22 @@ export default function ChangePasswordScreen() {
               color={colors.primaryDark}
             />
 
-            <Text style={styles.noticeText}>
-              {t("passwordChange.securityNotice")}
-            </Text>
+            <View style={styles.noticeContent}>
+              <Text style={styles.noticeText}>
+                {t("passwordChange.securityNotice")}
+              </Text>
+
+              <Text style={styles.passwordRuleText}>{passwordRule}</Text>
+            </View>
           </View>
 
           <Pressable
-            style={[
-              styles.saveButton,
-              saving && styles.buttonDisabled,
-            ]}
+            style={[styles.saveButton, saving && styles.buttonDisabled]}
             onPress={handleChangePassword}
             disabled={saving}
           >
             {saving ? (
-              <ActivityIndicator
-                size="small"
-                color={colors.white}
-              />
+              <ActivityIndicator size="small" color={colors.white} />
             ) : (
               <>
                 <Ionicons
@@ -456,10 +398,22 @@ const styles = StyleSheet.create({
     backgroundColor: colors.brandSoft,
   },
 
+  noticeContent: {
+    flex: 1,
+  },
+
   noticeText: {
     flex: 1,
     fontSize: 13,
     lineHeight: 19,
+    color: colors.dark,
+  },
+
+  passwordRuleText: {
+    marginTop: 6,
+    fontSize: 13,
+    lineHeight: 19,
+    fontWeight: "700",
     color: colors.dark,
   },
 

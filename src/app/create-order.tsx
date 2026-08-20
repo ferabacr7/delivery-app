@@ -164,6 +164,18 @@ export default function CreateOrderScreen() {
     null,
   );
 
+  const [
+    cashPaymentAmount,
+    setCashPaymentAmount,
+  ] = useState("");
+
+  const [
+    cashPaymentCurrency,
+    setCashPaymentCurrency,
+  ] = useState<SupportedCurrency | null>(
+    null,
+  );
+
   const [addresses, setAddresses] =
     useState<any[]>([]);
 
@@ -511,6 +523,53 @@ export default function CreateOrderScreen() {
       return;
     }
 
+    if (!paymentMethod) {
+      Alert.alert(
+        t("common.error"),
+        language === "es"
+          ? "Debe seleccionar un método de pago."
+          : "Please select a payment method.",
+      );
+      return;
+    }
+
+    const parsedCashPaymentAmount =
+      Number(
+        cashPaymentAmount
+          .trim()
+          .replace(",", "."),
+      );
+
+    if (
+      paymentMethod === "CASH" &&
+      (!cashPaymentAmount.trim() ||
+        !Number.isFinite(
+          parsedCashPaymentAmount,
+        ) ||
+        parsedCashPaymentAmount <= 0)
+    ) {
+      Alert.alert(
+        t("common.error"),
+        language === "es"
+          ? "Debe indicar con cuánto va a pagar."
+          : "Please enter how much you will pay with.",
+      );
+      return;
+    }
+
+    if (
+      paymentMethod === "CASH" &&
+      !cashPaymentCurrency
+    ) {
+      Alert.alert(
+        t("common.error"),
+        language === "es"
+          ? "Debe seleccionar si va a pagar en colones o dólares."
+          : "Please select whether you will pay in colones or dollars.",
+      );
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -533,8 +592,18 @@ export default function CreateOrderScreen() {
           currency:
             selectedCurrency,
 
-          paymentMethod:
-            paymentMethod ?? undefined,
+          paymentMethod,
+
+          cashPaymentAmount:
+            paymentMethod === "CASH"
+              ? parsedCashPaymentAmount
+              : undefined,
+
+          cashPaymentCurrency:
+            paymentMethod === "CASH"
+              ? (cashPaymentCurrency ??
+                undefined)
+              : undefined,
 
           courierWeight:
             selectedServiceType ===
@@ -604,6 +673,8 @@ export default function CreateOrderScreen() {
       setFoodOrderPaid(null);
       setCourierOrderPaid(null);
       setPaymentMethod(null);
+      setCashPaymentAmount("");
+      setCashPaymentCurrency(null);
 
       router.replace({
         pathname: "/order-detail",
@@ -1622,11 +1693,17 @@ export default function CreateOrderScreen() {
                 "SINPE" &&
                 styles.paymentOptionActive,
             ]}
-            onPress={() =>
+            onPress={() => {
               setPaymentMethod(
                 "SINPE",
-              )
-            }
+              );
+              setCashPaymentAmount(
+                "",
+              );
+              setCashPaymentCurrency(
+                null,
+              );
+            }}
           >
             <Ionicons
               name={
@@ -1705,6 +1782,75 @@ export default function CreateOrderScreen() {
             </View>
           </Pressable>
         </View>
+
+        {paymentMethod === "CASH" ? (
+          <View
+            style={
+              styles.cashPaymentContainer
+            }
+          >
+            <Text
+              style={styles.label}
+            >
+              {language === "es"
+                ? "¿Con cuánto vas a pagar?"
+                : "How much will you pay with?"}
+            </Text>
+
+            <View style={styles.cashAmountRow}>
+              <Pressable
+                style={styles.cashCurrencyToggle}
+                onPress={() =>
+                  setCashPaymentCurrency(
+                    cashPaymentCurrency === "CRC"
+                      ? "USD"
+                      : "CRC",
+                  )
+                }
+                accessibilityRole="button"
+                accessibilityLabel={
+                  language === "es"
+                    ? "Cambiar moneda de pago"
+                    : "Change payment currency"
+                }
+              >
+                <Text
+                  style={
+                    styles.cashCurrencySymbol
+                  }
+                >
+                  {cashPaymentCurrency === "USD"
+                    ? "$"
+                    : "₡"}
+                </Text>
+
+                <Ionicons
+                  name="chevron-down"
+                  size={16}
+                  color={colors.muted}
+                />
+              </Pressable>
+
+              <TextInput
+                style={styles.cashAmountInput}
+                value={cashPaymentAmount}
+                onChangeText={
+                  setCashPaymentAmount
+                }
+                placeholder={
+                  cashPaymentCurrency === "USD"
+                    ? "50"
+                    : "25000"
+                }
+                placeholderTextColor={
+                  colors.muted
+                }
+                keyboardType="decimal-pad"
+                inputMode="decimal"
+              />
+            </View>
+          </View>
+        ) : null}
 
         <Text
           style={styles.sectionTitle}
@@ -2092,6 +2238,48 @@ const styles =
         colors.primary,
       backgroundColor:
         colors.brandSoft,
+    },
+
+    cashPaymentContainer: {
+      marginTop: 4,
+    },
+
+    cashAmountRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+    },
+
+    cashCurrencyToggle: {
+      height: 56,
+      minWidth: 74,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 16,
+      paddingHorizontal: 14,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 6,
+      backgroundColor: colors.white,
+    },
+
+    cashCurrencySymbol: {
+      fontSize: 21,
+      fontWeight: "900",
+      color: colors.primary,
+    },
+
+    cashAmountInput: {
+      flex: 1,
+      height: 56,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 16,
+      paddingHorizontal: 16,
+      fontSize: 16,
+      color: colors.dark,
+      backgroundColor: colors.white,
     },
 
     emptyBox: {

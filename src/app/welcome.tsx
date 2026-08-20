@@ -14,7 +14,7 @@ export default function WelcomeScreen() {
   return (
     <View style={styles.container}>
       <ImageBackground
-        source={require("../../assets/images/startwelcome.png")}
+        source={require("../../assets/images/welcome.png")}
         style={styles.background}
         resizeMode="cover"
       >
@@ -71,49 +71,49 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 28,
     right: 28,
-    bottom: 55,
+    bottom: 105,
     alignItems: "center",
   },
 
   primaryButton: {
-  width: "62%",
-  height: 44,
+    width: "62%",
+    height: 44,
 
-  flexDirection: "row",
-  alignItems: "center",
-  justifyContent: "center",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
 
-  gap: 8,
+    gap: 8,
 
-  borderRadius: 14,
-  backgroundColor: colors.primary,
-},
+    borderRadius: 14,
+    backgroundColor: colors.primary,
+  },
 
-primaryButtonText: {
-  color: colors.white,
-  fontSize: 14,
-  fontWeight: "900",
-},
+  primaryButtonText: {
+    color: colors.white,
+    fontSize: 14,
+    fontWeight: "900",
+  },
 
-secondaryButton: {
-  width: "62%",
-  height: 44,
+  secondaryButton: {
+    width: "62%",
+    height: 44,
 
-  flexDirection: "row",
-  alignItems: "center",
-  justifyContent: "center",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
 
-  gap: 8,
+    gap: 8,
 
-  marginTop: 10,
+    marginTop: 10,
 
-  borderRadius: 14,
-  backgroundColor: "rgba(255,255,255,0.78)",
-},
+    borderRadius: 14,
+    backgroundColor: "rgba(255,255,255,0.78)",
+  },
 
-secondaryButtonText: {
-  color: colors.primary,
-  fontSize: 14,
-  fontWeight: "900",
-},
+  secondaryButtonText: {
+    color: colors.primary,
+    fontSize: 14,
+    fontWeight: "900",
+  },
 });
