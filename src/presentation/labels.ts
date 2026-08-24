@@ -35,7 +35,7 @@ export const quoteLabels = {
 
     subtotal: "Tarifa base",
     deliveryFee: "Costo de entrega",
-    total: "Total del servicio",
+    total: "Total",
 
     purchaseValidationTitle: "Detalles de la compra",
     estimatedPurchaseAmount: "Monto estimado",
@@ -117,7 +117,7 @@ export const quoteLabels = {
 
     subtotal: "Base fee",
     deliveryFee: "Delivery fee",
-    total: "Service total",
+    total: "Total",
 
     purchaseValidationTitle: "Purchase details",
     estimatedPurchaseAmount: "Estimated amount",

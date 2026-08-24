@@ -1,56 +1,66 @@
 {
   "expo": {
-    "name": "DeliveryApp",
+    "name": "ORBIT",
     "slug": "DeliveryApp",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/stores/app-icon.png",
     "scheme": "deliveryapp",
     "userInterfaceStyle": "automatic",
+
     "ios": {
-      "icon": "./assets/expo.icon",
-      "bundleIdentifier": "com.ferabacr7.DeliveryApp",
+      "icon": "./assets/stores/app-icon.png",
+      "bundleIdentifier": "com.orbitcr.app",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
     },
+
     "android": {
+      "package": "com.orbitcr.app",
+      "predictiveBackGestureEnabled": false,
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
-      },
-      "predictiveBackGestureEnabled": false
+        "foregroundImage": "./assets/stores/android-foreground.png",
+        "backgroundColor": "#000000"
+      }
     },
+
     "web": {
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "output": "static"
     },
+
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
-          "android": {
-            "image": "./assets/images/splash-icon.png",
-            "imageWidth": 76
-          }
+          "backgroundColor": "#000000",
+          "image": "./assets/stores/splash-logo.png",
+          "imageWidth": 180,
+          "resizeMode": "contain"
         }
       ],
-      "expo-localization"
+      "expo-localization",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "ORBIT utiliza tu ubicación para guardar direcciones, calcular rutas y permitir el seguimiento de entregas activas."
+        }
+      ]
     ],
+
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
     },
+
     "extra": {
       "router": {},
       "eas": {
         "projectId": "4ce1ce5e-5358-48d2-8c68-3b62227133df"
       }
     },
+
     "owner": "ferabacr7"
   }
 }

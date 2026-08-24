@@ -35,6 +35,11 @@ export default function RegisterScreen() {
     useState("");
 
   const [
+    showPassword,
+    setShowPassword,
+  ] = useState(false);
+
+  const [
     isRegistering,
     setIsRegistering,
   ] = useState(false);
@@ -326,7 +331,9 @@ export default function RegisterScreen() {
                     "register.password",
                   )}
                   placeholderTextColor="#777777"
-                  secureTextEntry
+                  secureTextEntry={
+                    !showPassword
+                  }
                   autoCapitalize="none"
                   autoCorrect={
                     false
@@ -339,6 +346,44 @@ export default function RegisterScreen() {
                     !isRegistering
                   }
                 />
+
+                <Pressable
+                  style={
+                    styles.passwordVisibilityButton
+                  }
+                  onPress={() =>
+                    setShowPassword(
+                      (current) =>
+                        !current,
+                    )
+                  }
+                  disabled={
+                    isRegistering
+                  }
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    showPassword
+                      ? language ===
+                        "es"
+                        ? "Ocultar contraseña"
+                        : "Hide password"
+                      : language ===
+                          "es"
+                        ? "Mostrar contraseña"
+                        : "Show password"
+                  }
+                >
+                  <Ionicons
+                    name={
+                      showPassword
+                        ? "eye-off-outline"
+                        : "eye-outline"
+                    }
+                    size={21}
+                    color="#666666"
+                  />
+                </Pressable>
               </View>
 
               <Text
@@ -482,6 +527,13 @@ const styles =
       paddingVertical: 0,
       color: colors.dark,
       fontSize: 16,
+    },
+
+    passwordVisibilityButton: {
+      marginLeft: 8,
+      alignItems: "center",
+      justifyContent:
+        "center",
     },
 
     passwordRule: {

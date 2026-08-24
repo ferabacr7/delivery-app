@@ -7,7 +7,11 @@ import {
   View,
 } from "react-native";
 
-import { getMyProfile, getSession } from "../services/authService";
+import {
+  clearLocalSession,
+  getMyProfile,
+  getSession,
+} from "../services/authService";
 import { colors } from "../styles/theme";
 
 export default function AppEntryScreen() {
@@ -17,12 +21,18 @@ export default function AppEntryScreen() {
 
   async function resolveInitialRoute() {
     try {
-      const { data: sessionData, error: sessionError } =
-        await getSession();
+      const {
+        data: sessionData,
+        error: sessionError,
+      } = await getSession();
 
       if (sessionError) {
-        console.error("INITIAL SESSION ERROR:", sessionError);
+        console.error(
+          "INITIAL SESSION ERROR:",
+          sessionError,
+        );
 
+        await clearLocalSession();
         router.replace("/welcome" as never);
         return;
       }
@@ -32,8 +42,10 @@ export default function AppEntryScreen() {
         return;
       }
 
-      const { data: profile, error: profileError } =
-        await getMyProfile();
+      const {
+        data: profile,
+        error: profileError,
+      } = await getMyProfile();
 
       if (profileError || !profile) {
         console.error(
@@ -41,6 +53,7 @@ export default function AppEntryScreen() {
           profileError,
         );
 
+        await clearLocalSession();
         router.replace("/welcome" as never);
         return;
       }
@@ -52,8 +65,12 @@ export default function AppEntryScreen() {
 
       router.replace("/home" as never);
     } catch (error) {
-      console.error("INITIAL ROUTE ERROR:", error);
+      console.error(
+        "INITIAL ROUTE ERROR:",
+        error,
+      );
 
+      await clearLocalSession();
       router.replace("/welcome" as never);
     }
   }

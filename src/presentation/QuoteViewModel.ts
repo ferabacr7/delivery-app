@@ -39,9 +39,24 @@ export type QuoteViewModel = {
 
   orderDetails: {
     pickupLocation: string | null;
+
     courierWeight: string | null;
-    paymentMethod: "SINPE" | "CASH" | null;
-    courierPaymentStatus: string | null;
+
+    paymentMethod:
+      | "SINPE"
+      | "CASH"
+      | null;
+
+    cashPaymentAmount:
+      number | null;
+
+    cashPaymentCurrency:
+      | "CRC"
+      | "USD"
+      | null;
+
+    courierPaymentStatus:
+      string | null;
   };
 
   location: {

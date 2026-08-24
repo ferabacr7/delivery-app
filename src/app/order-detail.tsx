@@ -120,6 +120,9 @@ export default function OrderDetailScreen() {
   const [loading, setLoading] =
     useState(true);
 
+  const [loadError, setLoadError] =
+    useState(false);
+
   const [actionLoading, setActionLoading] =
     useState(false);
 
@@ -173,10 +176,37 @@ export default function OrderDetailScreen() {
             orderError,
           );
 
+          /*
+           * IMPORTANTE:
+           *
+           * Un error de consulta no significa
+           * necesariamente que el pedido
+           * no exista.
+           *
+           * Puede ser una pérdida temporal
+           * de internet, sesión o conexión
+           * con Supabase.
+           *
+           * Por eso NO borramos order,
+           * quote ni delivery si ya estaban
+           * cargados.
+           */
+          setLoadError(true);
+
+          return;
+        }
+
+        if (!orderData) {
+          /*
+           * Este caso queda reservado
+           * para una respuesta válida
+           * sin pedido.
+           */
           setOrder(null);
           setQuote(null);
           setDelivery(null);
           setExchangeRate(null);
+          setLoadError(false);
 
           return;
         }
@@ -206,10 +236,6 @@ export default function OrderDetailScreen() {
             exchangeRateResult,
           );
 
-        /*
-         * Reportamos errores sin aplicar
-         * estados parciales a la pantalla.
-         */
         if (quoteResult.error) {
           console.log(
             "ORDER DETAIL: This order does not have a quote yet:",
@@ -239,17 +265,9 @@ export default function OrderDetailScreen() {
         }
 
         /*
-         * IMPORTANTE:
-         *
-         * Actualizamos order, quote,
-         * delivery y exchange rate
-         * después de terminar todas
-         * las consultas.
-         *
-         * Esto evita aplicar primero
-         * una order nueva mientras
-         * delivery todavía conserva
-         * el valor anterior.
+         * Aplicamos los nuevos datos
+         * únicamente después de terminar
+         * todas las consultas.
          */
         setOrder(orderData);
         setQuote(nextQuote);
@@ -257,16 +275,22 @@ export default function OrderDetailScreen() {
         setExchangeRate(
           nextExchangeRate,
         );
+
+        /*
+         * La carga terminó correctamente.
+         */
+        setLoadError(false);
       } catch (error) {
         console.error(
           "ORDER DETAIL: Unexpected loading error:",
           error,
         );
 
-        setOrder(null);
-        setQuote(null);
-        setDelivery(null);
-        setExchangeRate(null);
+        /*
+         * Conservamos cualquier información
+         * que ya estuviera cargada.
+         */
+        setLoadError(true);
       } finally {
         loadingRequestRef.current =
           false;
@@ -430,11 +454,6 @@ export default function OrderDetailScreen() {
         ),
       );
 
-      /*
-       * Realtime debe detectar
-       * el cambio, pero hacemos
-       * recarga de respaldo.
-       */
       await loadOrderDetail(false);
     } catch (error) {
       console.error(
@@ -513,72 +532,88 @@ export default function OrderDetailScreen() {
   }
 
   function handleCancelOrder() {
-  if (
-    !order ||
-    !delivery ||
-    actionLoading
-  ) {
-    return;
-  }
+    if (
+      !order ||
+      !delivery ||
+      actionLoading
+    ) {
+      return;
+    }
 
-  Alert.alert(
-    t("orderDetail.cancelOrder"),
-    t("orderDetail.cancelOrderConfirm"),
-    [
-      {
-        text: t("common.reject"),
-        style: "cancel",
-      },
-      {
-        text: t("orderDetail.cancelOrderYes"),
-        style: "destructive",
-        onPress: async () => {
-          try {
-            setActionLoading(true);
-
-            const { error } =
-              await cancelAcceptedOrder(
-                order.id,
-              );
-
-            if (error) {
-              Alert.alert(
-                t("orderDetail.cancelOrderErrorTitle"),
-                error.message,
-              );
-
-              return;
-            }
-
-            Alert.alert(
-              t("orderDetail.cancelOrderSuccessTitle"),
-              t("orderDetail.cancelOrderSuccessMessage"),
-            );
-
-            await loadOrderDetail(false);
-          } catch (error) {
-            console.error(
-              "ORDER DETAIL CANCEL ERROR:",
-              error,
-            );
-
-            Alert.alert(
-              t("common.error"),
-              t("orderDetail.cancelOrderErrorMessage"),
-            );
-          } finally {
-            setActionLoading(false);
-          }
+    Alert.alert(
+      t("orderDetail.cancelOrder"),
+      t("orderDetail.cancelOrderConfirm"),
+      [
+        {
+          text: t("common.reject"),
+          style: "cancel",
         },
-      },
-    ],
-  );
-}
+        {
+          text: t(
+            "orderDetail.cancelOrderYes",
+          ),
+          style: "destructive",
+          onPress: async () => {
+            try {
+              setActionLoading(true);
+
+              const { error } =
+                await cancelAcceptedOrder(
+                  order.id,
+                );
+
+              if (error) {
+                Alert.alert(
+                  t(
+                    "orderDetail.cancelOrderErrorTitle",
+                  ),
+                  error.message,
+                );
+
+                return;
+              }
+
+              Alert.alert(
+                t(
+                  "orderDetail.cancelOrderSuccessTitle",
+                ),
+                t(
+                  "orderDetail.cancelOrderSuccessMessage",
+                ),
+              );
+
+              await loadOrderDetail(false);
+            } catch (error) {
+              console.error(
+                "ORDER DETAIL CANCEL ERROR:",
+                error,
+              );
+
+              Alert.alert(
+                t("common.error"),
+                t(
+                  "orderDetail.cancelOrderErrorMessage",
+                ),
+              );
+            } finally {
+              setActionLoading(false);
+            }
+          },
+        },
+      ],
+    );
+  }
 
   function handleBackToOrders() {
     router.replace(
       "/orders" as never,
     );
+  }
+
+  function handleRetry() {
+    setLoadError(false);
+
+    void loadOrderDetail(true);
   }
 
   if (loading) {
@@ -604,6 +639,86 @@ export default function OrderDetailScreen() {
     );
   }
 
+  /*
+   * ERROR DE CARGA / CONEXIÓN
+   *
+   * Solo mostramos esta pantalla
+   * completa cuando todavía no
+   * tenemos datos anteriores.
+   */
+  if (loadError && !order) {
+    return (
+      <View
+        style={
+          styles.loadingContainer
+        }
+      >
+        <Ionicons
+          name="cloud-offline-outline"
+          size={42}
+          color={colors.brand}
+        />
+
+        <Text
+          style={
+            styles.errorTitle
+          }
+        >
+          {language === "es"
+            ? "No pudimos cargar el pedido"
+            : "We couldn't load the order"}
+        </Text>
+
+        <Text
+          style={
+            styles.emptyText
+          }
+        >
+          {language === "es"
+            ? "Revisá tu conexión a internet e intentá nuevamente."
+            : "Check your internet connection and try again."}
+        </Text>
+
+        <Pressable
+          style={styles.button}
+          onPress={handleRetry}
+        >
+          <Text
+            style={
+              styles.buttonText
+            }
+          >
+            {language === "es"
+              ? "Reintentar"
+              : "Try again"}
+          </Text>
+        </Pressable>
+
+        <Pressable
+          style={
+            styles.secondaryButton
+          }
+          onPress={
+            handleBackToOrders
+          }
+        >
+          <Text
+            style={
+              styles.secondaryButtonText
+            }
+          >
+            {t(
+              "orderDetail.backOrders",
+            )}
+          </Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  /*
+   * Pedido realmente no disponible.
+   */
   if (!order) {
     return (
       <View
@@ -659,12 +774,6 @@ export default function OrderDetailScreen() {
       order?.status,
     );
 
-    /*
-     * Para presentación usamos
-     * delivery.status cuando
-     * exista una delivery activa
-     * o completada.
-     */
     const displayOrder = {
       ...order,
       status:
@@ -855,6 +964,13 @@ const styles =
       color: colors.textMuted,
     },
 
+    errorTitle: {
+      ...typography.subtitle,
+      marginTop: spacing.md,
+      color: colors.text,
+      textAlign: "center",
+    },
+
     emptyText: {
       ...typography.body,
       marginTop: spacing.md,
@@ -924,6 +1040,27 @@ const styles =
       ...typography.button,
       color:
         colors.textInverse,
+      textAlign: "center",
+    },
+
+    secondaryButton: {
+      width: "100%",
+      minHeight: 58,
+      marginTop: spacing.md,
+      paddingHorizontal:
+        spacing.lg,
+      borderWidth: 1,
+      borderColor: colors.brand,
+      borderRadius:
+        radius.lg,
+      alignItems: "center",
+      justifyContent:
+        "center",
+    },
+
+    secondaryButtonText: {
+      ...typography.button,
+      color: colors.brand,
       textAlign: "center",
     },
   });

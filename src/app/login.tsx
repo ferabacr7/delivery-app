@@ -18,16 +18,17 @@ import { colors } from "../styles/theme";
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
 
   async function handleLogin() {
     if (loading) {
       return;
     }
 
-    if (!email.trim() || !password.trim()) {
+    if (!email.trim() || !password) {
       Alert.alert(
         t("login.requiredTitle"),
         t("login.requiredMessage"),
@@ -40,20 +41,32 @@ export default function LoginScreen() {
       setLoading(true);
 
       const { data, error } = await signIn(
-        email.trim(),
-        password.trim(),
+        email.trim().toLowerCase(),
+        password,
       );
 
       if (error) {
+        const isInvalidCredentials =
+          error.message
+            .toLowerCase()
+            .includes("invalid login credentials");
+
         Alert.alert(
           t("login.errorTitle"),
-          error.message,
+          isInvalidCredentials
+            ? language === "es"
+              ? "El correo electrónico o la contraseña son incorrectos."
+              : "The email or password is incorrect."
+            : error.message,
         );
 
         return;
       }
 
-      console.log("LOGIN SUCCESS:", data.user?.id);
+      console.log(
+        "LOGIN SUCCESS:",
+        data.user?.id,
+      );
 
       const {
         data: profile,
@@ -64,26 +77,41 @@ export default function LoginScreen() {
         Alert.alert(
           t("login.errorTitle"),
           profileError?.message ??
-            "No se pudo cargar el perfil del usuario.",
+            (language === "es"
+              ? "No se pudo cargar el perfil del usuario."
+              : "The user profile could not be loaded."),
         );
 
         return;
       }
 
-      console.log("LOGIN ROLE:", profile.role);
+      console.log(
+        "LOGIN ROLE:",
+        profile.role,
+      );
 
       if (profile.role === "driver") {
-        router.replace("/driver" as never);
+        router.replace(
+          "/driver" as never,
+        );
+
         return;
       }
 
-      router.replace("/home" as never);
+      router.replace(
+        "/home" as never,
+      );
     } catch (error) {
-      console.error("LOGIN ERROR:", error);
+      console.error(
+        "LOGIN ERROR:",
+        error,
+      );
 
       Alert.alert(
         t("login.errorTitle"),
-        "Ocurrió un error al iniciar sesión.",
+        language === "es"
+          ? "Ocurrió un error al iniciar sesión."
+          : "An error occurred while signing in.",
       );
     } finally {
       setLoading(false);
@@ -139,26 +167,83 @@ export default function LoginScreen() {
               style={styles.input}
               placeholder={t("login.password")}
               placeholderTextColor="#777777"
-              secureTextEntry
+              secureTextEntry={!showPassword}
               autoCapitalize="none"
+              autoCorrect={false}
               value={password}
               onChangeText={setPassword}
               editable={!loading}
             />
+
+            <Pressable
+              style={styles.passwordVisibilityButton}
+              onPress={() =>
+                setShowPassword(
+                  (current) => !current,
+                )
+              }
+              disabled={loading}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={
+                showPassword
+                  ? language === "es"
+                    ? "Ocultar contraseña"
+                    : "Hide password"
+                  : language === "es"
+                    ? "Mostrar contraseña"
+                    : "Show password"
+              }
+            >
+              <Ionicons
+                name={
+                  showPassword
+                    ? "eye-off-outline"
+                    : "eye-outline"
+                }
+                size={21}
+                color="#666666"
+              />
+            </Pressable>
           </View>
+
+          {/* FORGOT PASSWORD */}
+          <Pressable
+            onPress={() =>
+              router.push(
+                "/forgot-password" as never,
+              )
+            }
+            disabled={loading}
+          >
+            <Text
+              style={[
+                styles.forgotPassword,
+                loading &&
+                  styles.linkDisabled,
+              ]}
+            >
+              {language === "es"
+                ? "¿Olvidaste tu contraseña?"
+                : "Forgot your password?"}
+            </Text>
+          </Pressable>
 
           {/* SIGN IN */}
           <Pressable
             style={[
               styles.button,
-              loading && styles.buttonDisabled,
+              loading &&
+                styles.buttonDisabled,
             ]}
             onPress={handleLogin}
             disabled={loading}
           >
             <Text style={styles.buttonText}>
               {loading
-                ? "Ingresando..."
+                ? language === "es"
+                  ? "Ingresando..."
+                  : "Signing in..."
                 : t("login.button")}
             </Text>
           </Pressable>
@@ -166,14 +251,17 @@ export default function LoginScreen() {
           {/* CREATE ACCOUNT */}
           <Pressable
             onPress={() =>
-              router.push("/register" as never)
+              router.push(
+                "/register" as never,
+              )
             }
             disabled={loading}
           >
             <Text
               style={[
                 styles.link,
-                loading && styles.linkDisabled,
+                loading &&
+                  styles.linkDisabled,
               ]}
             >
               {t("login.createAccount")}
@@ -203,7 +291,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 28,
     paddingTop: 20,
     paddingBottom: 40,
-    backgroundColor: "rgba(255,255,255,0.42)",
+    backgroundColor:
+      "rgba(255,255,255,0.42)",
   },
 
   formContainer: {
@@ -231,7 +320,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
 
     borderRadius: 16,
-    backgroundColor: "rgba(255,255,255,0.68)",
+    backgroundColor:
+      "rgba(255,255,255,0.68)",
   },
 
   inputIcon: {
@@ -244,6 +334,24 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
     color: colors.dark,
     fontSize: 16,
+  },
+
+  passwordVisibilityButton: {
+    marginLeft: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  forgotPassword: {
+    width: "84%",
+    alignSelf: "center",
+    marginTop: -2,
+    marginBottom: 12,
+    paddingHorizontal: 4,
+    color: colors.primary,
+    fontSize: 13,
+    fontWeight: "800",
+    textAlign: "center",
   },
 
   button: {
@@ -278,7 +386,8 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
 
     borderRadius: 10,
-    backgroundColor: "rgba(255,255,255,0.38)",
+    backgroundColor:
+      "rgba(255,255,255,0.38)",
 
     color: colors.primary,
     fontSize: 14,

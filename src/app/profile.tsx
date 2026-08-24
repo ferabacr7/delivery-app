@@ -13,7 +13,11 @@ import {
 import BottomNavigation from "../components/ui/BottomNavigation";
 import { useLanguage } from "../i18n/useLanguage";
 import { useTranslation } from "../i18n/useTranslation";
-import { getCurrentUser, getMyProfile, signOut } from "../services/authService";
+import {
+  getCurrentUser,
+  getMyProfile,
+  signOut,
+} from "../services/authService";
 import { colors } from "../styles/theme";
 
 const profileDeliveryBg = require("../images/profile-delivery-bg.png.png");
@@ -169,7 +173,7 @@ export default function ProfileScreen() {
                 ? "Cambia tu contraseña"
                 : "Change your password"
             }
-            onPress={() => router.push("/change-password" as never)}
+            onPress={() => router.push("/security" as never)}
           />
 
           <ProfileOption
@@ -183,7 +187,7 @@ export default function ProfileScreen() {
             icon="information-circle-outline"
             title={t("profile.aboutApp")}
             subtitle={t("profile.aboutAppSubtitle")}
-            onPress={() => {}}
+            onPress={() => router.push("/about" as never)}
           />
 
           <ProfileOption
@@ -250,45 +254,45 @@ const styles = StyleSheet.create({
     position: "relative",
   },
 
- backgroundDecoration: {
-  position: "absolute",
-  top: 0,
-  left: 0,
-  right: 0,
-  height: 206,
-  backgroundColor: "#FFF6F0",
-  overflow: "hidden",
-},
+  backgroundDecoration: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 206,
+    backgroundColor: "#FFF6F0",
+    overflow: "hidden",
+  },
 
-bgCircleOne: {
-  position: "absolute",
-  width: 190,
-  height: 190,
-  borderRadius: 95,
-  backgroundColor: "rgba(255, 122, 47, 0.08)",
-  top: -64,
-  right: -42,
-},
+  bgCircleOne: {
+    position: "absolute",
+    width: 190,
+    height: 190,
+    borderRadius: 95,
+    backgroundColor: "rgba(255, 122, 47, 0.08)",
+    top: -64,
+    right: -42,
+  },
 
-bgCircleTwo: {
-  position: "absolute",
-  width: 155,
-  height: 155,
-  borderRadius: 78,
-  backgroundColor: "rgba(255, 122, 47, 0.07)",
-  bottom: -58,
-  left: -42,
-},
+  bgCircleTwo: {
+    position: "absolute",
+    width: 155,
+    height: 155,
+    borderRadius: 78,
+    backgroundColor: "rgba(255, 122, 47, 0.07)",
+    bottom: -58,
+    left: -42,
+  },
 
-bgCircleThree: {
-  position: "absolute",
-  width: 120,
-  height: 120,
-  borderRadius: 60,
-  backgroundColor: "rgba(255, 122, 47, 0.05)",
-  top: 78,
-  left: 132,
-},
+  bgCircleThree: {
+    position: "absolute",
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: "rgba(255, 122, 47, 0.05)",
+    top: 78,
+    left: 132,
+  },
 
   bgVehicle: {
     position: "absolute",

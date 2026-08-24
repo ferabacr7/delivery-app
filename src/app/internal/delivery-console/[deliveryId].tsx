@@ -268,99 +268,118 @@ export default function DeliveryConsoleScreen() {
   }
 
   function handleCompleteDelivery() {
-    if (!deliveryId || isProcessing) {
-      return;
-    }
-
-    if (
-      delivery?.status !==
-      DELIVERY_STATUS.ON_ROUTE
-    ) {
-      Alert.alert(
-        "Recorrido no iniciado",
-        "Debe iniciar el recorrido antes de completar la entrega.",
-      );
-
-      return;
-    }
-
-    Alert.alert(
-      "Completar entrega",
-      "¿Confirma que el pedido fue entregado?",
-      [
-        {
-          text: "Cancelar",
-          style: "cancel",
-        },
-        {
-          text: "Confirmar",
-
-          onPress: async () => {
-            setIsProcessing(true);
-
-            try {
-              stopDriverLocationTracking();
-
-              setTrackingActive(false);
-
-              const { data, error } =
-                await completeDelivery(
-                  deliveryId,
-                );
-
-              if (error) {
-                throw error;
-              }
-
-              if (!data) {
-                Alert.alert(
-                  "No se pudo completar",
-                  "La entrega ya no está en estado ON_ROUTE.",
-                );
-
-                await loadDelivery();
-
-                return;
-              }
-
-              setDelivery(data);
-
-              Alert.alert(
-                "Entrega completada",
-                "El pedido fue marcado como entregado.",
-                [
-                  {
-                    text: "Aceptar",
-
-                    onPress: () => {
-                      router.back();
-                    },
-                  },
-                ],
-              );
-            } catch (error) {
-              console.error(
-                "DELIVERY CONSOLE COMPLETE ERROR:",
-                error,
-              );
-
-              const message =
-                error instanceof Error
-                  ? error.message
-                  : "No se pudo completar la entrega.";
-
-              Alert.alert(
-                "Error",
-                message,
-              );
-            } finally {
-              setIsProcessing(false);
-            }
-          },
-        },
-      ],
-    );
+  if (!deliveryId || isProcessing) {
+    return;
   }
+
+  if (
+    delivery?.status !==
+    DELIVERY_STATUS.ON_ROUTE
+  ) {
+    Alert.alert(
+      "Recorrido no iniciado",
+      "Debe iniciar el recorrido antes de completar la entrega.",
+    );
+
+    return;
+  }
+
+  Alert.alert(
+    "Completar entrega",
+    "¿Confirma que el pedido fue entregado?",
+    [
+      {
+        text: "Cancelar",
+        style: "cancel",
+      },
+      {
+        text: "Confirmar",
+
+        onPress: async () => {
+          setIsProcessing(true);
+
+          try {
+            /*
+             * Primero confirmamos la entrega
+             * en el servidor.
+             *
+             * NO detenemos el tracking antes,
+             * porque si falla la conexión
+             * queremos mantener el GPS activo.
+             */
+            const { data, error } =
+              await completeDelivery(
+                deliveryId,
+              );
+
+            if (error) {
+              throw error;
+            }
+
+            if (!data) {
+              Alert.alert(
+                "No se pudo completar",
+                "La entrega ya no está disponible para completarse. Actualice la información e inténtelo nuevamente.",
+              );
+
+              await loadDelivery();
+
+              return;
+            }
+
+            /*
+             * Solo después de confirmar
+             * DELIVERED correctamente
+             * detenemos el tracking.
+             */
+            stopDriverLocationTracking();
+
+            setTrackingActive(false);
+            setDelivery(data);
+
+            Alert.alert(
+              "Entrega completada",
+              "El pedido fue marcado como entregado.",
+              [
+                {
+                  text: "Aceptar",
+
+                  onPress: () => {
+                    router.back();
+                  },
+                },
+              ],
+            );
+          } catch (error) {
+            console.warn(
+              "DELIVERY CONSOLE COMPLETE WARNING:",
+              error,
+            );
+
+            /*
+             * Si falla la conexión,
+             * dejamos el tracking activo.
+             * El repartidor puede volver
+             * a intentar completar.
+             */
+            setTrackingActive(
+              isTrackingDelivery(
+                deliveryId,
+              ),
+            );
+
+            Alert.alert(
+              "No se pudo completar la entrega",
+              "Verifique su conexión a internet e inténtelo nuevamente.",
+            );
+          } finally {
+            setIsProcessing(false);
+          }
+        },
+      },
+    ],
+  );
+}
 
   async function openGoogleMaps() {
     const latitude =

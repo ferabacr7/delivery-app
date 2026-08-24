@@ -1,8 +1,18 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
-import { colors, radius, spacing, typography } from "../../../constants/theme";
+import {
+  colors,
+  radius,
+  spacing,
+  typography,
+} from "../../../constants/theme";
 
 import Card from "../../ui/Card";
 import InfoRow from "../../ui/InfoRow";
@@ -20,7 +30,11 @@ type Props = {
   totalLabel: string;
   total: string;
 
+  paymentMethodLabel?: string;
   paymentMethod?: string | null;
+
+  cashPaymentLabel?: string;
+  cashPaymentAmount?: string | null;
 
   estimatedPurchaseLabel?: string;
   estimatedPurchaseAmount?: string | null;
@@ -39,8 +53,6 @@ type Props = {
   courierPaymentStatus?: string | null;
 
   supportPhoneNumber?: string;
-
-  
 };
 
 export default function PriceSummaryCard({
@@ -55,7 +67,11 @@ export default function PriceSummaryCard({
   totalLabel,
   total,
 
+  paymentMethodLabel = "Delivery payment method",
   paymentMethod,
+
+  cashPaymentLabel = "Cash amount",
+  cashPaymentAmount,
 
   estimatedPurchaseLabel,
   estimatedPurchaseAmount,
@@ -73,61 +89,121 @@ export default function PriceSummaryCard({
   courierPaymentStatusLabel,
   courierPaymentStatus,
 
-  supportPhoneNumber="50688888888"
-
+  supportPhoneNumber = "50688888888",
 }: Props) {
-  const [showPurchaseDetail, setShowPurchaseDetail] = useState(false);
-  const [showDeliveryDetail, setShowDeliveryDetail] = useState(false);
+  const [
+    showPurchaseDetail,
+    setShowPurchaseDetail,
+  ] = useState(false);
+
+  const [
+    showDeliveryDetail,
+    setShowDeliveryDetail,
+  ] = useState(false);
 
   return (
     <Card>
-      <Text style={styles.title}>{title}</Text>
+      <Text style={styles.title}>
+        {title}
+      </Text>
 
       {foodPaymentStatus ? (
         <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>{foodPaymentStatusLabel}</Text>
+          <Text style={styles.infoLabel}>
+            {foodPaymentStatusLabel}
+          </Text>
 
-          <Text style={styles.infoValue}>{foodPaymentStatus}</Text>
+          <Text style={styles.infoValue}>
+            {foodPaymentStatus}
+          </Text>
         </View>
       ) : null}
 
       {courierPaymentStatus ? (
         <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>{courierPaymentStatusLabel}</Text>
+          <Text style={styles.infoLabel}>
+            {courierPaymentStatusLabel}
+          </Text>
 
-          <Text style={styles.infoValue}>{courierPaymentStatus}</Text>
+          <Text style={styles.infoValue}>
+            {courierPaymentStatus}
+          </Text>
         </View>
       ) : null}
 
       {paymentMethod ? (
         <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Delivery payment method</Text>
+          <Text style={styles.infoLabel}>
+            {paymentMethodLabel}
+          </Text>
 
-          <Text style={styles.infoValue}>{paymentMethod}</Text>
+          <Text style={styles.infoValue}>
+            {paymentMethod}
+          </Text>
+        </View>
+      ) : null}
+
+      {cashPaymentAmount ? (
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>
+            {cashPaymentLabel}
+          </Text>
+
+          <Text style={styles.infoValue}>
+            {cashPaymentAmount}
+          </Text>
         </View>
       ) : null}
 
       {estimatedPurchaseAmount ? (
         <View style={styles.section}>
           <View style={styles.amountRow}>
-            <View style={styles.amountInformation}>
-              <Text style={styles.amountLabel}>{estimatedPurchaseLabel}</Text>
+            <View
+              style={
+                styles.amountInformation
+              }
+            >
+              <Text
+                style={
+                  styles.amountLabel
+                }
+              >
+                {estimatedPurchaseLabel}
+              </Text>
 
-              <Text style={styles.purchaseAmount}>
+              <Text
+                style={
+                  styles.purchaseAmount
+                }
+              >
                 {estimatedPurchaseAmount}
               </Text>
             </View>
 
             <Pressable
-              style={styles.miniDetailButton}
-              onPress={() => setShowPurchaseDetail((current) => !current)}
+              style={
+                styles.miniDetailButton
+              }
+              onPress={() =>
+                setShowPurchaseDetail(
+                  (current) =>
+                    !current,
+                )
+              }
               accessibilityRole="button"
               accessibilityState={{
-                expanded: showPurchaseDetail,
+                expanded:
+                  showPurchaseDetail,
               }}
             >
-              <Text style={styles.miniDetailButtonText}>
-                {showPurchaseDetail ? hideDetailLabel : viewDetailLabel}
+              <Text
+                style={
+                  styles.miniDetailButtonText
+                }
+              >
+                {showPurchaseDetail
+                  ? hideDetailLabel
+                  : viewDetailLabel}
               </Text>
 
               <Ionicons
@@ -137,20 +213,33 @@ export default function PriceSummaryCard({
                     : "chevron-down-outline"
                 }
                 size={16}
-                color={colors.brandDark}
+                color={
+                  colors.brandDark
+                }
               />
             </Pressable>
           </View>
 
-          {showPurchaseDetail && purchaseDetail ? (
-            <View style={styles.purchaseNotice}>
+          {showPurchaseDetail &&
+          purchaseDetail ? (
+            <View
+              style={
+                styles.purchaseNotice
+              }
+            >
               <Ionicons
                 name="information-circle-outline"
                 size={19}
-                color={colors.brandDark}
+                color={
+                  colors.brandDark
+                }
               />
 
-              <Text style={styles.purchaseNoticeText}>
+              <Text
+                style={
+                  styles.purchaseNoticeText
+                }
+              >
                 {purchaseDetail}
               </Text>
             </View>
@@ -160,22 +249,52 @@ export default function PriceSummaryCard({
 
       <View style={styles.section}>
         <View style={styles.amountRow}>
-          <View style={styles.amountInformation}>
-            <Text style={styles.amountLabel}>{deliveryServiceLabel}</Text>
+          <View
+            style={
+              styles.amountInformation
+            }
+          >
+            <Text
+              style={
+                styles.amountLabel
+              }
+            >
+              {deliveryServiceLabel}
+            </Text>
 
-            <Text style={styles.deliveryAmount}>{total}</Text>
+            <Text
+              style={
+                styles.deliveryAmount
+              }
+            >
+              {total}
+            </Text>
           </View>
 
           <Pressable
-            style={styles.miniDetailButton}
-            onPress={() => setShowDeliveryDetail((current) => !current)}
+            style={
+              styles.miniDetailButton
+            }
+            onPress={() =>
+              setShowDeliveryDetail(
+                (current) =>
+                  !current,
+              )
+            }
             accessibilityRole="button"
             accessibilityState={{
-              expanded: showDeliveryDetail,
+              expanded:
+                showDeliveryDetail,
             }}
           >
-            <Text style={styles.miniDetailButtonText}>
-              {showDeliveryDetail ? hideDetailLabel : viewDetailLabel}
+            <Text
+              style={
+                styles.miniDetailButtonText
+              }
+            >
+              {showDeliveryDetail
+                ? hideDetailLabel
+                : viewDetailLabel}
             </Text>
 
             <Ionicons
@@ -185,160 +304,222 @@ export default function PriceSummaryCard({
                   : "chevron-down-outline"
               }
               size={16}
-              color={colors.brandDark}
+              color={
+                colors.brandDark
+              }
             />
           </Pressable>
         </View>
 
         {showDeliveryDetail ? (
-          <View style={styles.deliveryDetail}>
-            <InfoRow label={serviceTypeFeeLabel} value={subtotal} />
+          <View
+            style={
+              styles.deliveryDetail
+            }
+          >
+            <InfoRow
+              label={
+                serviceTypeFeeLabel
+              }
+              value={subtotal}
+            />
 
-            <InfoRow label={deliveryFeeLabel} value={deliveryFee} />
+            <InfoRow
+              label={
+                deliveryFeeLabel
+              }
+              value={
+                deliveryFee
+              }
+            />
 
-            <View style={styles.divider} />
+            <View
+              style={
+                styles.divider
+              }
+            />
 
             <InfoRow
               label={totalLabel}
               value={total}
-              labelStyle={styles.detailTotalLabel}
-              valueStyle={styles.detailTotalValue}
+              labelStyle={
+                styles.detailTotalLabel
+              }
+              valueStyle={
+                styles.detailTotalValue
+              }
             />
           </View>
         ) : null}
       </View>
 
       {supportPhoneNumber ? (
-        <View style={styles.supportSection}>
-          <SupportCard phoneNumber={supportPhoneNumber} />
+        <View
+          style={
+            styles.supportSection
+          }
+        >
+          <SupportCard
+            phoneNumber={
+              supportPhoneNumber
+            }
+          />
         </View>
       ) : null}
     </Card>
   );
 }
 
-const styles = StyleSheet.create({
-  title: {
-    ...typography.subtitle,
-    color: colors.text,
-    marginBottom: spacing.sm,
-  },
+const styles =
+  StyleSheet.create({
+    title: {
+      ...typography.subtitle,
+      color: colors.text,
+      marginBottom:
+        spacing.sm,
+    },
 
-  infoRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    gap: spacing.md,
-    paddingVertical: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
+    infoRow: {
+      flexDirection: "row",
+      alignItems:
+        "flex-start",
+      justifyContent:
+        "space-between",
+      gap: spacing.md,
+      paddingVertical:
+        spacing.md,
+      borderTopWidth: 1,
+      borderTopColor:
+        colors.border,
+    },
 
-  infoLabel: {
-    ...typography.body,
-    flex: 1,
-    color: colors.textMuted,
-  },
+    infoLabel: {
+      ...typography.body,
+      flex: 1,
+      color:
+        colors.textMuted,
+    },
 
-  infoValue: {
-    ...typography.body,
-    flex: 1,
-    color: colors.text,
-    fontWeight: "800",
-    textAlign: "right",
-  },
+    infoValue: {
+      ...typography.body,
+      flex: 1,
+      color: colors.text,
+      fontWeight: "800",
+      textAlign: "right",
+    },
 
-  section: {
-    paddingVertical: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
+    section: {
+      paddingVertical:
+        spacing.md,
+      borderTopWidth: 1,
+      borderTopColor:
+        colors.border,
+    },
 
-  amountRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: spacing.md,
-  },
+    amountRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent:
+        "space-between",
+      gap: spacing.md,
+    },
 
-  amountInformation: {
-    flex: 1,
-  },
+    amountInformation: {
+      flex: 1,
+    },
 
-  amountLabel: {
-    ...typography.body,
-    color: colors.textMuted,
-  },
+    amountLabel: {
+      ...typography.body,
+      color:
+        colors.textMuted,
+    },
 
-  purchaseAmount: {
-    marginTop: spacing.xs,
-    ...typography.body,
-    color: colors.text,
-    fontWeight: "800",
-  },
+    purchaseAmount: {
+      marginTop:
+        spacing.xs,
+      ...typography.body,
+      color: colors.text,
+      fontWeight: "800",
+    },
 
-  deliveryAmount: {
-    marginTop: spacing.xs,
-    ...typography.body,
-    color: colors.text,
-    fontWeight: "800",
-  },
+    deliveryAmount: {
+      marginTop:
+        spacing.xs,
+      ...typography.body,
+      color: colors.text,
+      fontWeight: "800",
+    },
 
-  miniDetailButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingVertical: spacing.sm,
-    paddingLeft: spacing.sm,
-  },
+    miniDetailButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      paddingVertical:
+        spacing.sm,
+      paddingLeft:
+        spacing.sm,
+    },
 
-  miniDetailButtonText: {
-    ...typography.caption,
-    color: colors.brandDark,
-    fontWeight: "700",
-  },
+    miniDetailButtonText: {
+      ...typography.caption,
+      color:
+        colors.brandDark,
+      fontWeight: "700",
+    },
 
-  purchaseNotice: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: spacing.sm,
-    marginTop: spacing.md,
-    padding: spacing.md,
-    borderRadius: radius.lg,
-    backgroundColor: colors.surfaceSoft,
-  },
+    purchaseNotice: {
+      flexDirection: "row",
+      alignItems:
+        "flex-start",
+      gap: spacing.sm,
+      marginTop:
+        spacing.md,
+      padding: spacing.md,
+      borderRadius:
+        radius.lg,
+      backgroundColor:
+        colors.surfaceSoft,
+    },
 
-  purchaseNoticeText: {
-    ...typography.caption,
-    flex: 1,
-    color: colors.textMuted,
-    lineHeight: 19,
-  },
+    purchaseNoticeText: {
+      ...typography.caption,
+      flex: 1,
+      color:
+        colors.textMuted,
+      lineHeight: 19,
+    },
 
-  deliveryDetail: {
-    marginTop: spacing.md,
-    paddingTop: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
+    deliveryDetail: {
+      marginTop:
+        spacing.md,
+      paddingTop:
+        spacing.md,
+      borderTopWidth: 1,
+      borderTopColor:
+        colors.border,
+    },
 
-  divider: {
-    height: 1,
-    backgroundColor: colors.border,
-    marginVertical: spacing.md,
-  },
+    divider: {
+      height: 1,
+      backgroundColor:
+        colors.border,
+      marginVertical:
+        spacing.md,
+    },
 
-  detailTotalLabel: {
-    fontWeight: "800",
-    color: colors.text,
-  },
+    detailTotalLabel: {
+      fontWeight: "800",
+      color: colors.text,
+    },
 
-  detailTotalValue: {
-    fontWeight: "900",
-    color: colors.brandDark,
-  },
+    detailTotalValue: {
+      fontWeight: "900",
+      color:
+        colors.brandDark,
+    },
 
-  supportSection: {
-    marginTop: spacing.sm,
-  },
-});
+    supportSection: {
+      marginTop:
+        spacing.sm,
+    },
+  });

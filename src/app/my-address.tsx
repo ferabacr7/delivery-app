@@ -14,7 +14,9 @@ import {
   View,
 } from "react-native";
 
-import LocationPicker, { SelectedLocation } from "../components/LocationPicker";
+import LocationPicker, {
+  SelectedLocation,
+} from "../components/LocationPicker";
 import { useTranslation } from "../i18n/useTranslation";
 import {
   createAddress,
@@ -80,6 +82,35 @@ const PREDEFINED_ADDRESS_TYPES: AddressType[] = [
   "Hotel",
 ];
 
+function getAddressTypeLabel(
+  type: AddressType,
+  language: string,
+) {
+  if (language === "es") {
+    return type;
+  }
+
+  switch (type) {
+    case "Casa":
+      return "Home";
+
+    case "Trabajo":
+      return "Work";
+
+    case "Apartamento":
+      return "Apartment";
+
+    case "Hotel":
+      return "Hotel";
+
+    case "Otro":
+      return "Other";
+
+    default:
+      return type;
+  }
+}
+
 export default function MyAddressScreen() {
   const params = useLocalSearchParams<{
     addressId?: string | string[];
@@ -93,109 +124,195 @@ export default function MyAddressScreen() {
 
   const isEditing = Boolean(addressId);
 
-  const [addressLine, setAddressLine] = useState("");
-  const [reference, setReference] = useState("");
+  const [addressLine, setAddressLine] =
+    useState("");
 
-  const [addressType, setAddressType] = useState<AddressType>("Casa");
-  const [customAddressLabel, setCustomAddressLabel] = useState("");
-  const [isAddressTypeOpen, setIsAddressTypeOpen] = useState(false);
+  const [reference, setReference] =
+    useState("");
 
-  const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
+  const [addressType, setAddressType] =
+    useState<AddressType>("Casa");
 
-  const [isLoadingAddress, setIsLoadingAddress] = useState(isEditing);
-  const [isSaving, setIsSaving] = useState(false);
+  const [
+    customAddressLabel,
+    setCustomAddressLabel,
+  ] = useState("");
 
-  const { t } = useTranslation();
+  const [
+    isAddressTypeOpen,
+    setIsAddressTypeOpen,
+  ] = useState(false);
+
+  const [coordinates, setCoordinates] =
+    useState<Coordinates | null>(null);
+
+  const [
+    isLoadingAddress,
+    setIsLoadingAddress,
+  ] = useState(isEditing);
+
+  const [isSaving, setIsSaving] =
+    useState(false);
+
+  const { t, language } =
+    useTranslation();
 
   useEffect(() => {
     if (isEditing && addressId) {
-      loadAddress(addressId);
+      void loadAddress(addressId);
     }
   }, [addressId, isEditing]);
 
-  async function loadAddress(currentAddressId: string) {
+  async function loadAddress(
+    currentAddressId: string,
+  ) {
     try {
       setIsLoadingAddress(true);
 
-      const { data, error } = await getAddressById(currentAddressId);
+      const { data, error } =
+        await getAddressById(
+          currentAddressId,
+        );
 
       if (error) {
-        console.error("Error loading address:", error);
+        console.error(
+          "Error loading address:",
+          error,
+        );
 
-        Alert.alert(t("common.error"), t("addressForm.loadError"));
+        Alert.alert(
+          t("common.error"),
+          t("addressForm.loadError"),
+        );
 
-        router.replace("/my-addresses" as never);
+        router.replace(
+          "/my-addresses" as never,
+        );
+
         return;
       }
 
       if (!data) {
-        Alert.alert(t("common.error"), t("addressForm.notFound"));
+        Alert.alert(
+          t("common.error"),
+          t("addressForm.notFound"),
+        );
 
-        router.replace("/my-addresses" as never);
+        router.replace(
+          "/my-addresses" as never,
+        );
+
         return;
       }
 
-      const address = data as AddressRecord;
-      const savedLabel = address.label?.trim() || "Casa";
+      const address =
+        data as AddressRecord;
 
-      setAddressLine(address.address_line ?? "");
-      setReference(address.reference ?? "");
+      const savedLabel =
+        address.label?.trim() ||
+        "Casa";
+
+      setAddressLine(
+        address.address_line ?? "",
+      );
+
+      setReference(
+        address.reference ?? "",
+      );
 
       if (
-        PREDEFINED_ADDRESS_TYPES.includes(savedLabel as AddressType)
+        PREDEFINED_ADDRESS_TYPES.includes(
+          savedLabel as AddressType,
+        )
       ) {
-        setAddressType(savedLabel as AddressType);
+        setAddressType(
+          savedLabel as AddressType,
+        );
+
         setCustomAddressLabel("");
       } else {
         setAddressType("Otro");
-        setCustomAddressLabel(savedLabel);
+        setCustomAddressLabel(
+          savedLabel,
+        );
       }
 
       if (
-        typeof address.latitude === "number" &&
-        typeof address.longitude === "number"
+        typeof address.latitude ===
+          "number" &&
+        typeof address.longitude ===
+          "number"
       ) {
         setCoordinates({
-          latitude: address.latitude,
-          longitude: address.longitude,
+          latitude:
+            address.latitude,
+          longitude:
+            address.longitude,
         });
       }
     } catch (error) {
-      console.error("Unexpected error loading address:", error);
+      console.error(
+        "Unexpected error loading address:",
+        error,
+      );
 
-      Alert.alert(t("common.error"), t("addressForm.loadError"));
+      Alert.alert(
+        t("common.error"),
+        t("addressForm.loadError"),
+      );
     } finally {
-      setIsLoadingAddress(false);
+      setIsLoadingAddress(
+        false,
+      );
     }
   }
 
-  function handleLocationChange(selectedLocation: SelectedLocation) {
-    setAddressLine(selectedLocation.addressLine);
+  function handleLocationChange(
+    selectedLocation: SelectedLocation,
+  ) {
+    setAddressLine(
+      selectedLocation.addressLine,
+    );
 
     setCoordinates({
-      latitude: selectedLocation.latitude,
-      longitude: selectedLocation.longitude,
+      latitude:
+        selectedLocation.latitude,
+      longitude:
+        selectedLocation.longitude,
     });
   }
 
-  function handleSelectAddressType(selectedType: AddressType) {
-    setAddressType(selectedType);
+  function handleSelectAddressType(
+    selectedType: AddressType,
+  ) {
+    setAddressType(
+      selectedType,
+    );
+
     setIsAddressTypeOpen(false);
 
-    if (selectedType !== "Otro") {
+    if (
+      selectedType !== "Otro"
+    ) {
       setCustomAddressLabel("");
     }
   }
 
   function getAddressTypeIcon() {
     return (
-      ADDRESS_TYPE_OPTIONS.find((option) => option.value === addressType)
-        ?.icon ?? "location-outline"
+      ADDRESS_TYPE_OPTIONS.find(
+        (option) =>
+          option.value ===
+          addressType,
+      )?.icon ??
+      "location-outline"
     );
   }
 
   function getFinalAddressLabel() {
-    if (addressType === "Otro") {
+    if (
+      addressType === "Otro"
+    ) {
       return customAddressLabel.trim();
     }
 
@@ -203,19 +320,38 @@ export default function MyAddressScreen() {
   }
 
   async function handleSaveAddress() {
-    const trimmedAddressLine = addressLine.trim();
-    const trimmedReference = reference.trim();
-    const finalAddressLabel = getFinalAddressLabel();
+    const trimmedAddressLine =
+      addressLine.trim();
 
-    if (!coordinates || !trimmedAddressLine) {
-      Alert.alert(t("common.error"), t("addressForm.locationRequired"));
+    const trimmedReference =
+      reference.trim();
+
+    const finalAddressLabel =
+      getFinalAddressLabel();
+
+    if (
+      !coordinates ||
+      !trimmedAddressLine
+    ) {
+      Alert.alert(
+        t("common.error"),
+        t(
+          "addressForm.locationRequired",
+        ),
+      );
+
       return;
     }
 
-    if (addressType === "Otro" && !finalAddressLabel) {
+    if (
+      addressType === "Otro" &&
+      !finalAddressLabel
+    ) {
       Alert.alert(
         t("common.error"),
-        "Escriba un nombre para esta dirección.",
+        language === "es"
+          ? "Escribí un nombre para esta dirección."
+          : "Enter a name for this address.",
       );
 
       return;
@@ -225,108 +361,218 @@ export default function MyAddressScreen() {
       setIsSaving(true);
 
       const addressInput = {
-        label: finalAddressLabel,
-        addressLine: trimmedAddressLine,
-        reference: trimmedReference,
-        latitude: coordinates.latitude,
-        longitude: coordinates.longitude,
+        label:
+          finalAddressLabel,
+        addressLine:
+          trimmedAddressLine,
+        reference:
+          trimmedReference,
+        latitude:
+          coordinates.latitude,
+        longitude:
+          coordinates.longitude,
         isDefault: true,
       };
 
       const result =
-        isEditing && addressId
-          ? await updateAddress(addressId, addressInput)
-          : await createAddress(addressInput);
+        isEditing &&
+        addressId
+          ? await updateAddress(
+              addressId,
+              addressInput,
+            )
+          : await createAddress(
+              addressInput,
+            );
 
       if (result.error) {
-        console.error("Error saving address:", result.error);
+        console.error(
+          "Error saving address:",
+          result.error,
+        );
 
-        Alert.alert(t("common.error"), result.error.message);
+        Alert.alert(
+          t("common.error"),
+          result.error.message,
+        );
 
         return;
       }
 
       Alert.alert(
-        t("addressForm.savedTitle"),
+        t(
+          "addressForm.savedTitle",
+        ),
         isEditing
-          ? t("addressForm.updatedMessage")
-          : t("addressForm.savedMessage"),
+          ? t(
+              "addressForm.updatedMessage",
+            )
+          : t(
+              "addressForm.savedMessage",
+            ),
       );
 
-      router.replace("/my-addresses" as never);
+      router.replace(
+        "/my-addresses" as never,
+      );
     } catch (error) {
-      console.error("Unexpected error saving address:", error);
+      console.error(
+        "Unexpected error saving address:",
+        error,
+      );
 
-      Alert.alert(t("common.error"), t("addressForm.saveError"));
+      Alert.alert(
+        t("common.error"),
+        t(
+          "addressForm.saveError",
+        ),
+      );
     } finally {
       setIsSaving(false);
     }
   }
 
   function handleBack() {
-    router.replace("/my-addresses" as never);
+    router.replace(
+      "/my-addresses" as never,
+    );
   }
 
   if (isLoadingAddress) {
     return (
-      <View style={styles.loadingScreen}>
-        <ActivityIndicator size="large" color={colors.primary} />
+      <View
+        style={
+          styles.loadingScreen
+        }
+      >
+        <ActivityIndicator
+          size="large"
+          color={colors.primary}
+        />
 
-        <Text style={styles.loadingText}>{t("addressForm.loading")}</Text>
+        <Text
+          style={
+            styles.loadingText
+          }
+        >
+          {t(
+            "addressForm.loading",
+          )}
+        </Text>
       </View>
     );
   }
 
   return (
     <KeyboardAvoidingView
-      style={styles.keyboardContainer}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      style={
+        styles.keyboardContainer
+      }
+      behavior={
+        Platform.OS === "ios"
+          ? "padding"
+          : undefined
+      }
     >
       <ScrollView
         style={styles.container}
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={
+          false
+        }
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={styles.content}
+        contentContainerStyle={
+          styles.content
+        }
       >
         <Pressable
           style={styles.backButton}
           onPress={handleBack}
           hitSlop={10}
           accessibilityRole="button"
-          accessibilityLabel={t("common.back")}
+          accessibilityLabel={t(
+            "common.back",
+          )}
         >
-          <Text style={styles.back}>← {t("common.back")}</Text>
+          <Text style={styles.back}>
+            ← {t("common.back")}
+          </Text>
         </Pressable>
 
         <Text style={styles.title}>
-          {isEditing ? t("addressForm.editTitle") : t("addressForm.title")}
+          {isEditing
+            ? t(
+                "addressForm.editTitle",
+              )
+            : t(
+                "addressForm.title",
+              )}
         </Text>
 
-        <Text style={styles.label}>Tipo de dirección</Text>
+        <Text style={styles.label}>
+          {language === "es"
+            ? "Tipo de dirección"
+            : "Address type"}
+        </Text>
 
-        <View style={styles.dropdownContainer}>
+        <View
+          style={
+            styles.dropdownContainer
+          }
+        >
           <Pressable
             style={[
               styles.dropdownButton,
-              isAddressTypeOpen && styles.dropdownButtonOpen,
+              isAddressTypeOpen &&
+                styles.dropdownButtonOpen,
             ]}
-            onPress={() => setIsAddressTypeOpen((current) => !current)}
+            onPress={() =>
+              setIsAddressTypeOpen(
+                (current) =>
+                  !current,
+              )
+            }
             accessibilityRole="button"
-            accessibilityLabel="Seleccionar tipo de dirección"
+            accessibilityLabel={
+              language === "es"
+                ? "Seleccionar tipo de dirección"
+                : "Select address type"
+            }
             accessibilityState={{
-              expanded: isAddressTypeOpen,
+              expanded:
+                isAddressTypeOpen,
             }}
           >
-            <View style={styles.dropdownSelectedContent}>
-              <View style={styles.addressTypeIcon}>
+            <View
+              style={
+                styles.dropdownSelectedContent
+              }
+            >
+              <View
+                style={
+                  styles.addressTypeIcon
+                }
+              >
                 <Ionicons
-                  name={getAddressTypeIcon()}
+                  name={
+                    getAddressTypeIcon()
+                  }
                   size={21}
-                  color={colors.primary}
+                  color={
+                    colors.primary
+                  }
                 />
               </View>
 
-              <Text style={styles.dropdownSelectedText}>{addressType}</Text>
+              <Text
+                style={
+                  styles.dropdownSelectedText
+                }
+              >
+                {getAddressTypeLabel(
+                  addressType,
+                  language,
+                )}
+              </Text>
             </View>
 
             <Ionicons
@@ -341,92 +587,168 @@ export default function MyAddressScreen() {
           </Pressable>
 
           {isAddressTypeOpen && (
-            <View style={styles.dropdownMenu}>
-              {ADDRESS_TYPE_OPTIONS.map((option, index) => {
-                const isSelected = option.value === addressType;
+            <View
+              style={
+                styles.dropdownMenu
+              }
+            >
+              {ADDRESS_TYPE_OPTIONS.map(
+                (
+                  option,
+                  index,
+                ) => {
+                  const isSelected =
+                    option.value ===
+                    addressType;
 
-                return (
-                  <Pressable
-                    key={option.value}
-                    style={[
-                      styles.dropdownOption,
-                      index < ADDRESS_TYPE_OPTIONS.length - 1 &&
-                        styles.dropdownOptionBorder,
-                      isSelected && styles.dropdownOptionSelected,
-                    ]}
-                    onPress={() => handleSelectAddressType(option.value)}
-                    accessibilityRole="button"
-                  >
-                    <View style={styles.dropdownOptionContent}>
-                      <Ionicons
-                        name={option.icon}
-                        size={21}
-                        color={
-                          isSelected ? colors.primary : colors.dark
+                  return (
+                    <Pressable
+                      key={
+                        option.value
+                      }
+                      style={[
+                        styles.dropdownOption,
+                        index <
+                          ADDRESS_TYPE_OPTIONS.length -
+                            1 &&
+                          styles.dropdownOptionBorder,
+                        isSelected &&
+                          styles.dropdownOptionSelected,
+                      ]}
+                      onPress={() =>
+                        handleSelectAddressType(
+                          option.value,
+                        )
+                      }
+                      accessibilityRole="button"
+                    >
+                      <View
+                        style={
+                          styles.dropdownOptionContent
                         }
-                      />
-
-                      <Text
-                        style={[
-                          styles.dropdownOptionText,
-                          isSelected && styles.dropdownOptionTextSelected,
-                        ]}
                       >
-                        {option.value}
-                      </Text>
-                    </View>
+                        <Ionicons
+                          name={
+                            option.icon
+                          }
+                          size={21}
+                          color={
+                            isSelected
+                              ? colors.primary
+                              : colors.dark
+                          }
+                        />
 
-                    {isSelected && (
-                      <Ionicons
-                        name="checkmark-outline"
-                        size={21}
-                        color={colors.primary}
-                      />
-                    )}
-                  </Pressable>
-                );
-              })}
+                        <Text
+                          style={[
+                            styles.dropdownOptionText,
+                            isSelected &&
+                              styles.dropdownOptionTextSelected,
+                          ]}
+                        >
+                          {getAddressTypeLabel(
+                            option.value,
+                            language,
+                          )}
+                        </Text>
+                      </View>
+
+                      {isSelected && (
+                        <Ionicons
+                          name="checkmark-outline"
+                          size={21}
+                          color={
+                            colors.primary
+                          }
+                        />
+                      )}
+                    </Pressable>
+                  );
+                },
+              )}
             </View>
           )}
         </View>
 
-        {addressType === "Otro" && (
+        {addressType ===
+          "Otro" && (
           <>
-            <Text style={styles.customLabel}>
-              Nombre de la dirección
+            <Text
+              style={
+                styles.customLabel
+              }
+            >
+              {language === "es"
+                ? "Nombre de la dirección"
+                : "Address name"}
             </Text>
 
             <TextInput
               style={styles.input}
-              value={customAddressLabel}
-              onChangeText={setCustomAddressLabel}
-              placeholder="Ejemplo: Casa de mamá"
-              placeholderTextColor={colors.muted}
+              value={
+                customAddressLabel
+              }
+              onChangeText={
+                setCustomAddressLabel
+              }
+              placeholder={
+                language === "es"
+                  ? "Ejemplo: Casa de mamá"
+                  : "Example: Mom's house"
+              }
+              placeholderTextColor={
+                colors.muted
+              }
               maxLength={50}
               returnKeyType="done"
             />
 
-            <Text style={styles.characterCount}>
-              {customAddressLabel.length}/50
+            <Text
+              style={
+                styles.characterCount
+              }
+            >
+              {
+                customAddressLabel.length
+              }
+              /50
             </Text>
           </>
         )}
 
         <LocationPicker
-          initialLatitude={coordinates?.latitude}
-          initialLongitude={coordinates?.longitude}
-          initialAddressLine={addressLine}
-          onLocationChange={handleLocationChange}
+          initialLatitude={
+            coordinates?.latitude
+          }
+          initialLongitude={
+            coordinates?.longitude
+          }
+          initialAddressLine={
+            addressLine
+          }
+          onLocationChange={
+            handleLocationChange
+          }
         />
 
-        <Text style={styles.label}>{t("addressForm.additionalNotes")}</Text>
+        <Text style={styles.label}>
+          {t(
+            "addressForm.additionalNotes",
+          )}
+        </Text>
 
         <TextInput
           style={styles.textArea}
           value={reference}
-          onChangeText={setReference}
-          placeholder={t("addressForm.additionalNotesPlaceholder")}
-          placeholderTextColor={colors.muted}
+          onChangeText={
+            setReference
+          }
+          placeholder={t(
+            "addressForm.additionalNotesPlaceholder",
+          )}
+          placeholderTextColor={
+            colors.muted
+          }
           multiline
           textAlignVertical="top"
           returnKeyType="done"
@@ -434,28 +756,56 @@ export default function MyAddressScreen() {
           maxLength={300}
         />
 
-        <Text style={styles.characterCount}>{reference.length}/300</Text>
+        <Text
+          style={
+            styles.characterCount
+          }
+        >
+          {reference.length}/300
+        </Text>
 
         <Pressable
           style={[
             styles.button,
-            (!coordinates || isSaving) && styles.buttonDisabled,
+            (!coordinates ||
+              isSaving) &&
+              styles.buttonDisabled,
           ]}
-          onPress={handleSaveAddress}
-          disabled={!coordinates || isSaving}
+          onPress={
+            handleSaveAddress
+          }
+          disabled={
+            !coordinates ||
+            isSaving
+          }
           accessibilityRole="button"
         >
           {isSaving ? (
-            <ActivityIndicator size="small" color={colors.white} />
+            <ActivityIndicator
+              size="small"
+              color={
+                colors.white
+              }
+            />
           ) : (
             <>
               <Ionicons
                 name="checkmark-circle-outline"
                 size={22}
-                color={colors.white}
+                color={
+                  colors.white
+                }
               />
 
-              <Text style={styles.buttonText}>{t("addressForm.save")}</Text>
+              <Text
+                style={
+                  styles.buttonText
+                }
+              >
+                {t(
+                  "addressForm.save",
+                )}
+              </Text>
             </>
           )}
         </Pressable>
@@ -464,205 +814,230 @@ export default function MyAddressScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  keyboardContainer: {
-    flex: 1,
-    backgroundColor: colors.white,
-  },
+const styles =
+  StyleSheet.create({
+    keyboardContainer: {
+      flex: 1,
+      backgroundColor:
+        colors.white,
+    },
 
-  container: {
-    flex: 1,
-    backgroundColor: colors.white,
-  },
+    container: {
+      flex: 1,
+      backgroundColor:
+        colors.white,
+    },
 
-  content: {
-    flexGrow: 1,
-    padding: 24,
-    paddingTop: 70,
-    paddingBottom: 40,
-  },
+    content: {
+      flexGrow: 1,
+      padding: 24,
+      paddingTop: 70,
+      paddingBottom: 40,
+    },
 
-  loadingScreen: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: colors.white,
-  },
+    loadingScreen: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent:
+        "center",
+      backgroundColor:
+        colors.white,
+    },
 
-  loadingText: {
-    marginTop: 12,
-    fontSize: 15,
-    color: colors.muted,
-  },
+    loadingText: {
+      marginTop: 12,
+      fontSize: 15,
+      color: colors.muted,
+    },
 
-  backButton: {
-    alignSelf: "flex-start",
-  },
+    backButton: {
+      alignSelf:
+        "flex-start",
+    },
 
-  back: {
-    color: colors.primary,
-    fontSize: 16,
-    fontWeight: "700",
-  },
+    back: {
+      color: colors.primary,
+      fontSize: 16,
+      fontWeight: "700",
+    },
 
-  title: {
-    marginTop: 24,
-    fontSize: 32,
-    lineHeight: 39,
-    fontWeight: "900",
-    color: colors.primary,
-  },
+    title: {
+      marginTop: 24,
+      fontSize: 32,
+      lineHeight: 39,
+      fontWeight: "900",
+      color: colors.primary,
+    },
 
-  label: {
-    marginTop: 24,
-    marginBottom: 8,
-    fontSize: 14,
-    fontWeight: "900",
-    color: colors.dark,
-  },
+    label: {
+      marginTop: 24,
+      marginBottom: 8,
+      fontSize: 14,
+      fontWeight: "900",
+      color: colors.dark,
+    },
 
-  customLabel: {
-    marginTop: 18,
-    marginBottom: 8,
-    fontSize: 14,
-    fontWeight: "900",
-    color: colors.dark,
-  },
+    customLabel: {
+      marginTop: 18,
+      marginBottom: 8,
+      fontSize: 14,
+      fontWeight: "900",
+      color: colors.dark,
+    },
 
-  dropdownContainer: {
-    position: "relative",
-    zIndex: 20,
-  },
+    dropdownContainer: {
+      position: "relative",
+      zIndex: 20,
+    },
 
-  dropdownButton: {
-    minHeight: 58,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    backgroundColor: colors.white,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
+    dropdownButton: {
+      minHeight: 58,
+      borderWidth: 1,
+      borderColor:
+        colors.border,
+      borderRadius: 16,
+      paddingHorizontal: 16,
+      backgroundColor:
+        colors.white,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent:
+        "space-between",
+    },
 
-  dropdownButtonOpen: {
-    borderColor: colors.primary,
-  },
+    dropdownButtonOpen: {
+      borderColor:
+        colors.primary,
+    },
 
-  dropdownSelectedContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
+    dropdownSelectedContent: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+    },
 
-  addressTypeIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
-    backgroundColor: colors.brandSoft,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+    addressTypeIcon: {
+      width: 36,
+      height: 36,
+      borderRadius: 12,
+      backgroundColor:
+        colors.brandSoft,
+      alignItems: "center",
+      justifyContent:
+        "center",
+    },
 
-  dropdownSelectedText: {
-    fontSize: 16,
-    fontWeight: "800",
-    color: colors.dark,
-  },
+    dropdownSelectedText: {
+      fontSize: 16,
+      fontWeight: "800",
+      color: colors.dark,
+    },
 
-  dropdownMenu: {
-    marginTop: 8,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 16,
-    backgroundColor: colors.white,
-    overflow: "hidden",
-  },
+    dropdownMenu: {
+      marginTop: 8,
+      borderWidth: 1,
+      borderColor:
+        colors.border,
+      borderRadius: 16,
+      backgroundColor:
+        colors.white,
+      overflow: "hidden",
+    },
 
-  dropdownOption: {
-    minHeight: 54,
-    paddingHorizontal: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
+    dropdownOption: {
+      minHeight: 54,
+      paddingHorizontal: 16,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent:
+        "space-between",
+    },
 
-  dropdownOptionBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
+    dropdownOptionBorder: {
+      borderBottomWidth: 1,
+      borderBottomColor:
+        colors.border,
+    },
 
-  dropdownOptionSelected: {
-    backgroundColor: colors.brandSoft,
-  },
+    dropdownOptionSelected: {
+      backgroundColor:
+        colors.brandSoft,
+    },
 
-  dropdownOptionContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
+    dropdownOptionContent: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+    },
 
-  dropdownOptionText: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: colors.dark,
-  },
+    dropdownOptionText: {
+      fontSize: 15,
+      fontWeight: "700",
+      color: colors.dark,
+    },
 
-  dropdownOptionTextSelected: {
-    color: colors.primary,
-    fontWeight: "900",
-  },
+    dropdownOptionTextSelected: {
+      color:
+        colors.primary,
+      fontWeight: "900",
+    },
 
-  input: {
-    height: 56,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    fontSize: 16,
-    color: colors.dark,
-    backgroundColor: colors.white,
-  },
+    input: {
+      height: 56,
+      borderWidth: 1,
+      borderColor:
+        colors.border,
+      borderRadius: 16,
+      paddingHorizontal: 16,
+      fontSize: 16,
+      color: colors.dark,
+      backgroundColor:
+        colors.white,
+    },
 
-  textArea: {
-    minHeight: 112,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 16,
-    padding: 16,
-    fontSize: 16,
-    lineHeight: 23,
-    color: colors.dark,
-    backgroundColor: colors.white,
-    textAlignVertical: "top",
-  },
+    textArea: {
+      minHeight: 112,
+      borderWidth: 1,
+      borderColor:
+        colors.border,
+      borderRadius: 16,
+      padding: 16,
+      fontSize: 16,
+      lineHeight: 23,
+      color: colors.dark,
+      backgroundColor:
+        colors.white,
+      textAlignVertical:
+        "top",
+    },
 
-  characterCount: {
-    marginTop: 6,
-    textAlign: "right",
-    fontSize: 12,
-    color: colors.muted,
-  },
+    characterCount: {
+      marginTop: 6,
+      textAlign: "right",
+      fontSize: 12,
+      color: colors.muted,
+    },
 
-  button: {
-    marginTop: 28,
-    height: 58,
-    borderRadius: 16,
-    backgroundColor: colors.primary,
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 9,
-  },
+    button: {
+      marginTop: 28,
+      height: 58,
+      borderRadius: 16,
+      backgroundColor:
+        colors.primary,
+      flexDirection: "row",
+      justifyContent:
+        "center",
+      alignItems: "center",
+      gap: 9,
+    },
 
-  buttonDisabled: {
-    opacity: 0.55,
-  },
+    buttonDisabled: {
+      opacity: 0.55,
+    },
 
-  buttonText: {
-    color: colors.white,
-    fontSize: 17,
-    fontWeight: "900",
-  },
-});
+    buttonText: {
+      color: colors.white,
+      fontSize: 17,
+      fontWeight: "900",
+    },
+  });

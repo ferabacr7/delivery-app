@@ -1,3 +1,5 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import { supabase } from "../lib/supabase";
 
 const DEFAULT_PROFILE_NAME = "Usuario Delivery";
@@ -73,25 +75,6 @@ export async function signUp(
     };
   }
 
-  const { error: profileError } =
-    await supabase
-      .from("profiles")
-      .insert({
-        id: data.user.id,
-        full_name:
-          normalizedFullName,
-        phone:
-          normalizedPhone ||
-          null,
-      });
-
-  if (profileError) {
-    return {
-      data,
-      error: profileError,
-    };
-  }
-
   return {
     data,
     error: null,
@@ -102,15 +85,47 @@ export async function signIn(
   email: string,
   password: string,
 ) {
+  const normalizedEmail =
+    email.trim().toLowerCase();
+
   return await supabase.auth
     .signInWithPassword({
-      email,
+      email: normalizedEmail,
       password,
     });
 }
 
 export async function signOut() {
   return await supabase.auth.signOut();
+}
+
+export async function clearLocalSession() {
+  try {
+    await supabase.auth.signOut({
+      scope: "local",
+    });
+  } catch (error) {
+    console.warn(
+      "LOCAL SIGN OUT ERROR:",
+      error,
+    );
+  }
+
+  const keys =
+    await AsyncStorage.getAllKeys();
+
+  const supabaseAuthKeys =
+    keys.filter(
+      (key) =>
+        key.startsWith("sb-") &&
+        key.endsWith("-auth-token"),
+    );
+
+  if (supabaseAuthKeys.length > 0) {
+    await AsyncStorage.multiRemove(
+      supabaseAuthKeys,
+    );
+  }
 }
 
 export async function getCurrentUser() {
@@ -270,6 +285,31 @@ export async function updateMyEmail(
   return result;
 }
 
+export async function requestPasswordReset(
+  email: string,
+) {
+  const normalizedEmail =
+    email.trim().toLowerCase();
+
+  if (!normalizedEmail) {
+    return {
+      data: null,
+      error: new Error(
+        "El correo es obligatorio.",
+      ),
+    };
+  }
+
+  return await supabase.auth
+    .resetPasswordForEmail(
+      normalizedEmail,
+      {
+        redirectTo:
+          "deliveryapp://reset-password",
+      },
+    );
+}
+
 export async function updateMyPassword(
   password: string,
 ) {
@@ -317,4 +357,83 @@ export async function verifyCurrentPassword(
         userData.user.email,
       password,
     });
+}
+
+export async function deleteMyAccount() {
+  const {
+    data: sessionData,
+    error: sessionError,
+  } = await supabase.auth.getSession();
+
+  if (
+    sessionError ||
+    !sessionData.session
+  ) {
+    return {
+      data: null,
+      error:
+        sessionError ??
+        new Error(
+          "No authenticated session found",
+        ),
+    };
+  }
+
+  const {
+    data,
+    error,
+  } =
+    await supabase.functions.invoke(
+      "delete-account",
+      {
+        method: "POST",
+      },
+    );
+
+  if (error) {
+    let responseData:
+      | { error?: string }
+      | null = null;
+
+    try {
+      const context =
+        (
+          error as {
+            context?: Response;
+          }
+        ).context;
+
+      if (context) {
+        responseData =
+          await context.json();
+      }
+    } catch (contextError) {
+      console.error(
+        "DELETE ACCOUNT ERROR RESPONSE:",
+        contextError,
+      );
+    }
+
+    return {
+      data: responseData,
+      error,
+    };
+  }
+
+  if (!data?.success) {
+    return {
+      data,
+      error: new Error(
+        data?.error ??
+          "Unable to delete account",
+      ),
+    };
+  }
+
+  await clearLocalSession();
+
+  return {
+    data,
+    error: null,
+  };
 }

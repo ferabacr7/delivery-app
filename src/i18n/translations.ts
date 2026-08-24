@@ -89,7 +89,8 @@ export const translations = {
       errorTitle: "Ocurrió un problema",
       retry: "Intentar nuevamente",
       emptyTitle: "No tienes una dirección registrada",
-      emptyDescription: "Agrega una dirección para poder realizar tus pedidos.",
+      emptyDescription:
+        "Agrega una dirección para poder realizar tus pedidos.",
       add: "Agregar dirección",
       editAccessibility: "Editar dirección",
     },
@@ -141,7 +142,8 @@ export const translations = {
         "Compras pequeñas, cajas o electrodomésticos pequeños.",
 
       courierHeavyTitle: "Pesado (10–25 kg)",
-      courierHeavyDescription: "Cajas grandes, hieleras o sacos de alimento.",
+      courierHeavyDescription:
+        "Cajas grandes, hieleras o sacos de alimento.",
 
       courierManualReview:
         "Si el paquete supera los 25 kg o es demasiado voluminoso, la cotización requerirá revisión manual.",
@@ -161,7 +163,8 @@ export const translations = {
       foodPaymentNoDescription:
         "El repartidor deberá pagar el pedido al recogerlo.",
 
-      foodPaymentRequired: "Indique si el pedido de comida ya fue pagado.",
+      foodPaymentRequired:
+        "Indique si el pedido de comida ya fue pagado.",
 
       estimatedPurchaseValidationHelper:
         "Seleccione un monto aproximado para validar que la compra esté dentro del límite permitido.",
@@ -186,11 +189,14 @@ export const translations = {
         "Ej: Super Compro, Maxi Palí, Automercado",
 
       preferredPharmacy: "Farmacia de preferencia",
-      preferredPharmacyPlaceholder: "Ej: Farmacia La Bomba, Fischel",
+      preferredPharmacyPlaceholder:
+        "Ej: Farmacia La Bomba, Fischel",
 
-      restaurantPickupPlaceholder: "Ej: Restaurante El Tiki, Flamingo",
+      restaurantPickupPlaceholder:
+        "Ej: Restaurante El Tiki, Flamingo",
 
-      messagingPickupPlaceholder: "Ej: Hotel, comercio, casa o punto de retiro",
+      messagingPickupPlaceholder:
+        "Ej: Hotel, comercio, casa o punto de retiro",
 
       pickupLocationRequired: "Indica el lugar de retiro.",
     },
@@ -223,7 +229,8 @@ export const translations = {
       currentStatus: "Estado actual",
 
       quoteAcceptedTitle: "Cotización aceptada",
-      quoteAcceptedMessage: "Tu pedido fue aceptado correctamente.",
+      quoteAcceptedMessage:
+        "Tu pedido fue aceptado correctamente.",
       quoteRejectedTitle: "Cotización rechazada",
       quoteRejectedMessage: "Rechazaste esta cotización.",
 
@@ -234,8 +241,10 @@ export const translations = {
       trackingTitle: "Seguimiento de entrega",
       trackingDelivered: "Tu pedido fue entregado",
       trackingLive: "Ubicación actualizada en tiempo real",
-      trackingWaiting: "Disponible cuando el motorizado inicie la entrega",
-      trackingUnavailable: "Seguimiento no disponible para este pedido",
+      trackingWaiting:
+        "Disponible cuando el motorizado inicie la entrega",
+      trackingUnavailable:
+        "Seguimiento no disponible para este pedido",
       updatedRecently: "Actualizado recientemente",
       notAvailable: "Aún no disponible",
 
@@ -246,12 +255,15 @@ export const translations = {
       yourAddress: "Tu dirección",
 
       cancelOrder: "Cancelar pedido",
-      cancelOrderConfirm: "¿Seguro que deseas cancelar este pedido?",
+      cancelOrderConfirm:
+        "¿Seguro que deseas cancelar este pedido?",
       cancelOrderYes: "Sí, cancelar",
       cancelOrderErrorTitle: "No se pudo cancelar",
       cancelOrderSuccessTitle: "Pedido cancelado",
-      cancelOrderSuccessMessage: "Tu pedido fue cancelado correctamente.",
-      cancelOrderErrorMessage: "No se pudo cancelar el pedido.",
+      cancelOrderSuccessMessage:
+        "Tu pedido fue cancelado correctamente.",
+      cancelOrderErrorMessage:
+        "No se pudo cancelar el pedido.",
       contactSupport: "Contactar a Servicio al Cliente",
 
       estimatedArrival: "Llegada estimada",
@@ -273,6 +285,7 @@ export const translations = {
       paymentStatusLabel: "Estado de pago de la compra",
       estimatedPurchaseAmount: "Monto estimado de la compra",
       cash: "Efectivo",
+      cashAmount: "Paga con",
 
       // Detalle del monto de compra
       purchaseDetail:
@@ -316,7 +329,8 @@ export const translations = {
 
       detectingLocation: "Detectando ubicación...",
 
-      noLocationDetected: "Todavía no se ha detectado una ubicación.",
+      noLocationDetected:
+        "Todavía no se ha detectado una ubicación.",
 
       detectLocation: "Detectar ubicación",
 
@@ -329,7 +343,8 @@ export const translations = {
 
       placeholderLabel: "Casa, trabajo, apartamento...",
 
-      placeholderAddress: "Ej: 200m norte del supermercado...",
+      placeholderAddress:
+        "Ej: 200m norte del supermercado...",
 
       placeholderReference:
         "Color del portón, punto de referencia, indicaciones...",
@@ -344,9 +359,11 @@ export const translations = {
 
       savedTitle: "Dirección guardada",
 
-      savedMessage: "Tu dirección fue guardada correctamente.",
+      savedMessage:
+        "Tu dirección fue guardada correctamente.",
 
-      updatedMessage: "Tu dirección fue actualizada correctamente.",
+      updatedMessage:
+        "Tu dirección fue actualizada correctamente.",
 
       locationPermissionTitle: "Permiso de ubicación",
 
@@ -358,19 +375,26 @@ export const translations = {
       addressUnavailable:
         "No fue posible obtener una dirección exacta. Se guardarán las coordenadas.",
 
-      locationError: "No fue posible obtener tu ubicación actual.",
+      locationError:
+        "No fue posible obtener tu ubicación actual.",
 
-      locationRequired: "Primero debemos detectar tu ubicación.",
+      locationRequired:
+        "Primero debemos detectar tu ubicación.",
 
-      nameRequired: "Escribe un nombre para la dirección.",
+      nameRequired:
+        "Escribe un nombre para la dirección.",
 
-      addressRequired: "Escribe la dirección de entrega.",
+      addressRequired:
+        "Escribe la dirección de entrega.",
 
-      saveError: "No se pudo guardar la dirección.",
+      saveError:
+        "No se pudo guardar la dirección.",
 
-      loadError: "No fue posible cargar la dirección.",
+      loadError:
+        "No fue posible cargar la dirección.",
 
-      notFound: "La dirección no fue encontrada.",
+      notFound:
+        "La dirección no fue encontrada.",
     },
 
     common: {
@@ -382,9 +406,11 @@ export const translations = {
       address: "Dirección",
     },
 
-    movePinHelper: "Mueve el pin para ajustar la ubicación exacta.",
+    movePinHelper:
+      "Mueve el pin para ajustar la ubicación exacta.",
 
-    updatingAddress: "Actualizando dirección...",
+    updatingAddress:
+      "Actualizando dirección...",
 
     orderStatus: {
       validation: "Validando",
@@ -399,7 +425,8 @@ export const translations = {
 
     profileEdit: {
       title: "Información personal",
-      subtitle: "Actualiza tu nombre, teléfono y correo electrónico.",
+      subtitle:
+        "Actualiza tu nombre, teléfono y correo electrónico.",
       fullName: "Nombre completo",
       fullNamePlaceholder: "Ej: Fer Abarca",
       phone: "Teléfono",
@@ -414,32 +441,43 @@ export const translations = {
       nameRequired: "El nombre es obligatorio.",
       emailRequired: "El correo es obligatorio.",
       savedTitle: "Perfil actualizado",
-      savedMessage: "Tus datos fueron actualizados correctamente.",
+      savedMessage:
+        "Tus datos fueron actualizados correctamente.",
       emailConfirmationMessage:
         "Tus datos fueron actualizados. Revisa tu correo para confirmar el cambio de email si Supabase lo solicita.",
-      saveError: "No se pudieron guardar los cambios.",
+      saveError:
+        "No se pudieron guardar los cambios.",
     },
 
     passwordChange: {
       title: "Cambiar contraseña",
-      subtitle: "Crea una nueva contraseña para tu cuenta.",
+      subtitle:
+        "Crea una nueva contraseña para tu cuenta.",
       newPassword: "Nueva contraseña",
       newPasswordPlaceholder: "Mínimo 6 caracteres",
       confirmPassword: "Confirmar contraseña",
-      confirmPasswordPlaceholder: "Escribe la contraseña nuevamente",
+      confirmPasswordPlaceholder:
+        "Escribe la contraseña nuevamente",
       securityNotice:
         "Tu contraseña se actualiza directamente mediante Supabase Auth y no se guarda dentro de ORBIT.",
       button: "Actualizar contraseña",
       passwordRequired: "Escribe una nueva contraseña.",
-      passwordLength: "La contraseña debe tener al menos 6 caracteres.",
-      passwordMismatch: "Las contraseñas no coinciden.",
+      passwordLength:
+        "La contraseña debe tener al menos 6 caracteres.",
+      passwordMismatch:
+        "Las contraseñas no coinciden.",
       successTitle: "Contraseña actualizada",
-      successMessage: "Tu contraseña fue actualizada correctamente.",
-      saveError: "No se pudo actualizar la contraseña.",
+      successMessage:
+        "Tu contraseña fue actualizada correctamente.",
+      saveError:
+        "No se pudo actualizar la contraseña.",
       currentPassword: "Contraseña actual",
-      currentPasswordPlaceholder: "Escribe tu contraseña actual",
-      currentPasswordRequired: "Escribe tu contraseña actual.",
-      currentPasswordInvalid: "La contraseña actual no es correcta.",
+      currentPasswordPlaceholder:
+        "Escribe tu contraseña actual",
+      currentPasswordRequired:
+        "Escribe tu contraseña actual.",
+      currentPasswordInvalid:
+        "La contraseña actual no es correcta.",
       samePassword:
         "La nueva contraseña debe ser diferente a la contraseña actual.",
     },
@@ -486,7 +524,8 @@ export const translations = {
       password: "Password",
       confirmPassword: "Confirm Password",
       button: "Create Account",
-      subtitle: "Register to place orders and track your deliveries.",
+      subtitle:
+        "Register to place orders and track your deliveries.",
       requiredTitle: "Required Fields",
       requiredMessage: "Please enter email and password.",
       errorTitle: "Registration Error",
@@ -534,7 +573,8 @@ export const translations = {
       errorTitle: "Something went wrong",
       retry: "Try Again",
       emptyTitle: "You do not have a saved address",
-      emptyDescription: "Add an address so you can place your orders.",
+      emptyDescription:
+        "Add an address so you can place your orders.",
       add: "Add Address",
       editAccessibility: "Edit address",
     },
@@ -557,7 +597,8 @@ export const translations = {
       successMessage: "Your order was submitted successfully.",
       errorTitle: "Error",
       errorMessage: "The order could not be created.",
-      subtitle: "Tell us what you need and we will take care of it.",
+      subtitle:
+        "Tell us what you need and we will take care of it.",
       question: "What do you need?",
       required: "Please enter your order.",
       optionalDetails: "Optional Details",
@@ -567,8 +608,10 @@ export const translations = {
       creating: "Creating...",
       selectAddress: "Select an address.",
       selectService: "Select a service type.",
-      moreDetail: "Please provide more details about the order.",
-      noAddresses: "You do not have any saved addresses yet.",
+      moreDetail:
+        "Please provide more details about the order.",
+      noAddresses:
+        "You do not have any saved addresses yet.",
       serviceType: "Service Type",
       supermarket: "Supermarket",
       pharmacy: "Pharmacy",
@@ -586,7 +629,8 @@ export const translations = {
         "Small grocery orders, boxes, or small appliances.",
 
       courierHeavyTitle: "Heavy (22–55 lb)",
-      courierHeavyDescription: "Large boxes, coolers, or pet food bags.",
+      courierHeavyDescription:
+        "Large boxes, coolers, or pet food bags.",
 
       courierManualReview:
         "If the package weighs more than 55 lb or is too bulky, the quote will require manual review.",
@@ -597,16 +641,20 @@ export const translations = {
       estimatedPurchaseHelper:
         "Move the slider to select an approximate amount. The final amount will be confirmed using the store receipt.",
 
-      estimatedPurchaseAccessibility: "Estimated purchase amount",
+      estimatedPurchaseAccessibility:
+        "Estimated purchase amount",
 
-      foodPaymentTitle: "Has the food order already been paid?",
+      foodPaymentTitle:
+        "Has the food order already been paid?",
 
-      foodPaymentYes: "Yes, it has already been paid",
+      foodPaymentYes:
+        "Yes, it has already been paid",
 
       foodPaymentYesDescription:
         "The driver will only pick up and deliver the order.",
 
-      foodPaymentNo: "No, it still needs to be paid",
+      foodPaymentNo:
+        "No, it still needs to be paid",
 
       foodPaymentNoDescription:
         "The driver will need to pay for the order when picking it up.",
@@ -637,14 +685,17 @@ export const translations = {
         "Example: Super Compro, Maxi Palí, Automercado",
 
       preferredPharmacy: "Preferred pharmacy",
-      preferredPharmacyPlaceholder: "Example: Farmacia La Bomba, Fischel",
+      preferredPharmacyPlaceholder:
+        "Example: Farmacia La Bomba, Fischel",
 
-      restaurantPickupPlaceholder: "Example: El Tiki Restaurant, Flamingo",
+      restaurantPickupPlaceholder:
+        "Example: El Tiki Restaurant, Flamingo",
 
       messagingPickupPlaceholder:
         "Example: Hotel, store, house, or pickup point",
 
-      pickupLocationRequired: "Please enter the pickup location.",
+      pickupLocationRequired:
+        "Please enter the pickup location.",
     },
 
     orderDetail: {
@@ -675,7 +726,8 @@ export const translations = {
       currentStatus: "Current Status",
 
       quoteAcceptedTitle: "Quote Accepted",
-      quoteAcceptedMessage: "Your order was accepted successfully.",
+      quoteAcceptedMessage:
+        "Your order was accepted successfully.",
       quoteRejectedTitle: "Quote Rejected",
       quoteRejectedMessage: "You rejected this quote.",
 
@@ -686,8 +738,10 @@ export const translations = {
       trackingTitle: "Delivery tracking",
       trackingDelivered: "Your order was delivered",
       trackingLive: "Location updates in real time",
-      trackingWaiting: "Available when the driver starts the delivery",
-      trackingUnavailable: "Tracking is unavailable for this order",
+      trackingWaiting:
+        "Available when the driver starts the delivery",
+      trackingUnavailable:
+        "Tracking is unavailable for this order",
       updatedRecently: "Updated recently",
       notAvailable: "Not available yet",
 
@@ -698,12 +752,15 @@ export const translations = {
       yourAddress: "Your address",
 
       cancelOrder: "Cancel order",
-      cancelOrderConfirm: "Are you sure you want to cancel this order?",
+      cancelOrderConfirm:
+        "Are you sure you want to cancel this order?",
       cancelOrderYes: "Yes, cancel",
       cancelOrderErrorTitle: "Unable to cancel",
       cancelOrderSuccessTitle: "Order cancelled",
-      cancelOrderSuccessMessage: "Your order was cancelled successfully.",
-      cancelOrderErrorMessage: "The order could not be cancelled.",
+      cancelOrderSuccessMessage:
+        "Your order was cancelled successfully.",
+      cancelOrderErrorMessage:
+        "The order could not be cancelled.",
       contactSupport: "Contact Customer Support",
 
       estimatedArrival: "Estimated arrival",
@@ -725,6 +782,7 @@ export const translations = {
       paymentStatusLabel: "Purchase payment status",
       estimatedPurchaseAmount: "Estimated purchase amount",
       cash: "Cash",
+      cashAmount: "Paying with",
 
       // Purchase detail
       purchaseDetail:
@@ -762,13 +820,16 @@ export const translations = {
 
       detectedLocation: "Detected Location",
 
-      locationReady: "Your location has been successfully detected.",
+      locationReady:
+        "Your location has been successfully detected.",
 
-      locationWaiting: "Waiting to detect your location.",
+      locationWaiting:
+        "Waiting to detect your location.",
 
       detectingLocation: "Detecting location...",
 
-      noLocationDetected: "No location has been detected yet.",
+      noLocationDetected:
+        "No location has been detected yet.",
 
       detectLocation: "Detect Location",
 
@@ -781,7 +842,8 @@ export const translations = {
 
       placeholderLabel: "Home, Work, Apartment...",
 
-      placeholderAddress: "Example: 200m north of the supermarket...",
+      placeholderAddress:
+        "Example: 200m north of the supermarket...",
 
       placeholderReference:
         "Gate color, nearby landmark, delivery instructions...",
@@ -796,9 +858,11 @@ export const translations = {
 
       savedTitle: "Address Saved",
 
-      savedMessage: "Your address has been saved successfully.",
+      savedMessage:
+        "Your address has been saved successfully.",
 
-      updatedMessage: "Your address has been updated successfully.",
+      updatedMessage:
+        "Your address has been updated successfully.",
 
       locationPermissionTitle: "Location Permission",
 
@@ -810,17 +874,23 @@ export const translations = {
       addressUnavailable:
         "We couldn't determine an exact address. Your coordinates will be saved instead.",
 
-      locationError: "We couldn't retrieve your current location.",
+      locationError:
+        "We couldn't retrieve your current location.",
 
-      locationRequired: "Please detect your location first.",
+      locationRequired:
+        "Please detect your location first.",
 
-      nameRequired: "Please enter a name for this address.",
+      nameRequired:
+        "Please enter a name for this address.",
 
-      addressRequired: "Please enter your delivery address.",
+      addressRequired:
+        "Please enter the delivery address.",
 
-      saveError: "Unable to save the address.",
+      saveError:
+        "Unable to save the address.",
 
-      loadError: "Unable to load the address.",
+      loadError:
+        "Unable to load the address.",
 
       notFound: "Address not found.",
     },
@@ -834,7 +904,8 @@ export const translations = {
       address: "Address",
     },
 
-    movePinHelper: "Move the pin to adjust the exact location.",
+    movePinHelper:
+      "Move the pin to adjust the exact location.",
 
     updatingAddress: "Updating address...",
 
@@ -851,7 +922,8 @@ export const translations = {
 
     profileEdit: {
       title: "Personal information",
-      subtitle: "Update your name, phone number, and email address.",
+      subtitle:
+        "Update your name, phone number, and email address.",
       fullName: "Full name",
       fullNamePlaceholder: "Example: Fer Abarca",
       phone: "Phone number",
@@ -866,36 +938,48 @@ export const translations = {
       nameRequired: "Your name is required.",
       emailRequired: "Your email is required.",
       savedTitle: "Profile updated",
-      savedMessage: "Your information was updated successfully.",
+      savedMessage:
+        "Your information was updated successfully.",
       emailConfirmationMessage:
         "Your information was updated. Check your email to confirm the email change if Supabase requires it.",
-      saveError: "The changes could not be saved.",
+      saveError:
+        "The changes could not be saved.",
     },
 
     passwordChange: {
       title: "Change password",
-      subtitle: "Create a new password for your account.",
+      subtitle:
+        "Create a new password for your account.",
       newPassword: "New password",
       newPasswordPlaceholder: "Minimum 6 characters",
       confirmPassword: "Confirm password",
-      confirmPasswordPlaceholder: "Enter the password again",
+      confirmPasswordPlaceholder:
+        "Enter the password again",
       securityNotice:
         "Your password is updated directly through Supabase Auth and is never stored inside ORBIT.",
       button: "Update password",
       passwordRequired: "Enter a new password.",
-      passwordLength: "The password must be at least 6 characters.",
-      passwordMismatch: "The passwords do not match.",
+      passwordLength:
+        "The password must be at least 6 characters.",
+      passwordMismatch:
+        "The passwords do not match.",
       successTitle: "Password updated",
-      successMessage: "Your password was updated successfully.",
-      saveError: "The password could not be updated.",
+      successMessage:
+        "Your password was updated successfully.",
+      saveError:
+        "The password could not be updated.",
       currentPassword: "Current password",
-      currentPasswordPlaceholder: "Enter your current password",
-      currentPasswordRequired: "Enter your current password.",
-      currentPasswordInvalid: "Your current password is incorrect.",
+      currentPasswordPlaceholder:
+        "Enter your current password",
+      currentPasswordRequired:
+        "Enter your current password.",
+      currentPasswordInvalid:
+        "Your current password is incorrect.",
       samePassword:
         "Your new password must be different from your current password.",
     },
   },
 };
 
-export type Language = keyof typeof translations;
+export type Language =
+  keyof typeof translations;

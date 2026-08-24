@@ -18,6 +18,9 @@ type OrderLike = {
   courier_weight?: string | null;
   payment_method?: "SINPE" | "CASH" | null;
 
+  cash_payment_amount?: number | string | null;
+  cash_payment_currency?: SupportedCurrency | null;
+
   /*
    * Este monto es únicamente una referencia operativa
    * para validar que la compra esté dentro del límite permitido.
@@ -98,8 +101,11 @@ type BuildQuoteViewModelInput = {
  * - badge
  * - mensaje operativo
  */
-function normalizeOrderStatus(status?: string | null): QuoteStatusType {
-  const value = status?.trim().toUpperCase();
+function normalizeOrderStatus(
+  status?: string | null,
+): QuoteStatusType {
+  const value =
+    status?.trim().toUpperCase();
 
   switch (value) {
     case "VALIDATION":
@@ -141,8 +147,11 @@ function normalizeOrderStatus(status?: string | null): QuoteStatusType {
  * - rechazar cotización
  * - cotización vencida
  */
-function normalizeQuoteStatus(status?: string | null): QuoteStatusType {
-  const value = status?.trim().toUpperCase();
+function normalizeQuoteStatus(
+  status?: string | null,
+): QuoteStatusType {
+  const value =
+    status?.trim().toUpperCase();
 
   switch (value) {
     case "PENDING":
@@ -162,7 +171,9 @@ function normalizeQuoteStatus(status?: string | null): QuoteStatusType {
   }
 }
 
-function normalizeServiceType(serviceType?: string | null) {
+function normalizeServiceType(
+  serviceType?: string | null,
+) {
   if (!serviceType) {
     return "UNKNOWN";
   }
@@ -171,36 +182,61 @@ function normalizeServiceType(serviceType?: string | null) {
     .trim()
     .toUpperCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
+    .replace(
+      /[\u0300-\u036f]/g,
+      "",
+    );
 
-  const serviceMap: Record<string, string> = {
-    GENERAL_MESSAGING: "GENERAL_MESSAGING",
-    MENSAJERIA: "GENERAL_MESSAGING",
+  const serviceMap: Record<
+    string,
+    string
+  > = {
+    GENERAL_MESSAGING:
+      "GENERAL_MESSAGING",
+    MENSAJERIA:
+      "GENERAL_MESSAGING",
 
-    SUPERMARKET: "SUPERMARKET",
-    SUPERMERCADO: "SUPERMARKET",
+    SUPERMARKET:
+      "SUPERMARKET",
+    SUPERMERCADO:
+      "SUPERMARKET",
 
-    PHARMACY: "PHARMACY",
-    FARMACIA: "PHARMACY",
+    PHARMACY:
+      "PHARMACY",
+    FARMACIA:
+      "PHARMACY",
 
-    FOOD_PICKUP: "FOOD_PICKUP",
-    FOOD: "FOOD_PICKUP",
-    COMIDA: "FOOD_PICKUP",
-    RECOGER_COMIDA: "FOOD_PICKUP",
-    "RECOGER COMIDA": "FOOD_PICKUP",
-    PICKUP_FOOD: "FOOD_PICKUP",
+    FOOD_PICKUP:
+      "FOOD_PICKUP",
+    FOOD:
+      "FOOD_PICKUP",
+    COMIDA:
+      "FOOD_PICKUP",
+    RECOGER_COMIDA:
+      "FOOD_PICKUP",
+    "RECOGER COMIDA":
+      "FOOD_PICKUP",
+    PICKUP_FOOD:
+      "FOOD_PICKUP",
 
     PACKAGE: "PACKAGE",
-    ENCOMIENDA: "PACKAGE",
+    ENCOMIENDA:
+      "PACKAGE",
 
     ERRAND: "ERRAND",
-    MANDADO: "ERRAND",
+    MANDADO:
+      "ERRAND",
   };
 
-  return serviceMap[normalized] ?? "UNKNOWN";
+  return (
+    serviceMap[normalized] ??
+    "UNKNOWN"
+  );
 }
 
-function getStatusTone(status: QuoteStatusType): QuoteStatusTone {
+function getStatusTone(
+  status: QuoteStatusType,
+): QuoteStatusTone {
   switch (status) {
     case "accepted":
     case "delivered":
@@ -226,21 +262,44 @@ function getStatusTone(status: QuoteStatusType): QuoteStatusTone {
 }
 
 function formatMoney(
-  value: number | string | null | undefined,
-  currency: SupportedCurrency,
+  value:
+    | number
+    | string
+    | null
+    | undefined,
+  currency:
+    SupportedCurrency,
 ): string {
-  const numericValue = Number(value ?? 0);
+  const numericValue =
+    Number(value ?? 0);
 
-  const safeValue = Number.isFinite(numericValue) ? numericValue : 0;
+  const safeValue =
+    Number.isFinite(
+      numericValue,
+    )
+      ? numericValue
+      : 0;
 
-  const locale = currency === "USD" ? "en-US" : "es-CR";
+  const locale =
+    currency === "USD"
+      ? "en-US"
+      : "es-CR";
 
-  return new Intl.NumberFormat(locale, {
-    style: "currency",
-    currency,
-    minimumFractionDigits: currency === "USD" ? 2 : 0,
-    maximumFractionDigits: currency === "USD" ? 2 : 0,
-  }).format(safeValue);
+  return new Intl.NumberFormat(
+    locale,
+    {
+      style: "currency",
+      currency,
+      minimumFractionDigits:
+        currency === "USD"
+          ? 2
+          : 0,
+      maximumFractionDigits:
+        currency === "USD"
+          ? 2
+          : 0,
+    },
+  ).format(safeValue);
 }
 
 /*
@@ -251,8 +310,14 @@ function formatMoney(
  * 6.50 → 6.50
  * 6.86 → 7.00
  */
-function roundUsdAmount(amount: number) {
-  return Math.ceil(amount * 2) / 2;
+function roundUsdAmount(
+  amount: number,
+) {
+  return (
+    Math.ceil(
+      amount * 2,
+    ) / 2
+  );
 }
 
 /*
@@ -266,14 +331,26 @@ function convertMoneyForDisplay({
   displayCurrency,
   exchangeRate,
 }: {
-  value: number | string | null | undefined;
-  storedCurrency: SupportedCurrency;
-  displayCurrency: SupportedCurrency;
-  exchangeRate: number | null;
+  value:
+    | number
+    | string
+    | null
+    | undefined;
+  storedCurrency:
+    SupportedCurrency;
+  displayCurrency:
+    SupportedCurrency;
+  exchangeRate:
+    number | null;
 }): number {
-  const numericValue = Number(value ?? 0);
+  const numericValue =
+    Number(value ?? 0);
 
-  if (!Number.isFinite(numericValue)) {
+  if (
+    !Number.isFinite(
+      numericValue,
+    )
+  ) {
     return 0;
   }
 
@@ -281,20 +358,33 @@ function convertMoneyForDisplay({
    * Si la moneda guardada coincide con la moneda
    * que debe mostrarse, no se realiza conversión.
    */
-  if (storedCurrency === displayCurrency) {
+  if (
+    storedCurrency ===
+    displayCurrency
+  ) {
     return numericValue;
   }
 
   const validExchangeRate =
-    exchangeRate !== null && Number.isFinite(exchangeRate) && exchangeRate > 0;
-
-  if (!validExchangeRate) {
-    console.warn("QUOTE PRESENTATION: Invalid exchange rate.", {
-      storedCurrency,
-      displayCurrency,
+    exchangeRate !== null &&
+    Number.isFinite(
       exchangeRate,
-      value: numericValue,
-    });
+    ) &&
+    exchangeRate > 0;
+
+  if (
+    !validExchangeRate
+  ) {
+    console.warn(
+      "QUOTE PRESENTATION: Invalid exchange rate.",
+      {
+        storedCurrency,
+        displayCurrency,
+        exchangeRate,
+        value:
+          numericValue,
+      },
+    );
 
     /*
      * No cambiamos solamente el símbolo porque eso
@@ -306,50 +396,86 @@ function convertMoneyForDisplay({
   /*
    * CRC → USD
    */
-  if (storedCurrency === "CRC" && displayCurrency === "USD") {
-    return roundUsdAmount(numericValue / exchangeRate);
+  if (
+    storedCurrency ===
+      "CRC" &&
+    displayCurrency ===
+      "USD"
+  ) {
+    return roundUsdAmount(
+      numericValue /
+        exchangeRate,
+    );
   }
 
   /*
    * USD → CRC
    */
-  if (storedCurrency === "USD" && displayCurrency === "CRC") {
-    return Math.round(numericValue * exchangeRate);
+  if (
+    storedCurrency ===
+      "USD" &&
+    displayCurrency ===
+      "CRC"
+  ) {
+    return Math.round(
+      numericValue *
+        exchangeRate,
+    );
   }
 
   return numericValue;
 }
 
 function buildMapUrls(
-  latitude?: number | string | null,
-  longitude?: number | string | null,
+  latitude?:
+    | number
+    | string
+    | null,
+  longitude?:
+    | number
+    | string
+    | null,
 ) {
   if (
     latitude === null ||
-    latitude === undefined ||
+    latitude ===
+      undefined ||
     longitude === null ||
-    longitude === undefined
+    longitude ===
+      undefined
   ) {
     return {
-      googleMapsUrl: undefined,
-      wazeUrl: undefined,
+      googleMapsUrl:
+        undefined,
+      wazeUrl:
+        undefined,
     };
   }
 
-  const lat = Number(latitude);
-  const lng = Number(longitude);
+  const lat =
+    Number(latitude);
 
-  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+  const lng =
+    Number(longitude);
+
+  if (
+    !Number.isFinite(lat) ||
+    !Number.isFinite(lng)
+  ) {
     return {
-      googleMapsUrl: undefined,
-      wazeUrl: undefined,
+      googleMapsUrl:
+        undefined,
+      wazeUrl:
+        undefined,
     };
   }
 
   return {
-    googleMapsUrl: `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`,
+    googleMapsUrl:
+      `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`,
 
-    wazeUrl: `https://www.waze.com/ul?ll=${lat},${lng}&navigate=yes`,
+    wazeUrl:
+      `https://www.waze.com/ul?ll=${lat},${lng}&navigate=yes`,
   };
 }
 
@@ -359,34 +485,58 @@ export function buildQuoteViewModel({
   language = "es",
   exchangeRate = null,
 }: BuildQuoteViewModelInput): QuoteViewModel {
-  const labels = quoteLabels[language];
+  const labels =
+    quoteLabels[language];
 
-  const orderStatusType = normalizeOrderStatus(order.status);
+  const orderStatusType =
+    normalizeOrderStatus(
+      order.status,
+    );
 
-  const quoteStatusType = normalizeQuoteStatus(quote?.status);
+  const quoteStatusType =
+    normalizeQuoteStatus(
+      quote?.status,
+    );
 
   const presentationStatusType =
-    orderStatusType !== "unknown" ? orderStatusType : quoteStatusType;
+    orderStatusType !==
+    "unknown"
+      ? orderStatusType
+      : quoteStatusType;
 
-  const statusTone = getStatusTone(presentationStatusType);
+  const statusTone =
+    getStatusTone(
+      presentationStatusType,
+    );
 
-  const normalizedServiceType = normalizeServiceType(order.service_type);
+  const normalizedServiceType =
+    normalizeServiceType(
+      order.service_type,
+    );
 
-  const mapUrls = buildMapUrls(
-    order.addresses?.latitude,
-    order.addresses?.longitude,
-  );
+  const mapUrls =
+    buildMapUrls(
+      order.addresses
+        ?.latitude,
+      order.addresses
+        ?.longitude,
+    );
 
   const serviceTypeLabel =
     labels.serviceTypes[
       normalizedServiceType as keyof typeof labels.serviceTypes
-    ] ?? labels.unknownServiceType;
+    ] ??
+    labels.unknownServiceType;
 
   /*
    * Moneda en la que la cotización fue guardada.
    */
-  const storedQuoteCurrency: SupportedCurrency =
-    quote?.currency === "USD" ? "USD" : "CRC";
+  const storedQuoteCurrency:
+    SupportedCurrency =
+      quote?.currency ===
+      "USD"
+        ? "USD"
+        : "CRC";
 
   /*
    * Moneda que debe mostrarse según el idioma actual.
@@ -394,27 +544,36 @@ export function buildQuoteViewModel({
    * Español → CRC
    * Inglés  → USD
    */
-  const displayCurrency: SupportedCurrency = language === "en" ? "USD" : "CRC";
+  const displayCurrency:
+    SupportedCurrency =
+      language === "en"
+        ? "USD"
+        : "CRC";
 
-  /*
-   * Conversión visual del precio del servicio.
-   */
   /**
    * Comprueba si existe un monto base CRC válido.
    */
   function getBaseCrcAmount(
-    value: number | string | null | undefined,
+    value:
+      | number
+      | string
+      | null
+      | undefined,
   ): number | null {
     if (
       value === null ||
-      value === undefined
+      value ===
+        undefined
     ) {
       return null;
     }
 
-    const numericValue = Number(value);
+    const numericValue =
+      Number(value);
 
-    return Number.isFinite(numericValue)
+    return Number.isFinite(
+      numericValue,
+    )
       ? numericValue
       : null;
   }
@@ -434,277 +593,443 @@ export function buildQuoteViewModel({
       quote?.total_crc,
     );
 
-  /**
-   * Español:
-   *
-   * Si tenemos los valores oficiales CRC guardados,
-   * los utilizamos directamente.
-   *
-   * Esto evita:
-   *
-   * $8 × 505 = ₡4.040
-   *
-   * cuando el precio original era ₡4.000.
-   *
-   * Cotizaciones antiguas que todavía no tienen
-   * *_crc continúan utilizando la conversión anterior
-   * como fallback.
-   */
   const displaySubtotal =
-    displayCurrency === "CRC" &&
-    baseSubtotalCrc !== null
+    displayCurrency ===
+      "CRC" &&
+    baseSubtotalCrc !==
+      null
       ? baseSubtotalCrc
-      : convertMoneyForDisplay({
-          value: quote?.subtotal,
-          storedCurrency:
-            storedQuoteCurrency,
-          displayCurrency,
-          exchangeRate,
-        });
+      : convertMoneyForDisplay(
+          {
+            value:
+              quote?.subtotal,
+            storedCurrency:
+              storedQuoteCurrency,
+            displayCurrency,
+            exchangeRate,
+          },
+        );
 
   const displayDeliveryFee =
-    displayCurrency === "CRC" &&
-    baseDeliveryFeeCrc !== null
+    displayCurrency ===
+      "CRC" &&
+    baseDeliveryFeeCrc !==
+      null
       ? baseDeliveryFeeCrc
-      : convertMoneyForDisplay({
-          value: quote?.delivery_fee,
-          storedCurrency:
-            storedQuoteCurrency,
-          displayCurrency,
-          exchangeRate,
-        });
+      : convertMoneyForDisplay(
+          {
+            value:
+              quote?.delivery_fee,
+            storedCurrency:
+              storedQuoteCurrency,
+            displayCurrency,
+            exchangeRate,
+          },
+        );
 
   const displayTotal =
-    displayCurrency === "CRC" &&
-    baseTotalCrc !== null
+    displayCurrency ===
+      "CRC" &&
+    baseTotalCrc !==
+      null
       ? baseTotalCrc
-      : convertMoneyForDisplay({
-          value: quote?.total,
-          storedCurrency:
-            storedQuoteCurrency,
-          displayCurrency,
-          exchangeRate,
-        });
+      : convertMoneyForDisplay(
+          {
+            value:
+              quote?.total,
+            storedCurrency:
+              storedQuoteCurrency,
+            displayCurrency,
+            exchangeRate,
+          },
+        );
 
-  const isFoodPickup = normalizedServiceType === "FOOD_PICKUP";
+  const isFoodPickup =
+    normalizedServiceType ===
+    "FOOD_PICKUP";
 
-  const isCourier = normalizedServiceType === "GENERAL_MESSAGING";
+  const isCourier =
+    normalizedServiceType ===
+    "GENERAL_MESSAGING";
 
   const requiresPurchaseAmount =
-    normalizedServiceType === "SUPERMARKET" ||
-    normalizedServiceType === "PHARMACY" ||
-    (isFoodPickup && order.food_order_paid === false);
+    normalizedServiceType ===
+      "SUPERMARKET" ||
+    normalizedServiceType ===
+      "PHARMACY" ||
+    (isFoodPickup &&
+      order.food_order_paid ===
+        false);
 
   const hasEstimatedPurchaseAmount =
-    order.estimated_purchase_amount !== null &&
-    order.estimated_purchase_amount !== undefined &&
-    Number.isFinite(Number(order.estimated_purchase_amount));
+    order.estimated_purchase_amount !==
+      null &&
+    order.estimated_purchase_amount !==
+      undefined &&
+    Number.isFinite(
+      Number(
+        order.estimated_purchase_amount,
+      ),
+    );
 
-  const shouldShowPurchaseValidation = requiresPurchaseAmount || isFoodPickup;
+  const shouldShowPurchaseValidation =
+    requiresPurchaseAmount ||
+    isFoodPickup;
 
-  /*
-   * Moneda original del monto estimado.
-   *
-   * Si el campo no existe en pedidos antiguos,
-   * usamos CRC como respaldo.
-   */
-  const storedPurchaseCurrency: SupportedCurrency =
-    order.estimated_purchase_currency === "USD" ? "USD" : "CRC";
+  const storedPurchaseCurrency:
+    SupportedCurrency =
+      order.estimated_purchase_currency ===
+      "USD"
+        ? "USD"
+        : "CRC";
 
-  const displayPurchaseAmount = convertMoneyForDisplay({
-    value: order.estimated_purchase_amount,
-    storedCurrency: storedPurchaseCurrency,
-    displayCurrency,
-    exchangeRate,
-  });
+  const displayPurchaseAmount =
+    convertMoneyForDisplay({
+      value:
+        order.estimated_purchase_amount,
+      storedCurrency:
+        storedPurchaseCurrency,
+      displayCurrency,
+      exchangeRate,
+    });
 
   const purchaseAmount =
-    requiresPurchaseAmount && hasEstimatedPurchaseAmount
-      ? formatMoney(displayPurchaseAmount, displayCurrency)
+    requiresPurchaseAmount &&
+    hasEstimatedPurchaseAmount
+      ? formatMoney(
+          displayPurchaseAmount,
+          displayCurrency,
+        )
       : null;
 
-  const paymentStatus = isFoodPickup
-    ? order.food_order_paid === true
-      ? labels.foodOrderPaid
-      : order.food_order_paid === false
-        ? labels.foodOrderNotPaid
-        : null
-    : null;
+  const paymentStatus =
+    isFoodPickup
+      ? order.food_order_paid ===
+        true
+        ? labels.foodOrderPaid
+        : order.food_order_paid ===
+            false
+          ? labels.foodOrderNotPaid
+          : null
+      : null;
 
- const courierPaymentStatus = isCourier
-  ? order.courier_order_paid === true
-    ? language === "en"
-      ? "Payment completed at the store"
-      : "Pago realizado en el comercio"
-    : order.courier_order_paid === false
-      ? language === "en"
-        ? "Payment pending at the store"
-        : "Pago pendiente en el comercio"
-      : null
-  : null;
+  const courierPaymentStatus =
+    isCourier
+      ? order.courier_order_paid ===
+        true
+        ? language === "en"
+          ? "Payment completed at the store"
+          : "Pago realizado en el comercio"
+        : order.courier_order_paid ===
+            false
+          ? language === "en"
+            ? "Payment pending at the store"
+            : "Pago pendiente en el comercio"
+          : null
+      : null;
 
-  const estimatedArrival = (() => {
-    switch (presentationStatusType) {
-      case "accepted":
-        return language === "en" ? "20–30 min" : "20–30 minutos";
+  const cashPaymentAmount =
+    order.cash_payment_amount !==
+      null &&
+    order.cash_payment_amount !==
+      undefined &&
+    Number.isFinite(
+      Number(
+        order.cash_payment_amount,
+      ),
+    )
+      ? Number(
+          order.cash_payment_amount,
+        )
+      : null;
 
-      case "in_progress":
-        return language === "en" ? "15–25 min" : "15–25 minutos";
+  const cashPaymentCurrency:
+    SupportedCurrency | null =
+      order.cash_payment_currency ===
+        "USD"
+        ? "USD"
+        : order.cash_payment_currency ===
+            "CRC"
+          ? "CRC"
+          : null;
 
-      case "on_route":
-        return language === "en" ? "8–15 min" : "8–15 minutos";
+  const estimatedArrival =
+    (() => {
+      switch (
+        presentationStatusType
+      ) {
+        case "accepted":
+          return language ===
+            "en"
+            ? "20–30 min"
+            : "20–30 minutos";
 
-      case "delivered":
-        return language === "en" ? "Delivered" : "Entregado";
+        case "in_progress":
+          return language ===
+            "en"
+            ? "15–25 min"
+            : "15–25 minutos";
 
-      case "rejected":
-        return language === "en" ? "Quote rejected" : "Cotización rechazada";
+        case "on_route":
+          return language ===
+            "en"
+            ? "8–15 min"
+            : "8–15 minutos";
 
-      case "expired":
-        return language === "en" ? "Quote expired" : "Cotización vencida";
+        case "delivered":
+          return language ===
+            "en"
+            ? "Delivered"
+            : "Entregado";
 
-      case "quoted":
-        return language === "en"
-          ? "Awaiting confirmation"
-          : "Esperando confirmación";
+        case "rejected":
+          return language ===
+            "en"
+            ? "Quote rejected"
+            : "Cotización rechazada";
 
-      case "pending":
-      case "unknown":
-      default:
-        return language === "en" ? "Pending" : "Pendiente";
-    }
-  })();
+        case "expired":
+          return language ===
+            "en"
+            ? "Quote expired"
+            : "Cotización vencida";
 
-   console.warn("QUOTE PRESENTATION CURRENCY:", {
-    language,
-    storedQuoteCurrency,
-    displayCurrency,
-    storedPurchaseCurrency,
-    exchangeRate,
+        case "quoted":
+          return language ===
+            "en"
+            ? "Awaiting confirmation"
+            : "Esperando confirmación";
 
-    originalSubtotal: quote?.subtotal,
-    baseSubtotalCrc:
-      quote?.subtotal_crc,
-    displaySubtotal,
+        case "pending":
+        case "unknown":
+        default:
+          return language ===
+            "en"
+            ? "Pending"
+            : "Pendiente";
+      }
+    })();
 
-    originalDeliveryFee:
-      quote?.delivery_fee,
-    baseDeliveryFeeCrc:
-      quote?.delivery_fee_crc,
-    displayDeliveryFee,
+  console.warn(
+    "QUOTE PRESENTATION CURRENCY:",
+    {
+      language,
+      storedQuoteCurrency,
+      displayCurrency,
+      storedPurchaseCurrency,
+      exchangeRate,
 
-    originalTotal: quote?.total,
-    baseTotalCrc:
-      quote?.total_crc,
-    displayTotal,
+      originalSubtotal:
+        quote?.subtotal,
+      baseSubtotalCrc:
+        quote?.subtotal_crc,
+      displaySubtotal,
 
-    originalPurchaseAmount:
-      order.estimated_purchase_amount,
-    displayPurchaseAmount,
-  });
+      originalDeliveryFee:
+        quote?.delivery_fee,
+      baseDeliveryFeeCrc:
+        quote?.delivery_fee_crc,
+      displayDeliveryFee,
+
+      originalTotal:
+        quote?.total,
+      baseTotalCrc:
+        quote?.total_crc,
+      displayTotal,
+
+      originalPurchaseAmount:
+        order.estimated_purchase_amount,
+      displayPurchaseAmount,
+    },
+  );
 
   return {
-    orderNumber: order.id?.slice(-6).toUpperCase() ?? "------",
+    orderNumber:
+      order.id
+        ?.slice(-6)
+        .toUpperCase() ??
+      "------",
 
     header: {
-      title: labels.headerTitle,
+      title:
+        labels.headerTitle,
 
-      subtitle: labels.headerSubtitle[presentationStatusType],
+      subtitle:
+        labels.headerSubtitle[
+          presentationStatusType
+        ],
     },
 
     service: {
-      title: labels.serviceTitle,
-      typeLabel: labels.serviceType,
-      type: serviceTypeLabel,
-      description: order.description ?? "",
-      statusPrefix: labels.statusPrefix,
+      title:
+        labels.serviceTitle,
+      typeLabel:
+        labels.serviceType,
+      type:
+        serviceTypeLabel,
+      description:
+        order.description ??
+        "",
+      statusPrefix:
+        labels.statusPrefix,
 
-      statusLabel: labels.status[presentationStatusType],
+      statusLabel:
+        labels.status[
+          presentationStatusType
+        ],
 
-      statusType: presentationStatusType,
+      statusType:
+        presentationStatusType,
       statusTone,
     },
 
     orderDetails: {
-      pickupLocation: order.pickup_location?.trim() || null,
-      courierWeight: order.courier_weight?.trim() || null,
-      paymentMethod: order.payment_method ?? null,
+      pickupLocation:
+        order.pickup_location
+          ?.trim() ||
+        null,
+
+      courierWeight:
+        order.courier_weight
+          ?.trim() ||
+        null,
+
+      paymentMethod:
+        order.payment_method ??
+        null,
+
+      cashPaymentAmount,
+
+      cashPaymentCurrency,
+
       courierPaymentStatus,
     },
 
     location: {
-      title: labels.locationTitle,
+      title:
+        labels.locationTitle,
 
-      address: order.addresses?.address_line ?? "",
+      address:
+        order.addresses
+          ?.address_line ??
+        "",
 
-      reference: order.addresses?.reference ?? labels.noReference,
+      reference:
+        order.addresses
+          ?.reference ??
+        labels.noReference,
 
       latitude:
-        order.addresses?.latitude !== null &&
-        order.addresses?.latitude !== undefined &&
-        Number.isFinite(Number(order.addresses.latitude))
-          ? Number(order.addresses.latitude)
+        order.addresses
+          ?.latitude !==
+          null &&
+        order.addresses
+          ?.latitude !==
+          undefined &&
+        Number.isFinite(
+          Number(
+            order.addresses
+              .latitude,
+          ),
+        )
+          ? Number(
+              order.addresses
+                .latitude,
+            )
           : null,
 
       longitude:
-        order.addresses?.longitude !== null &&
-        order.addresses?.longitude !== undefined &&
-        Number.isFinite(Number(order.addresses.longitude))
-          ? Number(order.addresses.longitude)
+        order.addresses
+          ?.longitude !==
+          null &&
+        order.addresses
+          ?.longitude !==
+          undefined &&
+        Number.isFinite(
+          Number(
+            order.addresses
+              .longitude,
+          ),
+        )
+          ? Number(
+              order.addresses
+                .longitude,
+            )
           : null,
 
-      googleMapsUrl: mapUrls.googleMapsUrl,
+      googleMapsUrl:
+        mapUrls.googleMapsUrl,
 
-      wazeUrl: mapUrls.wazeUrl,
+      wazeUrl:
+        mapUrls.wazeUrl,
     },
 
     tracking: {
       estimatedArrival,
 
       estimatedArrivalLabel:
-        language === "en" ? "Estimated arrival" : "Llegada estimada",
+        language === "en"
+          ? "Estimated arrival"
+          : "Llegada estimada",
 
       lastUpdate: "",
 
       lastUpdateLabel:
-        language === "en" ? "Last update" : "Última actualización",
+        language === "en"
+          ? "Last update"
+          : "Última actualización",
     },
 
-    /*
-     * Esta sección contiene exclusivamente
-     * el precio del servicio de entrega.
-     *
-     * estimated_purchase_amount nunca se suma
-     * ni se incluye aquí.
-     */
     pricing: {
-      title: labels.pricingTitle,
+      title:
+        labels.pricingTitle,
 
-      subtotalLabel: serviceTypeLabel,
+      subtotalLabel:
+        serviceTypeLabel,
 
-      subtotal: formatMoney(displaySubtotal, displayCurrency),
+      subtotal:
+        formatMoney(
+          displaySubtotal,
+          displayCurrency,
+        ),
 
-      deliveryFeeLabel: labels.deliveryFee,
+      deliveryFeeLabel:
+        labels.deliveryFee,
 
-      deliveryFee: formatMoney(displayDeliveryFee, displayCurrency),
+      deliveryFee:
+        formatMoney(
+          displayDeliveryFee,
+          displayCurrency,
+        ),
 
-      totalLabel: labels.total,
+      totalLabel:
+        labels.total,
 
-      total: formatMoney(displayTotal, displayCurrency),
+      total:
+        formatMoney(
+          displayTotal,
+          displayCurrency,
+        ),
     },
 
     purchaseValidation: {
-      shouldShow: shouldShowPurchaseValidation,
+      shouldShow:
+        shouldShowPurchaseValidation,
 
-      title: labels.purchaseValidationTitle,
+      title:
+        labels.purchaseValidationTitle,
 
-      amountLabel: labels.estimatedPurchaseAmount,
+      amountLabel:
+        labels.estimatedPurchaseAmount,
 
-      amount: purchaseAmount,
+      amount:
+        purchaseAmount,
 
-      helperText: labels.purchaseValidationHelper,
+      helperText:
+        labels.purchaseValidationHelper,
 
-      paymentStatusLabel: labels.paymentStatusLabel,
+      paymentStatusLabel:
+        labels.paymentStatusLabel,
 
       paymentStatus,
 
@@ -712,22 +1037,26 @@ export function buildQuoteViewModel({
     },
 
     customerMessage: {
-      title: labels.customerMessageTitle,
+      title:
+        labels.customerMessageTitle,
 
-      message: quote?.notes || labels.noMessage,
+      message:
+        quote?.notes ||
+        labels.noMessage,
     },
 
     actions: {
-      acceptLabel: labels.accept,
-      rejectLabel: labels.reject,
+      acceptLabel:
+        labels.accept,
 
-      /*
-       * Una cotización solamente puede responderse cuando:
-       *
-       * 1. El pedido está oficialmente en QUOTED.
-       * 2. La cotización continúa en PENDING.
-       */
-      canRespond: orderStatusType === "quoted" && quoteStatusType === "pending",
+      rejectLabel:
+        labels.reject,
+
+      canRespond:
+        orderStatusType ===
+          "quoted" &&
+        quoteStatusType ===
+          "pending",
     },
   };
 }
