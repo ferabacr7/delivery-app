@@ -7,7 +7,6 @@
     "icon": "./assets/stores/app-icon.png",
     "scheme": "deliveryapp",
     "userInterfaceStyle": "automatic",
-
     "ios": {
       "icon": "./assets/stores/app-icon.png",
       "bundleIdentifier": "com.orbitcr.app",
@@ -15,7 +14,6 @@
         "ITSAppUsesNonExemptEncryption": false
       }
     },
-
     "android": {
       "package": "com.orbitcr.app",
       "predictiveBackGestureEnabled": false,
@@ -24,11 +22,9 @@
         "backgroundColor": "#000000"
       }
     },
-
     "web": {
       "output": "static"
     },
-
     "plugins": [
       "expo-router",
       [
@@ -46,21 +42,22 @@
         {
           "locationWhenInUsePermission": "ORBIT utiliza tu ubicación para guardar direcciones, calcular rutas y permitir el seguimiento de entregas activas."
         }
-      ]
+      ],
+      "expo-font",
+      "expo-image",
+      "expo-web-browser",
+      "expo-status-bar"
     ],
-
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
     },
-
     "extra": {
       "router": {},
       "eas": {
         "projectId": "4ce1ce5e-5358-48d2-8c68-3b62227133df"
       }
     },
-
     "owner": "ferabacr7"
   }
 }
