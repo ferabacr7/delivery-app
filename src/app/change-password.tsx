@@ -15,11 +15,7 @@ import {
 } from "react-native";
 
 import { useTranslation } from "../i18n/useTranslation";
-import {
-  isValidPassword,
-  updateMyPassword,
-  verifyCurrentPassword,
-} from "../services/authService";
+import { isValidPassword, updateMyPassword } from "../services/authService";
 import { colors } from "../styles/theme";
 
 export default function ChangePasswordScreen() {
@@ -41,9 +37,8 @@ export default function ChangePasswordScreen() {
 
   const passwordRule =
     language === "es"
-      ? "La nueva contraseña debe tener mínimo 8 caracteres e incluir una letra, un número y un símbolo."
-      : "Your new password must contain at least 8 characters, including a letter, a number, and a symbol.";
-
+      ? "La nueva contraseña debe tener al menos 8 caracteres e incluir una letra mayúscula, una minúscula, un número y un símbolo."
+      : "Your new password must contain at least 8 characters, including an uppercase letter, a lowercase letter, a number, and a symbol.";
   async function handleChangePassword() {
     if (!currentPassword) {
       Alert.alert(
@@ -81,21 +76,16 @@ export default function ChangePasswordScreen() {
     try {
       setSaving(true);
 
-      const verificationResult = await verifyCurrentPassword(currentPassword);
-
-      if (verificationResult.error) {
-        Alert.alert(
-          t("common.error"),
-          t("passwordChange.currentPasswordInvalid"),
-        );
-
-        return;
-      }
-
-      const result = await updateMyPassword(password);
+      const result = await updateMyPassword(password, currentPassword);
 
       if (result.error) {
-        Alert.alert(t("common.error"), result.error.message);
+        const errorCode =
+          "code" in result.error ? String(result.error.code) : "unknown";
+
+        Alert.alert(
+          t("common.error"),
+          `${result.error.message}\n\nCódigo: ${errorCode}`,
+        );
 
         return;
       }

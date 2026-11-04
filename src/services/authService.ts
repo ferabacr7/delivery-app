@@ -4,26 +4,15 @@ import { supabase } from "../lib/supabase";
 
 const DEFAULT_PROFILE_NAME = "Usuario Delivery";
 
-export function isValidPassword(
-  password: string,
-) {
-  const hasMinimumLength =
-    password.length >= 8;
-
-  const hasLetter =
-    /[A-Za-z]/.test(password);
-
-  const hasNumber =
-    /[0-9]/.test(password);
-
-  const hasSymbol =
-    /[^A-Za-z0-9\s]/.test(password);
+export function isValidPassword(password: string) {
+  const hasMinimumLength = password.length >= 8;
+  const hasLowercase = /[a-z]/.test(password);
+  const hasUppercase = /[A-Z]/.test(password);
+  const hasNumber = /[0-9]/.test(password);
+  const hasSymbol = /[^A-Za-z0-9\s]/.test(password);
 
   return (
-    hasMinimumLength &&
-    hasLetter &&
-    hasNumber &&
-    hasSymbol
+    hasMinimumLength && hasLowercase && hasUppercase && hasNumber && hasSymbol
   );
 }
 
@@ -33,15 +22,11 @@ export async function signUp(
   fullName: string = DEFAULT_PROFILE_NAME,
   phone: string = "",
 ) {
-  const normalizedEmail =
-    email.trim().toLowerCase();
+  const normalizedEmail = email.trim().toLowerCase();
 
-  const normalizedFullName =
-    fullName.trim() ||
-    DEFAULT_PROFILE_NAME;
+  const normalizedFullName = fullName.trim() || DEFAULT_PROFILE_NAME;
 
-  const normalizedPhone =
-    phone.trim();
+  const normalizedPhone = phone.trim();
 
   if (!isValidPassword(password)) {
     return {
@@ -52,21 +37,17 @@ export async function signUp(
     };
   }
 
-  const { data, error } =
-    await supabase.auth.signUp({
-      email: normalizedEmail,
-      password,
-      options: {
-        emailRedirectTo:
-          "https://orbit-cr.com/auth/email-confirmed",
-        data: {
-          full_name:
-            normalizedFullName,
-          phone:
-            normalizedPhone,
-        },
+  const { data, error } = await supabase.auth.signUp({
+    email: normalizedEmail,
+    password,
+    options: {
+      emailRedirectTo: "https://orbit-cr.com/auth/email-confirmed",
+      data: {
+        full_name: normalizedFullName,
+        phone: normalizedPhone,
       },
-    });
+    },
+  });
 
   if (error || !data.user) {
     return {
@@ -81,18 +62,13 @@ export async function signUp(
   };
 }
 
-export async function signIn(
-  email: string,
-  password: string,
-) {
-  const normalizedEmail =
-    email.trim().toLowerCase();
+export async function signIn(email: string, password: string) {
+  const normalizedEmail = email.trim().toLowerCase();
 
-  return await supabase.auth
-    .signInWithPassword({
-      email: normalizedEmail,
-      password,
-    });
+  return await supabase.auth.signInWithPassword({
+    email: normalizedEmail,
+    password,
+  });
 }
 
 export async function signOut() {
@@ -105,26 +81,17 @@ export async function clearLocalSession() {
       scope: "local",
     });
   } catch (error) {
-    console.warn(
-      "LOCAL SIGN OUT ERROR:",
-      error,
-    );
+    console.warn("LOCAL SIGN OUT ERROR:", error);
   }
 
-  const keys =
-    await AsyncStorage.getAllKeys();
+  const keys = await AsyncStorage.getAllKeys();
 
-  const supabaseAuthKeys =
-    keys.filter(
-      (key) =>
-        key.startsWith("sb-") &&
-        key.endsWith("-auth-token"),
-    );
+  const supabaseAuthKeys = keys.filter(
+    (key) => key.startsWith("sb-") && key.endsWith("-auth-token"),
+  );
 
   if (supabaseAuthKeys.length > 0) {
-    await AsyncStorage.multiRemove(
-      supabaseAuthKeys,
-    );
+    await AsyncStorage.multiRemove(supabaseAuthKeys);
   }
 }
 
@@ -137,181 +104,114 @@ export async function getSession() {
 }
 
 export async function getMyProfile() {
-  const {
-    data: userData,
-    error: userError,
-  } =
-    await supabase.auth.getUser();
+  const { data: userData, error: userError } = await supabase.auth.getUser();
 
-  if (
-    userError ||
-    !userData.user
-  ) {
+  if (userError || !userData.user) {
     return {
       data: null,
-      error:
-        userError ??
-        new Error(
-          "No authenticated user found",
-        ),
+      error: userError ?? new Error("No authenticated user found"),
     };
   }
 
   return await supabase
     .from("profiles")
     .select("*")
-    .eq(
-      "id",
-      userData.user.id,
-    )
+    .eq("id", userData.user.id)
     .single();
 }
 
-export async function updateMyProfile(
-  fullName: string,
-  phone: string,
-) {
-  const {
-    data: userData,
-    error: userError,
-  } =
-    await supabase.auth.getUser();
+export async function updateMyProfile(fullName: string, phone: string) {
+  const { data: userData, error: userError } = await supabase.auth.getUser();
 
-  if (
-    userError ||
-    !userData.user
-  ) {
+  if (userError || !userData.user) {
     return {
       data: null,
-      error:
-        userError ??
-        new Error(
-          "No authenticated user found",
-        ),
+      error: userError ?? new Error("No authenticated user found"),
     };
   }
 
-  const normalizedFullName =
-    fullName.trim();
+  const normalizedFullName = fullName.trim();
 
-  const normalizedPhone =
-    phone.trim();
+  const normalizedPhone = phone.trim();
 
   if (!normalizedFullName) {
     return {
       data: null,
-      error: new Error(
-        "El nombre es obligatorio.",
-      ),
+      error: new Error("El nombre es obligatorio."),
     };
   }
 
   return await supabase
     .from("profiles")
     .update({
-      full_name:
-        normalizedFullName,
-      phone:
-        normalizedPhone || null,
+      full_name: normalizedFullName,
+      phone: normalizedPhone || null,
     })
-    .eq(
-      "id",
-      userData.user.id,
-    )
+    .eq("id", userData.user.id)
     .select()
     .single();
 }
 
-export async function updateMyEmail(
-  email: string,
-) {
-  const normalizedEmail =
-    email.trim().toLowerCase();
+export async function updateMyEmail(email: string) {
+  const normalizedEmail = email.trim().toLowerCase();
 
   if (!normalizedEmail) {
     return {
       data: null,
-      error: new Error(
-        "El correo es obligatorio.",
-      ),
+      error: new Error("El correo es obligatorio."),
     };
   }
 
-  const result =
-    await supabase.auth.updateUser(
-      {
-        email:
-          normalizedEmail,
-      },
-      {
-        emailRedirectTo:
-          "https://orbit-cr.com/auth/email-change-confirmed",
-      },
-    );
-
-  console.log(
-    "UPDATE EMAIL DEBUG:",
+  const result = await supabase.auth.updateUser(
     {
-      requestedEmail:
-        normalizedEmail,
-
-      userEmail:
-        result.data.user?.email,
-
-      newEmail:
-        result.data.user
-          ?.new_email,
-
-      error: result.error
-        ? {
-            message:
-              result.error
-                .message,
-
-            status:
-              result.error
-                .status,
-
-            code:
-              result.error.code,
-
-            name:
-              result.error.name,
-          }
-        : null,
+      email: normalizedEmail,
+    },
+    {
+      emailRedirectTo: "https://orbit-cr.com/auth/email-change-confirmed",
     },
   );
+
+  console.log("UPDATE EMAIL DEBUG:", {
+    requestedEmail: normalizedEmail,
+
+    userEmail: result.data.user?.email,
+
+    newEmail: result.data.user?.new_email,
+
+    error: result.error
+      ? {
+          message: result.error.message,
+
+          status: result.error.status,
+
+          code: result.error.code,
+
+          name: result.error.name,
+        }
+      : null,
+  });
 
   return result;
 }
 
-export async function requestPasswordReset(
-  email: string,
-) {
-  const normalizedEmail =
-    email.trim().toLowerCase();
+export async function requestPasswordReset(email: string) {
+  const normalizedEmail = email.trim().toLowerCase();
 
   if (!normalizedEmail) {
     return {
       data: null,
-      error: new Error(
-        "El correo es obligatorio.",
-      ),
+      error: new Error("El correo es obligatorio."),
     };
   }
 
-  return await supabase.auth
-    .resetPasswordForEmail(
-      normalizedEmail,
-      {
-        redirectTo:
-          "deliveryapp://reset-password",
-      },
-    );
+  return await supabase.auth.resetPasswordForEmail(normalizedEmail, {
+    redirectTo: "deliveryapp://reset-password",
+  });
 }
 
 export async function updateMyPassword(
   password: string,
+  currentPassword?: string,
 ) {
   if (!isValidPassword(password)) {
     return {
@@ -322,96 +222,58 @@ export async function updateMyPassword(
     };
   }
 
-  return await supabase.auth
-    .updateUser({
-      password,
-    });
+  return await supabase.auth.updateUser({
+    password,
+    ...(currentPassword ? { current_password: currentPassword } : {}),
+  });
 }
 
-export async function verifyCurrentPassword(
-  password: string,
-) {
-  const {
-    data: userData,
-    error: userError,
-  } =
-    await supabase.auth.getUser();
+export async function verifyCurrentPassword(password: string) {
+  const { data: userData, error: userError } = await supabase.auth.getUser();
 
-  if (
-    userError ||
-    !userData.user?.email
-  ) {
+  if (userError || !userData.user?.email) {
     return {
       data: null,
-      error:
-        userError ??
-        new Error(
-          "No authenticated user found",
-        ),
+      error: userError ?? new Error("No authenticated user found"),
     };
   }
 
-  return await supabase.auth
-    .signInWithPassword({
-      email:
-        userData.user.email,
-      password,
-    });
+  return await supabase.auth.signInWithPassword({
+    email: userData.user.email,
+    password,
+  });
 }
 
 export async function deleteMyAccount() {
-  const {
-    data: sessionData,
-    error: sessionError,
-  } = await supabase.auth.getSession();
+  const { data: sessionData, error: sessionError } =
+    await supabase.auth.getSession();
 
-  if (
-    sessionError ||
-    !sessionData.session
-  ) {
+  if (sessionError || !sessionData.session) {
     return {
       data: null,
-      error:
-        sessionError ??
-        new Error(
-          "No authenticated session found",
-        ),
+      error: sessionError ?? new Error("No authenticated session found"),
     };
   }
 
-  const {
-    data,
-    error,
-  } =
-    await supabase.functions.invoke(
-      "delete-account",
-      {
-        method: "POST",
-      },
-    );
+  const { data, error } = await supabase.functions.invoke("delete-account", {
+    method: "POST",
+  });
 
   if (error) {
-    let responseData:
-      | { error?: string }
-      | null = null;
+    let responseData: { error?: string } | null = null;
 
     try {
-      const context =
-        (
-          error as {
-            context?: Response;
-          }
-        ).context;
+      const context = (
+        error as {
+          context?: Response;
+        }
+      ).context;
 
       if (context) {
-        responseData =
-          await context.json();
+        responseData = await context.json();
       }
     } catch (contextError) {
-      console.error(
-        "DELETE ACCOUNT ERROR RESPONSE:",
-        contextError,
-      );
+      console.error("DELETE ACCOUNT ERROR RESPONSE:", contextError);
     }
 
     return {
@@ -423,10 +285,7 @@ export async function deleteMyAccount() {
   if (!data?.success) {
     return {
       data,
-      error: new Error(
-        data?.error ??
-          "Unable to delete account",
-      ),
+      error: new Error(data?.error ?? "Unable to delete account"),
     };
   }
 
