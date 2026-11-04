@@ -12,10 +12,7 @@ import {
 } from "react-native";
 
 import { useTranslation } from "../i18n/useTranslation";
-import {
-  isValidPassword,
-  updateMyPassword,
-} from "../services/authService";
+import { isValidPassword, updateMyPassword } from "../services/authService";
 import { supabase } from "../lib/supabase";
 import { colors } from "../styles/theme";
 
@@ -25,53 +22,35 @@ type RecoveryParams = {
   code: string | null;
 };
 
-function getRecoveryParams(
-  url: string,
-): RecoveryParams {
-  const parsed =
-    Linking.parse(url);
+function getRecoveryParams(url: string): RecoveryParams {
+  const parsed = Linking.parse(url);
 
-  const queryParams =
-    parsed.queryParams ?? {};
+  const queryParams = parsed.queryParams ?? {};
 
   let accessToken =
-    typeof queryParams.access_token ===
-    "string"
+    typeof queryParams.access_token === "string"
       ? queryParams.access_token
       : null;
 
   let refreshToken =
-    typeof queryParams.refresh_token ===
-    "string"
+    typeof queryParams.refresh_token === "string"
       ? queryParams.refresh_token
       : null;
 
-  let code =
-    typeof queryParams.code === "string"
-      ? queryParams.code
-      : null;
+  let code = typeof queryParams.code === "string" ? queryParams.code : null;
 
-  const hashIndex =
-    url.indexOf("#");
+  const hashIndex = url.indexOf("#");
 
   if (hashIndex >= 0) {
-    const hash =
-      url.slice(hashIndex + 1);
+    const hash = url.slice(hashIndex + 1);
 
-    const hashParams =
-      new URLSearchParams(hash);
+    const hashParams = new URLSearchParams(hash);
 
-    accessToken =
-      accessToken ??
-      hashParams.get("access_token");
+    accessToken = accessToken ?? hashParams.get("access_token");
 
-    refreshToken =
-      refreshToken ??
-      hashParams.get("refresh_token");
+    refreshToken = refreshToken ?? hashParams.get("refresh_token");
 
-    code =
-      code ??
-      hashParams.get("code");
+    code = code ?? hashParams.get("code");
   }
 
   return {
@@ -82,43 +61,24 @@ function getRecoveryParams(
 }
 
 export default function ResetPasswordScreen() {
-  const [password, setPassword] =
-    useState("");
+  const [password, setPassword] = useState("");
 
-  const [
-    confirmPassword,
-    setConfirmPassword,
-  ] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
-  const [
-    showPassword,
-    setShowPassword,
-  ] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-  const [
-    showConfirmPassword,
-    setShowConfirmPassword,
-  ] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const [loading, setLoading] =
-    useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const [
-    validatingSession,
-    setValidatingSession,
-  ] = useState(true);
+  const [validatingSession, setValidatingSession] = useState(true);
 
-  const [
-    recoveryReady,
-    setRecoveryReady,
-  ] = useState(false);
+  const [recoveryReady, setRecoveryReady] = useState(false);
 
   const { language } = useTranslation();
 
   useEffect(() => {
-    async function handleRecoveryUrl(
-      url: string | null,
-    ) {
+    async function handleRecoveryUrl(url: string | null) {
       if (!url) {
         setRecoveryReady(false);
         setValidatingSession(false);
@@ -126,32 +86,35 @@ export default function ResetPasswordScreen() {
       }
 
       try {
-        const {
-          accessToken,
-          refreshToken,
-          code,
-        } = getRecoveryParams(url);
+        const { accessToken, refreshToken, code } = getRecoveryParams(url);
 
-        if (
-          accessToken &&
-          refreshToken
-        ) {
-          const {
-            error,
-          } =
-            await supabase.auth
-              .setSession({
-                access_token:
-                  accessToken,
-                refresh_token:
-                  refreshToken,
-              });
+        const parsedUrl = Linking.parse(url);
+
+        const queryType = parsedUrl.queryParams?.type;
+
+        const hashIndex = url.indexOf("#");
+
+        const hashType =
+          hashIndex >= 0
+            ? new URLSearchParams(url.slice(hashIndex + 1)).get("type")
+            : null;
+
+        const recoveryType =
+          typeof queryType === "string" ? queryType : hashType;
+
+        if (recoveryType !== "recovery") {
+          setRecoveryReady(false);
+          return;
+        }
+
+        if (accessToken && refreshToken) {
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
 
           if (error) {
-            console.error(
-              "RECOVERY SET SESSION ERROR:",
-              error,
-            );
+            console.error("RECOVERY SET SESSION ERROR:", error);
 
             setRecoveryReady(false);
             return;
@@ -162,19 +125,10 @@ export default function ResetPasswordScreen() {
         }
 
         if (code) {
-          const {
-            error,
-          } =
-            await supabase.auth
-              .exchangeCodeForSession(
-                code,
-              );
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
 
           if (error) {
-            console.error(
-              "RECOVERY CODE EXCHANGE ERROR:",
-              error,
-            );
+            console.error("RECOVERY CODE EXCHANGE ERROR:", error);
 
             setRecoveryReady(false);
             return;
@@ -184,27 +138,12 @@ export default function ResetPasswordScreen() {
           return;
         }
 
-        const {
-          data: sessionData,
-          error: sessionError,
-        } =
-          await supabase.auth
-            .getSession();
-
-        if (
-          !sessionError &&
-          sessionData.session
-        ) {
-          setRecoveryReady(true);
-          return;
-        }
+        // No permitir la recuperación solamente
+        // porque exista una sesión iniciada.
 
         setRecoveryReady(false);
       } catch (error) {
-        console.error(
-          "RECOVERY URL ERROR:",
-          error,
-        );
+        console.error("RECOVERY URL ERROR:", error);
 
         setRecoveryReady(false);
       } finally {
@@ -213,27 +152,18 @@ export default function ResetPasswordScreen() {
     }
 
     async function initialize() {
-      const initialUrl =
-        await Linking.getInitialURL();
+      const initialUrl = await Linking.getInitialURL();
 
-      await handleRecoveryUrl(
-        initialUrl,
-      );
+      await handleRecoveryUrl(initialUrl);
     }
 
     void initialize();
 
-    const subscription =
-      Linking.addEventListener(
-        "url",
-        ({ url }) => {
-          setValidatingSession(true);
+    const subscription = Linking.addEventListener("url", ({ url }) => {
+      setValidatingSession(true);
 
-          void handleRecoveryUrl(
-            url,
-          );
-        },
-      );
+      void handleRecoveryUrl(url);
+    });
 
     return () => {
       subscription.remove();
@@ -247,9 +177,7 @@ export default function ResetPasswordScreen() {
 
     if (!recoveryReady) {
       Alert.alert(
-        language === "es"
-          ? "Enlace no válido"
-          : "Invalid link",
+        language === "es" ? "Enlace no válido" : "Invalid link",
         language === "es"
           ? "No se pudo validar la sesión de recuperación. Solicitá un nuevo enlace."
           : "The recovery session could not be validated. Request a new link.",
@@ -258,25 +186,18 @@ export default function ResetPasswordScreen() {
       return;
     }
 
-    if (
-      !isValidPassword(password)
-    ) {
+    if (!isValidPassword(password)) {
       Alert.alert(
+        language === "es" ? "Contraseña no válida" : "Invalid password",
         language === "es"
-          ? "Contraseña no válida"
-          : "Invalid password",
-        language === "es"
-          ? "La contraseña debe tener al menos 8 caracteres e incluir una letra, un número y un símbolo."
-          : "The password must contain at least 8 characters, including a letter, a number, and a symbol.",
+          ? "La contraseña debe tener al menos 8 caracteres e incluir una letra mayúscula, una minúscula, un número y un símbolo."
+          : "The password must contain at least 8 characters, including an uppercase letter, a lowercase letter, a number, and a symbol.",
       );
 
       return;
     }
 
-    if (
-      password !==
-      confirmPassword
-    ) {
+    if (password !== confirmPassword) {
       Alert.alert(
         language === "es"
           ? "Las contraseñas no coinciden"
@@ -292,23 +213,13 @@ export default function ResetPasswordScreen() {
     try {
       setLoading(true);
 
-      const {
-        error,
-      } =
-        await updateMyPassword(
-          password,
-        );
+      const { error } = await updateMyPassword(password);
 
       if (error) {
-        console.error(
-          "UPDATE RECOVERY PASSWORD ERROR:",
-          error,
-        );
+        console.error("UPDATE RECOVERY PASSWORD ERROR:", error);
 
         Alert.alert(
-          language === "es"
-            ? "No se pudo actualizar"
-            : "Unable to update",
+          language === "es" ? "No se pudo actualizar" : "Unable to update",
           error.message,
         );
 
@@ -318,27 +229,19 @@ export default function ResetPasswordScreen() {
       await supabase.auth.signOut();
 
       Alert.alert(
-        language === "es"
-          ? "Contraseña actualizada"
-          : "Password updated",
+        language === "es" ? "Contraseña actualizada" : "Password updated",
         language === "es"
           ? "Tu contraseña fue actualizada correctamente. Ya podés iniciar sesión."
           : "Your password was updated successfully. You can now sign in.",
         [
           {
             text: "OK",
-            onPress: () =>
-              router.replace(
-                "/login" as never,
-              ),
+            onPress: () => router.replace("/login" as never),
           },
         ],
       );
     } catch (error) {
-      console.error(
-        "RESET PASSWORD ERROR:",
-        error,
-      );
+      console.error("RESET PASSWORD ERROR:", error);
 
       Alert.alert(
         "Error",
@@ -353,15 +256,9 @@ export default function ResetPasswordScreen() {
 
   if (validatingSession) {
     return (
-      <View
-        style={styles.centeredContainer}
-      >
-        <Text
-          style={styles.statusText}
-        >
-          {language === "es"
-            ? "Validando enlace..."
-            : "Validating link..."}
+      <View style={styles.centeredContainer}>
+        <Text style={styles.statusText}>
+          {language === "es" ? "Validando enlace..." : "Validating link..."}
         </Text>
       </View>
     );
@@ -369,12 +266,8 @@ export default function ResetPasswordScreen() {
 
   if (!recoveryReady) {
     return (
-      <View
-        style={styles.centeredContainer}
-      >
-        <View
-          style={styles.iconContainer}
-        >
+      <View style={styles.centeredContainer}>
+        <View style={styles.iconContainer}>
           <Ionicons
             name="alert-circle-outline"
             size={34}
@@ -383,14 +276,10 @@ export default function ResetPasswordScreen() {
         </View>
 
         <Text style={styles.title}>
-          {language === "es"
-            ? "Enlace no válido"
-            : "Invalid link"}
+          {language === "es" ? "Enlace no válido" : "Invalid link"}
         </Text>
 
-        <Text
-          style={styles.description}
-        >
+        <Text style={styles.description}>
           {language === "es"
             ? "No se pudo validar el enlace de recuperación. Volvé a ORBIT y solicitá uno nuevo."
             : "The recovery link could not be validated. Return to ORBIT and request a new one."}
@@ -398,18 +287,10 @@ export default function ResetPasswordScreen() {
 
         <Pressable
           style={styles.button}
-          onPress={() =>
-            router.replace(
-              "/forgot-password" as never,
-            )
-          }
+          onPress={() => router.replace("/forgot-password" as never)}
         >
-          <Text
-            style={styles.buttonText}
-          >
-            {language === "es"
-              ? "Solicitar nuevo enlace"
-              : "Request new link"}
+          <Text style={styles.buttonText}>
+            {language === "es" ? "Solicitar nuevo enlace" : "Request new link"}
           </Text>
         </Pressable>
       </View>
@@ -419,9 +300,7 @@ export default function ResetPasswordScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        <View
-          style={styles.iconContainer}
-        >
+        <View style={styles.iconContainer}>
           <Ionicons
             name="lock-closed-outline"
             size={34}
@@ -430,23 +309,17 @@ export default function ResetPasswordScreen() {
         </View>
 
         <Text style={styles.title}>
-          {language === "es"
-            ? "Nueva contraseña"
-            : "New password"}
+          {language === "es" ? "Nueva contraseña" : "New password"}
         </Text>
 
-        <Text
-          style={styles.description}
-        >
+        <Text style={styles.description}>
           {language === "es"
             ? "Creá una nueva contraseña para tu cuenta de ORBIT."
             : "Create a new password for your ORBIT account."}
         </Text>
 
         {/* NEW PASSWORD */}
-        <View
-          style={styles.inputContainer}
-        >
+        <View style={styles.inputContainer}>
           <Ionicons
             name="lock-closed-outline"
             size={20}
@@ -457,14 +330,10 @@ export default function ResetPasswordScreen() {
           <TextInput
             style={styles.input}
             placeholder={
-              language === "es"
-                ? "Nueva contraseña"
-                : "New password"
+              language === "es" ? "Nueva contraseña" : "New password"
             }
             placeholderTextColor="#777777"
-            secureTextEntry={
-              !showPassword
-            }
+            secureTextEntry={!showPassword}
             autoCapitalize="none"
             autoCorrect={false}
             value={password}
@@ -473,14 +342,8 @@ export default function ResetPasswordScreen() {
           />
 
           <Pressable
-            style={
-              styles.passwordVisibilityButton
-            }
-            onPress={() =>
-              setShowPassword(
-                (current) => !current,
-              )
-            }
+            style={styles.passwordVisibilityButton}
+            onPress={() => setShowPassword((current) => !current)}
             disabled={loading}
             hitSlop={8}
             accessibilityRole="button"
@@ -495,11 +358,7 @@ export default function ResetPasswordScreen() {
             }
           >
             <Ionicons
-              name={
-                showPassword
-                  ? "eye-off-outline"
-                  : "eye-outline"
-              }
+              name={showPassword ? "eye-off-outline" : "eye-outline"}
               size={21}
               color="#666666"
             />
@@ -507,12 +366,7 @@ export default function ResetPasswordScreen() {
         </View>
 
         {/* CONFIRM PASSWORD */}
-        <View
-          style={[
-            styles.inputContainer,
-            styles.secondInput,
-          ]}
-        >
+        <View style={[styles.inputContainer, styles.secondInput]}>
           <Ionicons
             name="lock-closed-outline"
             size={20}
@@ -523,32 +377,20 @@ export default function ResetPasswordScreen() {
           <TextInput
             style={styles.input}
             placeholder={
-              language === "es"
-                ? "Confirmar contraseña"
-                : "Confirm password"
+              language === "es" ? "Confirmar contraseña" : "Confirm password"
             }
             placeholderTextColor="#777777"
-            secureTextEntry={
-              !showConfirmPassword
-            }
+            secureTextEntry={!showConfirmPassword}
             autoCapitalize="none"
             autoCorrect={false}
             value={confirmPassword}
-            onChangeText={
-              setConfirmPassword
-            }
+            onChangeText={setConfirmPassword}
             editable={!loading}
           />
 
           <Pressable
-            style={
-              styles.passwordVisibilityButton
-            }
-            onPress={() =>
-              setShowConfirmPassword(
-                (current) => !current,
-              )
-            }
+            style={styles.passwordVisibilityButton}
+            onPress={() => setShowConfirmPassword((current) => !current)}
             disabled={loading}
             hitSlop={8}
             accessibilityRole="button"
@@ -563,39 +405,27 @@ export default function ResetPasswordScreen() {
             }
           >
             <Ionicons
-              name={
-                showConfirmPassword
-                  ? "eye-off-outline"
-                  : "eye-outline"
-              }
+              name={showConfirmPassword ? "eye-off-outline" : "eye-outline"}
               size={21}
               color="#666666"
             />
           </Pressable>
         </View>
 
-        <Text
-          style={styles.passwordHint}
-        >
+        <Text style={styles.passwordHint}>
           {language === "es"
             ? "Mínimo 8 caracteres, incluyendo una letra, un número y un símbolo."
             : "At least 8 characters, including a letter, a number, and a symbol."}
         </Text>
 
         <Pressable
-          style={[
-            styles.button,
-            loading &&
-              styles.buttonDisabled,
-          ]}
+          style={[styles.button, loading && styles.buttonDisabled]}
           onPress={() => {
             void handleUpdatePassword();
           }}
           disabled={loading}
         >
-          <Text
-            style={styles.buttonText}
-          >
+          <Text style={styles.buttonText}>
             {loading
               ? language === "es"
                 ? "Actualizando..."
@@ -613,8 +443,7 @@ export default function ResetPasswordScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor:
-      colors.background,
+    backgroundColor: colors.background,
     paddingHorizontal: 24,
     paddingTop: 60,
   },
@@ -624,8 +453,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 24,
-    backgroundColor:
-      colors.background,
+    backgroundColor: colors.background,
   },
 
   content: {
@@ -642,8 +470,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 20,
     borderRadius: 20,
-    backgroundColor:
-      colors.brandSoft,
+    backgroundColor: colors.brandSoft,
   },
 
   title: {
@@ -673,8 +500,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 16,
-    backgroundColor:
-      colors.white,
+    backgroundColor: colors.white,
   },
 
   secondInput: {
@@ -711,8 +537,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginTop: 18,
     borderRadius: 16,
-    backgroundColor:
-      colors.primary,
+    backgroundColor: colors.primary,
   },
 
   buttonDisabled: {
